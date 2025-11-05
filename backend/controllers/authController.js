@@ -22,7 +22,7 @@ const cadastroUsuarioController = async (req, res) => {
       nome,
       senha,
       email,
-      setor,
+      departamento,
       endereco,
       cidade,
       estado,
@@ -47,7 +47,7 @@ const cadastroUsuarioController = async (req, res) => {
       nome: nome,
       senha: senhaHash,
       email: email,
-      setor: setor,
+      departamento: departamento,
       endereco: endereco,
       cidade: cidade,
       estado: estado,
@@ -71,34 +71,36 @@ const cadastroUsuarioController = async (req, res) => {
 
 
 const loginController = async (req, res) => {
-  const { email, senha } = req.body;
 
+  const { email, senha } = req.body;
+  console.log(req.body)
   try {
-    // Busca o usuário com o setor
+
+    // Busca o usuário c o email e departamento dele
     const usuario = await read(
-      'usuarios u JOIN setor s ON u.setor_id = s.id',
+      'usuarios u JOIN departamento d ON u.departamento_id = d.id',
       `u.email = '${email}'`,
-      'u.*, s.setor AS setor'
+      'u.*, d.departamento AS departamento'
     );
-    
+
     // verifica se encontrou
     if (!usuario) {
       return res.status(404).json({ mensagem: 'Usuário não encontrado' });
     }
-    
+
     // compara senha
     const senhaCorreta = await compare(senha, usuario.senha);
     if (!senhaCorreta) {
       return res.status(401).json({ mensagem: 'Senha incorreta' });
     }
-    
+
     // gera token
     const token = jwt.sign(
-      { id: usuario.id, setor: usuario.setor, nome: usuario.nome, status: usuario.status },
+      { id: usuario.id, departamento: usuario.departamento, nome: usuario.nome, status: usuario.status },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
-    
+
     res.json({ mensagem: 'Login realizado com sucesso', token, usuario });
   } catch (error) {
     console.error('Erro ao fazer login:', error);

@@ -1,5 +1,5 @@
-// import express from "express";
-// // import { listarSalarios, criarSalario, editarSalario, excluirSalario } from "../controllers/salariosController";
+import express from "express";
+import { listarSalarios, criarSalario, editarSalario, excluirSalario } from "../controllers/salariosController.js";
 
 // const router = express.Router();
 

@@ -8,11 +8,13 @@ import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
 
 export function LoginForm() {
+
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
   const API_URL = "http://localhost:8080";
 
   const login = async (e) => {
@@ -32,10 +34,12 @@ export function LoginForm() {
       if (res.ok && data.token) {
         localStorage.setItem("token", data.token);
         toast.success("Login realizado com sucesso!");
-        const setor = data.usuario?.setor;
+        const departamento = data.usuario?.departamento; 
+        console.log("Departamento do usuário:", departamento);
         setTimeout(() => {
-          if (setor === "gerente") router.push("/gerente");
-          else if (setor === "matriz") router.push("/matriz");
+          if (departamento === "Diretor Geral") router.push("/matriz");
+          else if (departamento === "Diretor Administrativo") router.push("/filial");
+          else if (departamento === "Gerente") router.push("/filial");
           else router.push("/pdv");
         }, 1000);
       } else {
@@ -49,6 +53,9 @@ export function LoginForm() {
     } finally {
       setLoading(false);
     }
+    
+   
+
   };
 
   return (

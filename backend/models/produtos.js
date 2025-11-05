@@ -1,5 +1,16 @@
 import { create, readAll, read, update, deleteRecord } from "../config/database.js";
 
+
+const obterProdutoPorCodigoBarras = async (codigo_barras) => {
+    try {
+        return await read('produtos', `codigo_barras = "${codigo_barras}"`);
+    } catch (error) {
+        console.error('Erro ao obter produto por código de barras: ', error);
+        throw error;
+    }
+};
+
+
 const criarProduto = async (produtoData) => {
     try {
         return await create('produtos', produtoData)
@@ -44,4 +55,4 @@ const deletarProduto = async (id) =>{
     }
 }
 
-export { criarProduto, listarProdutos, obterProdutoPorId, atualizarProduto, deletarProduto };
+export { criarProduto, listarProdutos, obterProdutoPorId, atualizarProduto, deletarProduto, obterProdutoPorCodigoBarras };
