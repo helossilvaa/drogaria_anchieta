@@ -4,7 +4,25 @@ import {
     obterProdutoPorId,
     atualizarProduto,
     deletarProduto,
+    obterProdutoPorCodigoBarras
 } from "../models/produtos.js";
+
+const obterProdutoPorCodigoBarrasController = async (req, res) => {
+    try {
+        const { codigo_barras } = req.params;
+
+        const produto = await obterProdutoPorCodigoBarras(codigo_barras);
+
+        if (!produto) {
+            return res.status(404).json({ mensagem: "Produto não encontrado pelo código de barras!" });
+        }
+
+        res.status(200).json(produto);
+    } catch (error) {
+        console.error("Erro ao buscar por código de barras:", error);
+        res.status(500).json({ mensagem: "Erro ao buscar produto por código de barras!" });
+    }
+};
 
 const criarProdutoController = async (req, res) => {
     try {
@@ -86,5 +104,6 @@ export {
     listarProdutosController,
     obterProdutoPorIdController,
     atualizarProdutoController,
-    deletarProdutoController
+    deletarProdutoController,
+    obterProdutoPorCodigoBarrasController
 }
