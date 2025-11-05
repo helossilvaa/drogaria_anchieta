@@ -13,7 +13,8 @@ const listarProdutos = async () => {
     try {
         return await readAll('produtos');
     } catch (error) {
-        console.error('Erro ao listar produtos: ', error)
+        console.error('Erro ao listar produtos: ', error);
+        throw error;
     }
 };
 const obterProdutoPorId = async (id) => {
@@ -30,6 +31,7 @@ const atualizarProduto = async (id, produtoData) => {
         return await update('produtos', `id = ${id}`, produtoData)
     } catch (error) {
         console.error('Erro ao atualizar produto: ', error)
+        throw error;
     }
 };
 
