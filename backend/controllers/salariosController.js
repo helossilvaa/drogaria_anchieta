@@ -1,4 +1,4 @@
-import { Salario } from "../models/salarios";
+import { Salario } from "../models/salarios.js";
 
 export const listarSalarios = async (req, res) => {
   try {
