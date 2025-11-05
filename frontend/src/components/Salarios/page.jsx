@@ -25,7 +25,7 @@ export default function Salarios() {
   const [unidades, setUnidades] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
 
-  // filtros: mês e departamento
+  // filtros 
   const [filtroMes, setFiltroMes] = useState(""); // formato YYYY-MM
   const [filtroDepartamento, setFiltroDepartamento] = useState("");
 

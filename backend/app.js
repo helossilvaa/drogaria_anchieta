@@ -18,8 +18,6 @@ import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
 
-
-
 dotenv.config();
 
 const app = express();
@@ -62,7 +60,6 @@ app.use("/api", descontosRotas);
 app.use('/api', fornecedoresRotas);
 app.use('/api', contasFilialRotas);
 app.use ('/produtos', produtosRotas);
-
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

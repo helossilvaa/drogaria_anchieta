@@ -6,9 +6,8 @@ import {
   DropdownMenuItem,
 } from "../ui/dropdown-menu";
 
-export default function DropdownMenuEstados() {
+export default function DropdownMenuEstados({ value, onChange }) {
   const [estados, setEstados] = useState([]);
-  const [estadoSelecionado, setEstadoSelecionado] = useState(null);
 
   useEffect(() => {
     fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados")
@@ -23,6 +22,9 @@ export default function DropdownMenuEstados() {
         console.error("Erro ao buscar estados:", error);
       });
   }, []);
+
+  // tenta encontrar o estado atual pelo valor (sigla)
+  const estadoSelecionado = estados.find((e) => e.sigla === value);
 
   return (
     <DropdownMenu>
@@ -40,7 +42,7 @@ export default function DropdownMenuEstados() {
         {estados.map((estado) => (
           <DropdownMenuItem
             key={estado.id}
-            onClick={() => setEstadoSelecionado(estado)}
+            onClick={() => onChange(estado.sigla)}
           >
             {estado.nome} ({estado.sigla})
           </DropdownMenuItem>

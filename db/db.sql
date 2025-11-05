@@ -3,17 +3,19 @@ create database drogaria;
 use drogaria;
 
 
-CREATE TABLE setor (
+CREATE TABLE tipoUnidade (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-    setor VARCHAR(250) NOT NULL
+    tipoUnidade VARCHAR(250) NOT NULL
 );
 
 CREATE TABLE departamento (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(100) NOT NULL,
-  setor_id INT NOT NULL,
-  FOREIGN KEY (setor_id) REFERENCES setor(id)
+    id INT AUTO_INCREMENT PRIMARY KEY,
+	departamento VARCHAR(250) NOT NULL,
+    tipoUnidade_id INT NOT NULL,
+    FOREIGN KEY (tipoUnidade_id) REFERENCES tipoUnidade(id)
 );
+
+
 
 
 CREATE TABLE usuarios (
@@ -26,7 +28,7 @@ CREATE TABLE usuarios (
     nome VARCHAR(255) NOT NULL,
     senha VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    setor_id INT NOT NULL,
+    departamento_id INT NOT NULL,
     logradouro VARCHAR(250) NOT NULL,
     cidade VARCHAR(100) NOT NULL,
     estado CHAR(2) NOT NULL,
@@ -36,7 +38,7 @@ CREATE TABLE usuarios (
     status ENUM('ativo', 'inativo') DEFAULT 'ativo',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (setor_id) REFERENCES setor(id)
+    FOREIGN KEY (departamento_id) REFERENCES departamento(id)
 );
 
 CREATE TABLE unidade (
@@ -232,17 +234,15 @@ CREATE TABLE contas (
 );
 
 
-CREATE TABLE IF NOT EXISTS salarios (
+CREATE TABLE  salarios (
   id INT AUTO_INCREMENT PRIMARY KEY,
   id_funcionario INT NOT NULL,
-  setor_id INT NOT NULL,
   departamento_id INT NOT NULL,
   unidade_id INT NOT NULL,
   valor DECIMAL(10,2) NOT NULL,
   status_pagamento ENUM('pendente', 'pago') DEFAULT 'pendente',
   data_atualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (id_funcionario) REFERENCES usuarios(id),
-  FOREIGN KEY (setor_id) REFERENCES setor(id),
   FOREIGN KEY (departamento_id) REFERENCES departamento(id),
   FOREIGN KEY (unidade_id) REFERENCES unidade(id)
 );
@@ -314,15 +314,88 @@ INSERT INTO tipos_pagamento (tipo) VALUES
 INSERT INTO unidade_medida (sigla) VALUES 
 ('ml'), ('l'), ('g'), ('mg'), ('unidade'); 
 
-INSERT INTO setor (setor) VALUES 
-('matriz'), ('gerente'), ('pdv'); 
+INSERT INTO tipoUnidade (tipoUnidade) VALUES 
+('matriz'), ('filial'); 
 
 INSERT INTO usuarios (registro, cpf, telefone, data_nascimento, genero, nome,
- senha, email, setor_id, logradouro, cidade, estado, cep, numero) VALUES 
+ senha, email, departamento_id, unidade_id, logradouro, cidade, estado, cep, numero) VALUES 
 ('12345678', '54470206941', '1192222222', '09-12-2007', 'feminino', 
-'heloise', '$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', 'heloise@gmail.com', '1', 'rua joao bosco', 
+'Isabella', '$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', 'isabella@gmail.com', '2', '2', 'rua joao bosco', 
+'sao bernardo do campo', 'sp', '09730480', '12'),
+('12345678', '54470206941', '1192222222', '09-12-2008', 'feminino', 
+'Giovanna', '$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', 'giovanna@gmail.com', '1', '1', 'rua joao bosco', 
+'sao bernardo do campo', 'sp', '09730480', '12');
+('12345678', '54470206941', '1192222222', '09-12-2007', 'feminino', 
+'heloise', '$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', 'heloise@gmail.com', '1', '3', 'rua joao bosco', 
 'sao bernardo do campo', 'sp', '09730480', '12');
 
+insert into tiposdescontos (tipo) values
+("Convênio"),
+("Cupom"),
+("Programa de Fidelidade");
+
+ALTER TABLE filiados ADD COLUMN unidade_id INT NULL;
+ALTER TABLE filiados ADD CONSTRAINT fk_usuario_unidade FOREIGN KEY (unidade_id) REFERENCES unidade(id);
+
+INSERT INTO contas (nomeConta, categoria, dataPostada, dataVencimento, valor, status, conta_pdf) VALUES
+('Compra de medicamentos Genéricos SA', 'Fornecedores', '2025-10-01', '2025-10-15', 12480.00, true, ''),
+('Compra de cosméticos Dermavida', 'Fornecedores', '2025-10-02', '2025-10-20', 8600.00, true, ''),
+('Reabastecimento de vitaminas NutriMais', 'Fornecedores', '2025-10-05', '2025-10-19', 5320.00, false, ''),
+('Conta de energia elétrica outubro', 'Despesas Fixas', '2025-10-03', '2025-10-18', 980.75, true, ''),
+('Conta de água e esgoto outubro', 'Despesas Fixas', '2025-10-04', '2025-10-19', 410.20, true, ''),
+('Serviço de internet e telefonia', 'Despesas Fixas', '2025-10-06', '2025-10-21', 299.90, true, ''),
+('Aluguel da loja matriz', 'Despesas Fixas', '2025-10-01', '2025-10-10', 4500.00, false, ''),
+('IPTU loja matriz parcela 9', 'Tributos e Taxas', '2025-10-02', '2025-10-30', 830.00, true, ''),
+('Taxa de licença sanitária anual', 'Tributos e Taxas', '2025-10-10', '2025-10-31', 950.00, true, ''),
+('INSS - contribuição outubro', 'Tributos e Taxas', '2025-10-08', '2025-10-25', 1320.00, true, ''),
+('Compra de papel A4 e etiquetas', 'Materiais e Suprimentos', '2025-10-07', '2025-10-22', 220.00, true, ''),
+('Compra de sacolas personalizadas', 'Materiais e Suprimentos', '2025-10-09', '2025-10-24', 780.00, false, ''),
+('Compra de produtos de limpeza', 'Materiais e Suprimentos', '2025-10-11', '2025-10-26', 340.00, true, ''),
+('Serviço de dedetização', 'Manutenção', '2025-10-05', '2025-10-15', 600.00, true, ''),
+('Troca de lâmpadas e reparos elétricos', 'Manutenção', '2025-10-12', '2025-10-27', 480.00, true, ''),
+('Manutenção do ar-condicionado', 'Manutenção', '2025-10-14', '2025-10-30', 890.00, false, ''),
+('Tarifa bancária mensal', 'Financeiras / Bancárias', '2025-10-01', '2025-10-05', 45.90, true, ''),
+('Mensalidade do sistema de gestão', 'Financeiras / Bancárias', '2025-10-09', '2025-10-20', 250.00, true, ''),
+('Juros de antecipação de recebíveis', 'Financeiras / Bancárias', '2025-10-15', '2025-10-29', 370.00, false, ''),
+('Pagamento de boletos via banco', 'Financeiras / Bancárias', '2025-10-18', '2025-10-31', 100.00, true, '');
+
+ INSERT INTO fornecedores (fornecedor, cnpj, logradouro, cidade, estado, cep, telefone, email, status, bairro, numero) VALUES
+('Alimentos Brasil Ltda', '12.345.678/0001-90', 'Rua das Flores', 'São Paulo', 'SP', '01001-000', '(11)1234-5678', 'contato@alimentosbr.com', 'ativa', 'Centro', 101),
+('Tecnologia Max', '98.765.432/0001-01', 'Avenida Paulista', 'São Paulo', 'SP', '01311-000', '(11)9988-7766', 'suporte@tecnomax.com', 'ativa', 'Bela Vista', 1500),
+('Construtora Alpha', '45.678.123/0001-76', 'Rua dos Tijolos', 'Rio de Janeiro', 'RJ', '20040-020', '(21)3344-5566', 'comercial@alpha.com', 'ativa', 'Copacabana', 345),
+('Medic Pharma', '77.456.123/0001-55', 'Rua Saúde', 'Belo Horizonte', 'MG', '30140-110', '(31)4455-6677', 'vendas@medicpharma.com', 'ativa', 'Savassi', 234),
+('Eco Produtos Verdes', '23.987.654/0001-44', 'Rua do Meio Ambiente', 'Curitiba', 'PR', '80020-200', '(41)98888-1234', 'eco@produtosverdes.com', 'ativa', 'Centro', 98),
+('Lopes Materiais', '56.123.890/0001-33', 'Avenida das Indústrias', 'Porto Alegre', 'RS', '90010-300', '(51)3222-4455', 'lopes@materiais.com', 'ativa', 'Industrial', 500),
+('Fashion Moda', '19.345.876/0001-11', 'Rua da Moda', 'Florianópolis', 'SC', '88010-400', '(48)3333-1122', 'sac@fashionmoda.com', 'ativa', 'Trindade', 78),
+('Tech Soluções', '34.567.123/0001-99', 'Av. das Inovações', 'Campinas', 'SP', '13015-000', '(19)4002-8922', 'contato@techsolucoes.com', 'ativa', 'Cambuí', 900),
+('Bebidas Premium', '87.654.321/0001-22', 'Rua das Águas', 'Recife', 'PE', '50010-020', '(81)3221-2211', 'vendas@bebidaspremium.com', 'ativa', 'Boa Vista', 210),
+('Móveis Conforto', '54.321.876/0001-00', 'Av. do Lar', 'Fortaleza', 'CE', '60060-030', '(85)3344-5566', 'contato@moveisconforto.com', 'ativa', 'Aldeota', 145),
+('Pet Care Brasil', '98.111.222/0001-33', 'Rua Animal', 'Salvador', 'BA', '40015-150', '(71)7777-8811', 'suporte@petcare.com', 'ativa', 'Centro', 45),
+('Auto Peças Turbo', '11.222.333/0001-44', 'Avenida dos Motores', 'Goiânia', 'GO', '74015-060', '(62)3232-4545', 'vendas@autoturbo.com', 'ativa', 'Jardim Goiás', 800),
+('Granjas do Vale', '66.777.888/0001-55', 'Estrada Rural', 'Londrina', 'PR', '86010-080', '(43)98877-6655', 'contato@granjasvale.com', 'ativa', 'Zona Rural', 12),
+('Papel & Cia', '12.222.444/0001-88', 'Rua dos Papéis', 'São Luís', 'MA', '65010-090', '(98)3233-7788', 'email@papelcia.com', 'ativa', 'Renascença', 123),
+('Luz Elétrica', '45.333.222/0001-99', 'Av. da Energia', 'Manaus', 'AM', '69010-100', '(92)3111-2211', 'comercial@luzeletrica.com', 'ativa', 'Centro', 899),
+('SuperGelados', '33.444.555/0001-66', 'Rua do Frio', 'Natal', 'RN', '59010-200', '(84)3001-0022', 'contato@supergelados.com', 'ativa', 'Petrópolis', 250),
+('Metalúrgica Forte', '22.555.666/0001-77', 'Rua das Ferramentas', 'Cuiabá', 'MT', '78010-300', '(65)3444-5566', 'metal@forte.com', 'ativa', 'Centro Norte', 55),
+('Têxtil Brasil', '88.999.000/0001-11', 'Rua da Seda', 'João Pessoa', 'PB', '58010-400', '(83)3222-0001', 'sac@textilbrasil.com', 'ativa', 'Centro', 190),
+('AgroVida', '55.666.777/0001-22', 'Rodovia BR-101', 'Aracaju', 'SE', '49010-500', '(79)3111-2244', 'vendas@agrovida.com', 'ativa', 'Industrial', 1),
+('Importadora Global', '10.101.202/0001-33', 'Rua do Comércio', 'Belém', 'PA', '66010-600', '(91)4002-8999', 'global@importadora.com', 'ativa', 'Campina', 72);
+
+insert into departamento (departamento, tipoUnidade_id) VALUES
+('Caixa', 2 ), 
+('Gerente', 2 ),
+('Diretor Administrativo', 2 ),  
+('Diretor Geral', 1 )
+
+INSERT INTO unidade 
+
+(tipo, nome, cnpj, logradouro, cidade, estado, cep, numero, telefone, email, data_abertura, status)
+
+VALUES
+('matriz', 'TechStore Matriz', '12345678000199', 'Av. Paulista', 'São Paulo', 'SP', '01310-000', 1000, '345678901', 'contato@techstore.com.br', '2015-03-12', 'ativa'),
+('franquia', 'TechStore Rio', '22345678000155', 'Rua das Laranjeiras', 'Rio de Janeiro', 'RJ', '22240-000', 250, '987654321', 'rio@techstore.com.br', '2018-07-01', 'ativa'),
+('franquia', 'TechStore BH', '32345678000133', 'Av. Afonso Pena', 'Belo Horizonte', 'MG', '30130-000', 1200, '998877665', 'bh@techstore.com.br', '2019-05-20', 'ativa'),
+('franquia', 'TechStore Curitiba', '42345678000122', 'Rua XV de Novembro', 'Curitiba', 'PR', '80020-310', 45, '987123456', 'curitiba@techstore.com.br', '2020-02-10', 'inativa'),
+('franquia', 'TechStore Porto Alegre', '52345678000111', 'Av. Ipiranga', 'Porto Alegre', 'RS', '90160-092', 500, '912345678', 'poa@techstore.com.br', '2021-09-15', 'ativa');
 
  
-
