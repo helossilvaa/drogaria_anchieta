@@ -18,6 +18,7 @@ export default function Layout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
+    
     const fetchUsuario = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -28,20 +29,17 @@ export default function Layout({ children }) {
 
         const decoded = jwtDecode(token);
 
-       
-        if (!["matriz", "gerente", "pdv"].includes(decoded.setor)) {
+        if (!["Diretor Geral", "Diretor Administrativo", "Gerente", "Caixa"].includes(decoded.departamento)) {
           router.push("/");
           return;
         }
 
-        
         if (decoded.exp < Date.now() / 1000) {
           localStorage.removeItem("token");
           router.push("/");
           return;
         }
 
-        
         const res = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -52,7 +50,7 @@ export default function Layout({ children }) {
         setUsuario({
           nome: data.nome,
           foto: data.foto || null,
-          setor: decoded.setor,
+          departamento: decoded.departamento,
         });
 
       } catch (err) {

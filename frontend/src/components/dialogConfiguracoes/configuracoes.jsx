@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Label } from "@radix-ui/react-label";
+import { Label } from "@/components/ui/label";
 import { Input } from "@heroui/react";
 import { CalendarioConfig } from "../calendarioConfig/calendario";
 import { ImagePlus } from "lucide-react";
@@ -19,9 +19,8 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 
 export function DialogConfig({ open, onOpenChange }) {
-  const [loading, setLoading] = useState(true);
-
   const API_URL = "http://localhost:8080";
+
   const [formValues, setFormValues] = useState({
     nome: "",
     cpf: "",
@@ -34,7 +33,6 @@ export function DialogConfig({ open, onOpenChange }) {
     estado: "",
   });
 
-  
   useEffect(() => {
     if (!open) return;
 
@@ -56,7 +54,8 @@ export function DialogConfig({ open, onOpenChange }) {
         setFormValues({
           nome: data.nome || "",
           cpf: data.cpf || "",
-          data_nascimento: data.data_nascimento || "",
+          data_nascimento: data.data_nascimento
+            ? data.data_nascimento.split("T")[0] : "",
           email: data.email || "",
           telefone: data.telefone || "",
           rua: data.logradouro || "",
@@ -64,11 +63,8 @@ export function DialogConfig({ open, onOpenChange }) {
           cidade: data.cidade || "",
           estado: data.estado || "",
         });
-
-        setLoading(false);
       } catch (err) {
         console.error(err);
-        setLoading(false);
       }
     };
 
@@ -88,13 +84,20 @@ export function DialogConfig({ open, onOpenChange }) {
     const id = decoded.id;
 
     try {
-      const res = await fetch(`http://localhost:8080/usuarios/${id}`, {
+      const res = await fetch(`${API_URL}/usuarios/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formValues),
+        body: JSON.stringify({
+          ...formValues,
+          data_nascimento: formValues.data_nascimento
+            ? new Date(formValues.data_nascimento)
+              .toISOString()
+              .split("T")[0]
+            : null,
+        }),
       });
 
       if (!res.ok) throw new Error("Erro ao atualizar usuário");
@@ -106,8 +109,6 @@ export function DialogConfig({ open, onOpenChange }) {
       alert("Erro ao salvar alterações");
     }
   };
-
-  if (loading) return <div>Carregando...</div>;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -166,8 +167,10 @@ export function DialogConfig({ open, onOpenChange }) {
             <div className="grid gap-2">
               <Label>Data de Nascimento</Label>
               <CalendarioConfig
-                value={formValues.dataNascimento}
-                onChange={(val) => setFormValues((prev) => ({ ...prev, dataNascimento: val }))}
+                value={formValues.data_nascimento}
+                onChange={(val) =>
+                  setFormValues((prev) => ({ ...prev, data_nascimento: val }))
+                }
               />
             </div>
           </div>
@@ -198,11 +201,11 @@ export function DialogConfig({ open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Endereço */}
+          {/* Linha 4: Endereço */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="rua">Rua / Número</Label>
-              <div className="flex gap-2">
+            <div className="grid grid-cols-[1fr_100px] gap-2">
+              <div className="grid gap-2">
+                <Label htmlFor="rua">Rua</Label>
                 <Input
                   id="rua"
                   name="rua"
@@ -211,6 +214,9 @@ export function DialogConfig({ open, onOpenChange }) {
                   size="sm"
                   className="shadow-none focus:ring-0"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="numero">Nº</Label>
                 <Input
                   id="numero"
                   name="numero"
@@ -221,9 +227,10 @@ export function DialogConfig({ open, onOpenChange }) {
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="cidade">Cidade / Estado</Label>
-              <div className="flex gap-2">
+
+            <div className="grid grid-cols-[1fr_200px] gap-2">
+              <div className="grid gap-2">
+                <Label htmlFor="cidade">Cidade</Label>
                 <Input
                   id="cidade"
                   name="cidade"
@@ -232,9 +239,14 @@ export function DialogConfig({ open, onOpenChange }) {
                   size="sm"
                   className="shadow-none focus:ring-0"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="estado">Estado</Label>
                 <DropdowMenuEstados
                   value={formValues.estado}
-                  onChange={(val) => setFormValues((prev) => ({ ...prev, estado: val }))}
+                  onValueChange={(val) =>
+                    setFormValues((prev) => ({ ...prev, estado: val }))
+                  }
                 />
               </div>
             </div>
@@ -243,9 +255,13 @@ export function DialogConfig({ open, onOpenChange }) {
 
         <DialogFooter className="pt-4 mt-2 flex justify-end gap-2">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Cancelar</Button>
+            <Button variant="outline" size="sm">
+              Cancelar
+            </Button>
           </DialogClose>
-          <Button onClick={handleSubmit} size="sm">Salvar alterações</Button>
+          <Button onClick={handleSubmit} size="sm">
+            Salvar alterações
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

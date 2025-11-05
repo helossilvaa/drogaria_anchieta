@@ -58,7 +58,7 @@ export function ComboboxDemo() {
 
         const decoded = jwtDecode(token);
 
-        if (!["matriz", "gerente", "pdv"].includes(decoded.setor)) {
+        if (!["Diretor Geral", "Diretor Administrativo", "Gerente", "Caixa"].includes(decoded.departamento)) {
           router.push("/");
           return;
         }
@@ -95,7 +95,7 @@ export function ComboboxDemo() {
     fetchUsuario();
   }, [router]);
 
-  if (loading) return <div>Carregando...</div>;
+ 
   if (error) return <div>Erro: {error}</div>;
 
   const userName = dadosUsuario?.nome || "Usuário";
@@ -146,8 +146,8 @@ export function ComboboxDemo() {
                       <CommandItem
                         key={item.value}
                         onSelect={() => {
-                          setOpen(false);       // Fecha o popover
-                          setOpenDialog(true);  // Abre o dialog
+                          setOpen(false);       
+                          setOpenDialog(true); 
                         }}
                       >
                         <Icon className="mr-2 h-4 w-4" />

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo, useCallback } from 'react';
 import { Search, ChevronDown, Plus, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
-import  DialogFranquia from '@/components/addFranquia/adicionarFranquia'
+import DialogFranquia from '@/components/addFranquia/adicionarFranquia'
 
 
 const users = [

@@ -1,3 +1,4 @@
+import { obterUsuario } from "../../../Senaliza/backend/models/usuario";
 import { criarUnidade, listarUnidades, obterunidadeId, atualizarUnidade, deletarUnidade } from "../models/franquia";
 
 
@@ -142,5 +143,27 @@ const deletarUnidadeController = async (req, res) => {
     }
 };
 
-export {criarUnidadeController, listarUnidadesController, obterunidadeIdcontroller, atualizarUnidadeController, deletarUnidadeController};
+
+const atribuirDiretorAdmController = async (req, res) => {
+    try {
+        const { unidadeId, diretorId } = req.body;
+
+        const unidade = await obterunidadeId(unidadeId);
+        const diretor = await obterUsuario(diretorId);
+
+        if (!unidade) return res.status(404).json({ mensagem: 'Unidade não encontrada' });
+        if (!diretor) return res.status(404).json({ mensagem: 'Diretor não encontrado' });
+
+        
+        unidade.diretorAdm = diretorId;
+        await atualizarUnidade(unidadeId, unidade);
+
+        res.status(200).json({ mensagem: `Diretor administrativo atribuído à unidade ${unidade.nome} com sucesso!` });
+    } catch (error) {
+        console.error('Erro ao atribuir diretor administrativo:', error);
+        res.status(500).json({ mensagem: 'Erro ao atribuir diretor administrativo.' });
+    }
+};
+
+export {criarUnidadeController, listarUnidadesController, obterunidadeIdcontroller, atualizarUnidadeController, deletarUnidadeController, atribuirDiretorAdmController};
 
