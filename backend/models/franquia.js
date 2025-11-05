@@ -68,6 +68,18 @@ const mudarStatusUnidade = async (id, novoStatus) => {
     }
 };
 
+const atribuirUnidade = async (unidadeId, dono_usuario_id) => {
+    try {
+      const dadosParaAtualizar = {
+        dono_usuario_id: dono_usuario_id,
+      };
+      const condicao = `id = ${unidadeId}`;
+      return await update('chamados', dadosParaAtualizar, condicao);
+    } catch (error) {
+      console.error('Erro ao atribuir chamado:', error);
+      throw error;
+    }
+  };
 
 
-export { criarUnidade, listarUnidade, obterunidadeId, atualizarUnidade, deletarUnidade, mudarStatusUnidade };
+export { criarUnidade, listarUnidades, obterunidadeId, atualizarUnidade, deletarUnidade, mudarStatusUnidade, atribuirUnidade };
