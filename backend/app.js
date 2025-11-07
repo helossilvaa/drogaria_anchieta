@@ -12,7 +12,7 @@ import abrirFechar_CaixaRotas from './routes/abrirFechar_CaixaRotas.js';
 import categoriaRotas from './routes/categoriaRotas.js';
 import filiadosRotas from './routes/filiadosRotas.js';
 import tiposDescontosRotas from "./routes/tiposDescontosRotas.js";
-import parceriaRotas from "./routes/parceriaRotas.js";
+import parceriaRotas from "./routes/parceriaRotas.js5";
 import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
@@ -60,6 +60,7 @@ app.use("/api", descontosRotas);
 app.use('/api', fornecedoresRotas);
 app.use('/api', contasFilialRotas);
 app.use ('/produtos', produtosRotas);
+// app.use('/api', salariosRotas);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });
