@@ -19,6 +19,7 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     
+    
     const fetchUsuario = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -28,6 +29,8 @@ export default function Layout({ children }) {
         }
 
         const decoded = jwtDecode(token);
+        
+      
 
         if (!["Diretor Geral", "Diretor Administrativo", "Gerente", "Caixa"].includes(decoded.departamento)) {
           router.push("/");
@@ -40,7 +43,9 @@ export default function Layout({ children }) {
           return;
         }
 
-        const res = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
+        const id = decoded.id; 
+        
+        const res = await fetch(`${API_URL}/usuarios/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -64,13 +69,7 @@ export default function Layout({ children }) {
     fetchUsuario();
   }, [router]);
   
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Carregando...</p>
-      </div>
-    );
-  }
+  
 
 
   if (erro) {
