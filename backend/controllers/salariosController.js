@@ -11,18 +11,16 @@ export const listarSalarios = async (req, res) => {
 };
 
 export const criarSalario = async (req, res) => {
-  const { id_funcionario, setor_id, departamento_id, unidade_id, valor, status_pagamento } = req.body;
+  const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
-  if (!id_funcionario || !setor_id || !departamento_id || !unidade_id || !valor) {
+  if (!id_funcionario || !departamento_id || !valor) {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
 
   try {
     const insertId = await Salario.create({
       id_funcionario,
-      setor_id,
       departamento_id,
-      unidade_id,
       valor,
       status_pagamento: status_pagamento || "pendente",
     });
@@ -36,18 +34,16 @@ export const criarSalario = async (req, res) => {
 
 export const editarSalario = async (req, res) => {
   const { id } = req.params;
-  const { id_funcionario, setor_id, departamento_id, unidade_id, valor, status_pagamento } = req.body;
+  const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
-  if (!id_funcionario || !setor_id || !departamento_id || !unidade_id || !valor) {
+  if (!id_funcionario || !departamento_id || !valor) {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
 
   try {
     const updated = await Salario.update(id, {
       id_funcionario,
-      setor_id,
       departamento_id,
-      unidade_id,
       valor,
       status_pagamento,
     });

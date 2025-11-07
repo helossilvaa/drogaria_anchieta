@@ -17,6 +17,8 @@ import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
+import salariosRotas from './routes/salariosRotas.js';
+import departamentosRotas from './routes/departamentoRotas.js';
 
 dotenv.config();
 
@@ -60,10 +62,8 @@ app.use("/api", descontosRotas);
 app.use('/api', fornecedoresRotas);
 app.use('/api', contasFilialRotas);
 app.use ('/produtos', produtosRotas);
-<<<<<<< HEAD
-// app.use('/api', salariosRotas);
-=======
->>>>>>> f6c897d58e57525e34555a44df429ca0f25edbe9
+app.use('/api', salariosRotas);
+app.use('/api/departamento', departamentosRotas)
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

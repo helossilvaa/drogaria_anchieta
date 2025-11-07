@@ -5,16 +5,10 @@ import { criarDepartamentoController, atualizarDepartamentoController, deletarDe
 import authMiddleware from '../middlewares/authMiddleware.js';
  
 const router = express.Router();
- 
-
 router.post('/', authMiddleware, criarDepartamentoController);
-
 router.get('/', authMiddleware, listarDepartamentoController);
-
 router.get('/:id', authMiddleware, obterDepartamentoIdController);
-
 router.put('/:id', authMiddleware, atualizarDepartamentoController);
-
 router.delete('/:id', authMiddleware, deletarDepartamentoController);
 
 router.options('/', (req, res) => {

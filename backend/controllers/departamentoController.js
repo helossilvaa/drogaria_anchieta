@@ -1,4 +1,4 @@
-import { criarDepartamento, atualizarDepartamento, deletarDepartamento, listarDepartamento, obterDepartamentoId } from "../models/departamento";
+import { criarDepartamento, atualizarDepartamento, deletarDepartamento, listarDepartamento, obterDepartamentoId } from "../models/departamento.js";
 
 const criarDepartamentoController = async (req, res) => {
     try {
@@ -11,7 +11,7 @@ const criarDepartamentoController = async (req, res) => {
         };
 
         const departamentoId = await criarDepartamento(departamentoData);
-        res.status(201).json({mensagem: 'Setor criado com sucesso!', id: setorId});
+        res.status(201).json({mensagem: 'Departamento criado com sucesso!', id: departamentoId});
         
     } catch (error) {
         console.error('Erro ao criar departamento', error);
@@ -22,7 +22,7 @@ const criarDepartamentoController = async (req, res) => {
 const listarDepartamentoController = async (req, res) => {
     try {
         const departamentos = await listarDepartamento();
-        res.status(201).json(departamentos);
+        res.status(200).json(departamentos);
         
     } catch (error) {
         console.error('Erro ao listar departamentos', error);
