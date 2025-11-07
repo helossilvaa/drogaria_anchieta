@@ -69,25 +69,29 @@ const cadastroUsuarioController = async (req, res) => {
 };
 
 
-
 const loginController = async (req, res) => {
 
   const { email, senha } = req.body;
   console.log(req.body)
   try {
 
-    // Busca o usuário c o email e departamento dele
-    const usuario = await read(
-      'usuarios u JOIN departamento d ON u.departamento_id = d.id',
+    const resultado = await read(
+      'usuarios u LEFT JOIN departamento d ON u.departamento_id = d.id',
       `u.email = '${email}'`,
       'u.*, d.departamento AS departamento'
     );
-
-    // verifica se encontrou
+    
+    // garante que sempre pegue o primeiro usuário retornado
+    const usuario = Array.isArray(resultado) ? resultado[0] : resultado;
+    
     if (!usuario) {
       return res.status(404).json({ mensagem: 'Usuário não encontrado' });
     }
-
+    
+    console.log("Usuário autenticado:", usuario.id, usuario.nome);
+    
+    
+    
     // compara senha
     const senhaCorreta = await compare(senha, usuario.senha);
     if (!senhaCorreta) {
