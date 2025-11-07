@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem, SelectLabel, } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 
 const API_URL = 'http://localhost:8080/produtos';
 const API_CATEGORIAS = "http://localhost:8080/categorias";
@@ -33,7 +34,7 @@ export default function Produtos() {
     nome: "",
     medida_id: "",
     tarja: "",
-    categoria: "",
+    categoria_id: "",
     marca_id: "",
     codigo_barras: "",
     descricao: "",
@@ -43,7 +44,8 @@ export default function Produtos() {
     lote_id: "",
     armazenamento: "",
   });
-
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -65,7 +67,6 @@ export default function Produtos() {
       });
 
       if (!res.ok) throw new Error("Erro ao carregar produtos");
-
       const data = await res.json();
       setProdutos(data);
     } catch (err) {
@@ -126,6 +127,60 @@ export default function Produtos() {
     }
   });
 
+  const handleAtualizarProduto = async () => {
+    if (!produtoEditando) return;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/${produtoEditando.id}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(produtoEditando),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.mensagem || "Erro ao atualizar produto");
+      }
+
+      setMensagemFeedback({ type: "success", text: "Produto atualizado com sucesso!" });
+      setIsEditDialogOpen(false);
+      await fetchProdutos();
+    } catch (err) {
+      console.error(err);
+      setMensagemFeedback({ type: "error", text: err.message });
+    }
+  };
+
+  //editar o produto
+  const handleEditarClick = (produto) => {
+    setProdutoEditando(produto);
+    setIsEditDialogOpen(true);
+  };
+
+  //handel de deletar o produto
+  const handleExcluirProduto = async (id) => {
+    const token = localStorage.getItem("token");
+    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Erro ao excluir produto");
+
+      setMensagemFeedback({ type: "success", text: "Produto excluído com sucesso!" });
+      await fetchProdutos();
+    } catch (err) {
+      console.error(err);
+      setMensagemFeedback({ type: "error", text: err.message });
+    }
+  };
+
   // Paginação
   const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -162,7 +217,7 @@ export default function Produtos() {
         nome: "",
         medida_id: "",
         tarja: "",
-        categoria: "",
+        categoria_id: "",
         marca_id: "",
         codigo_barras: "",
         descricao: "",
@@ -190,7 +245,7 @@ export default function Produtos() {
         {/* Botão Criar Produto */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#4b9c86] text-white hover:bg-[#3e8473]">
+            <Button className="bg-[#b8677a] text-white hover:bg-[#3e8473]">
               Criar Produto
             </Button>
           </DialogTrigger>
@@ -219,7 +274,7 @@ export default function Produtos() {
               </Select>
 
               {/* Select Categoria */}
-              <Select value={novoProduto.categoria} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria: v })}>
+              <Select value={novoProduto.categoria_id} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione a Categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="medicamento">Medicamento</SelectItem>
@@ -244,17 +299,90 @@ export default function Produtos() {
           </DialogContent>
         </Dialog>
 
+        {/* Dialog de editar o produto */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Editar Produto</DialogTitle>
+            </DialogHeader>
 
-        {mensagemFeedback?.text && (
-          <div
-            className={`p-4 mb-4 text-sm rounded-lg ${mensagemFeedback.type === "success"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-              }`}
-          >
-            {mensagemFeedback.text}
-          </div>
-        )}
+            {produtoEditando && (
+              <div className="grid gap-2 mt-2">
+                <Input
+                  placeholder="Nome"
+                  value={produtoEditando.nome}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, nome: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Registro ANVISA"
+                  value={produtoEditando.registro_anvisa || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, registro_anvisa: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Código de Barras"
+                  value={produtoEditando.codigo_barras || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, codigo_barras: e.target.value })
+                  }
+                />
+                <Input
+                  type="number"
+                  placeholder="Preço Unitário"
+                  value={produtoEditando.preco_unitario || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, preco_unitario: e.target.value })
+                  }
+                />
+                <Input
+                  type="date"
+                  value={produtoEditando.validade ? produtoEditando.validade.split("T")[0] : ""}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, validade: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Descrição"
+                  value={produtoEditando.descricao || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, descricao: e.target.value })
+                  }
+                />
+              </div>
+            )}
+
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-[#4b9c86] text-white hover:bg-[#3e8473]"
+                onClick={handleAtualizarProduto}
+              >
+                Salvar Alterações
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <AnimatePresence>
+          {mensagemFeedback?.text && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg border ${mensagemFeedback.type === "success"
+                  ? "bg-green-100 text-green-800 border-green-300"
+                  : "bg-red-100 text-red-800 border-red-300"
+                }`}
+            >
+              {mensagemFeedback.text}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Abas */}
         <div className="border-b mb-4">
@@ -286,10 +414,10 @@ export default function Produtos() {
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Categorias</SelectLabel>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem>Todas</SelectItem>
                 {categorias.map((cat) => (
                   <SelectItem key={cat.id} value={String(cat.id)}>
-                    {cat.nome}
+                    {cat.categoria_id}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -307,7 +435,7 @@ export default function Produtos() {
                 <th className="py-3 px-6">Marca</th>
                 <th className="py-3 px-6">Registro ANVISA</th>
                 <th className="py-3 px-6">Validade</th>
-                <th className="py-3 px-6">Quantidade</th>
+                <th className="py-3 px-6">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -327,15 +455,32 @@ export default function Produtos() {
                 produtosPaginados.map((produto) => (
                   <tr key={produto.id} className="odd:bg-white even:bg-gray-50 border-b">
                     <td className="px-6 py-4 font-medium text-gray-900">{produto.nome}</td>
-                    <td className="px-6 py-4">{produto.categoria?.nome || "N/A"}</td>
-                    <td className="px-6 py-4">{produto.marca?.nome || "N/A"}</td>
-                    <td className="px-6 py-4">{produto.registroAnvisa || "-"}</td>
+                    <td className="px-6 py-4">{produto.categoria}</td>
+                    <td className="px-6 py-4">{produto.marca_id || "N/A"}</td>
+                    <td className="px-6 py-4">{produto.registro_anvisa || "-"}</td>
                     <td className="px-6 py-4">
                       {produto.validade
                         ? new Date(produto.validade).toLocaleDateString("pt-BR")
                         : "N/A"}
                     </td>
-                    <td className="px-6 py-4">{produto.quantidade ?? 0}</td>
+                    <td className=" flex px-6 py-4">
+                      <button
+                        onClick={() => handleExcluirProduto(produto.id)}
+                        className="rounded-full p-1 hover:bg-red-900"
+                      >
+                        <svg
+                          className="w-6 h-6 text-gray-800 dark:text-white"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path fillRule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

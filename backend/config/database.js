@@ -10,7 +10,7 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
- 
+    
 // Função assíncrona que obtém uma conexão do pool.
 // Essa conexão é usada para executar as queries SQL.
 async function getConnection() {

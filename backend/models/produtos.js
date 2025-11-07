@@ -39,7 +39,7 @@ const obterProdutoPorId = async (id) => {
 
 const atualizarProduto = async (id, produtoData) => {
     try {
-        return await update('produtos', `id = ${id}`, produtoData)
+        return await update('produtos', produtoData, `id = ${id}`)
     } catch (error) {
         console.error('Erro ao atualizar produto: ', error)
         throw error;
