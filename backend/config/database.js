@@ -81,21 +81,31 @@ async function create(table, data) {
  
 // Função para atualizar um registro
 async function update(table, data, where) {
-    const connection = await getConnection();
-    try {
-        const set = Object.keys(data)
-            .map(column => `${column} = ?`)
-            .join(', ');
- 
-        const sql = `UPDATE ${table} SET ${set} WHERE ${where}`;
-        const values = Object.values(data);
- 
-        const [result] = await connection.execute(sql, [...values]);
-        return result.affectedRows;
-    } finally {
-        connection.release();
+  const connection = await getConnection();
+  try {
+    
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    );
+
+    if (Object.keys(cleanData).length === 0) {
+      throw new Error("Nenhum campo válido para atualizar");
     }
+
+    const set = Object.keys(cleanData)
+      .map((column) => `${column} = ?`)
+      .join(", ");
+
+    const sql = `UPDATE ${table} SET ${set} WHERE ${where}`;
+    const values = Object.values(cleanData);
+
+    const [result] = await connection.execute(sql, values);
+    return result.affectedRows;
+  } finally {
+    connection.release();
+  }
 }
+
  
 // Função para excluir um registro
 async function deleteRecord(table, where) {

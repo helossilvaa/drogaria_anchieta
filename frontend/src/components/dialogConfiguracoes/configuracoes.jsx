@@ -19,8 +19,8 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 
 export function DialogConfig({ open, onOpenChange }) {
-  const API_URL = "http://localhost:8080";
 
+  const [previewImage, setPreviewImage] = useState(null);
   const [formValues, setFormValues] = useState({
     nome: "",
     cpf: "",
@@ -32,6 +32,20 @@ export function DialogConfig({ open, onOpenChange }) {
     cidade: "",
     estado: "",
   });
+
+  const API_URL = "http://localhost:8080";
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result); // mostra no preview
+        setFormValues((prev) => ({ ...prev, foto: reader.result })); // salva no formValues
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -85,7 +99,7 @@ export function DialogConfig({ open, onOpenChange }) {
 
     try {
       const res = await fetch(`${API_URL}/usuarios/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -130,140 +144,151 @@ export function DialogConfig({ open, onOpenChange }) {
                 type="file"
                 accept="image/*"
                 className="hidden"
+                onChange={handleFileChange}
               />
               <label
                 htmlFor="file-upload"
-                className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition"
+                className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition overflow-hidden"
               >
-                <ImagePlus className="w-5 h-5 text-gray-600" />
+                {previewImage ? (
+                  <img
+                    src={previewImage}
+                    alt="Pré-visualização"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImagePlus className="w-5 h-5 text-gray-600" />
+                )}
               </label>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                name="nome"
-                value={formValues.nome}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
-            </div>
+
           </div>
-
-          {/* Linha 2: CPF + Data de Nascimento */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="cpf">CPF</Label>
-              <Input
-                id="cpf"
-                name="cpf"
-                value={formValues.cpf}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Data de Nascimento</Label>
-              <CalendarioConfig
-                value={formValues.data_nascimento}
-                onChange={(val) =>
-                  setFormValues((prev) => ({ ...prev, data_nascimento: val }))
-                }
-              />
-            </div>
-          </div>
-
-          {/* Linha 3: Email + Telefone */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                value={formValues.email}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                name="telefone"
-                value={formValues.telefone}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
-            </div>
-          </div>
-
-          {/* Linha 4: Endereço */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid grid-cols-[1fr_100px] gap-2">
-              <div className="grid gap-2">
-                <Label htmlFor="rua">Rua</Label>
-                <Input
-                  id="rua"
-                  name="rua"
-                  value={formValues.rua}
-                  onChange={handleChange}
-                  size="sm"
-                  className="shadow-none focus:ring-0"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="numero">Nº</Label>
-                <Input
-                  id="numero"
-                  name="numero"
-                  value={formValues.numero}
-                  onChange={handleChange}
-                  size="sm"
-                  className="shadow-none focus:ring-0"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-[1fr_200px] gap-2">
-              <div className="grid gap-2">
-                <Label htmlFor="cidade">Cidade</Label>
-                <Input
-                  id="cidade"
-                  name="cidade"
-                  value={formValues.cidade}
-                  onChange={handleChange}
-                  size="sm"
-                  className="shadow-none focus:ring-0"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="estado">Estado</Label>
-                <DropdowMenuEstados
-                  value={formValues.estado}
-                  onValueChange={(val) =>
-                    setFormValues((prev) => ({ ...prev, estado: val }))
-                  }
-                />
-              </div>
-            </div>
+          <div className="grid gap-2">
+            <Label htmlFor="nome">Nome</Label>
+            <Input
+              id="nome"
+              name="nome"
+              value={formValues.nome}
+              onChange={handleChange}
+              size="sm"
+              className="shadow-none focus:ring-0"
+            />
           </div>
         </div>
 
-        <DialogFooter className="pt-4 mt-2 flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button variant="outline" size="sm">
-              Cancelar
-            </Button>
-          </DialogClose>
-          <Button onClick={handleSubmit} size="sm">
-            Salvar alterações
+        {/* Linha 2: CPF + Data de Nascimento */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input
+              id="cpf"
+              name="cpf"
+              value={formValues.cpf}
+              onChange={handleChange}
+              size="sm"
+              className="shadow-none focus:ring-0"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Data de Nascimento</Label>
+            <CalendarioConfig
+              value={formValues.data_nascimento}
+              onChange={(val) =>
+                setFormValues((prev) => ({ ...prev, data_nascimento: val }))
+              }
+            />
+          </div>
+        </div>
+
+        {/* Linha 3: Email + Telefone */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              value={formValues.email}
+              onChange={handleChange}
+              size="sm"
+              className="shadow-none focus:ring-0"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="telefone">Telefone</Label>
+            <Input
+              id="telefone"
+              name="telefone"
+              value={formValues.telefone}
+              onChange={handleChange}
+              size="sm"
+              className="shadow-none focus:ring-0"
+            />
+          </div>
+        </div>
+
+        {/* Linha 4: Endereço */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[1fr_100px] gap-2">
+            <div className="grid gap-2">
+              <Label htmlFor="rua">Rua</Label>
+              <Input
+                id="rua"
+                name="rua"
+                value={formValues.rua}
+                onChange={handleChange}
+                size="sm"
+                className="shadow-none focus:ring-0"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="numero">Nº</Label>
+              <Input
+                id="numero"
+                name="numero"
+                value={formValues.numero}
+                onChange={handleChange}
+                size="sm"
+                className="shadow-none focus:ring-0"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[1fr_200px] gap-2">
+            <div className="grid gap-2">
+              <Label htmlFor="cidade">Cidade</Label>
+              <Input
+                id="cidade"
+                name="cidade"
+                value={formValues.cidade}
+                onChange={handleChange}
+                size="sm"
+                className="shadow-none focus:ring-0"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="estado">Estado</Label>
+              <DropdowMenuEstados
+                value={formValues.estado}
+                onChange={(val) =>
+                  setFormValues((prev) => ({ ...prev, estado: val }))
+                }
+              />
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <DialogFooter className="pt-4 mt-2 flex justify-end gap-2">
+        <DialogClose asChild>
+          <Button variant="outline" size="sm">
+            Cancelar
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogClose>
+        <Button onClick={handleSubmit} size="sm">
+          Salvar alterações
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+    </Dialog >
   );
 }

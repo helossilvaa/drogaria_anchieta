@@ -17,89 +17,43 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
 import { DialogConfig } from "../dialogConfiguracoes/configuracoes";
 
-const menuItems = [
-  { value: "configuracoes", label: "Configurações", icon: Settings },
-  { value: "sair", label: "Sair", icon: LogOut },
-];
 
-function getInitials(name) {
-  if (!name) return "";
-  const parts = name.trim().split(" ");
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0].toUpperCase())
-    .join("");
-}
 
-export function ComboboxDemo() {
+export function ComboboxDemo({ usuario }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
-  const [dadosUsuario, setDadosUsuario] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-
-  const API_URL = "http://localhost:8080";
-  const router = useRouter();
+  
 
   useEffect(() => {
-    const fetchUsuario = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/");
-          return;
-        }
 
-        const decoded = jwtDecode(token);
+    if (!usuario) return;
 
-        if (!["Diretor Geral", "Diretor Administrativo", "Gerente", "Caixa"].includes(decoded.departamento)) {
-          router.push("/");
-          return;
-        }
+    const { nome, foto } = usuario;
 
-        if (decoded.exp < Date.now() / 1000) {
-          localStorage.removeItem("token");
-          setTimeout(() => router.push("/"), 3000);
-          return;
-        }
+  }, [usuario]);
 
-        const id = decoded.id;
+  const menuItems = [
+    { value: "configuracoes", label: "Configurações", icon: Settings },
+    { value: "sair", label: "Sair", icon: LogOut },
+  ];
 
-        const res = await fetch(`${API_URL}/usuarios/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  function getInitials(name) {
+    if (!name) return "";
+    const parts = name.trim().split(" ");
+    return parts
+      .slice(0, 2)
+      .map((p) => p[0].toUpperCase())
+      .join("");
+  }
 
-        if (!res.ok) throw new Error("Usuário não encontrado");
 
-        const data = await res.json();
+  const userName = usuario?.nome || "Usuário";
+  const userImage = usuario?.foto;
+  console.log("FOTO DO USUÁRIO:", usuario?.foto);
 
-        setDadosUsuario({
-          nome: data.nome,
-          foto: data.foto || null,
-        });
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Erro ao carregar usuário:", err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchUsuario();
-  }, [router]);
-
- 
-  if (error) return <div>Erro: {error}</div>;
-
-  const userName = dadosUsuario?.nome || "Usuário";
-  const userImage = dadosUsuario?.foto;
 
   return (
     <>
@@ -113,7 +67,8 @@ export function ComboboxDemo() {
             className="w-[220px] justify-between"
           >
             <div className="flex items-center gap-2">
-              {userImage ? (
+              {typeof userImage === "string" && userImage.trim() !== "" ? (
+                
                 <Image
                   src={userImage}
                   alt={userName}
@@ -126,6 +81,8 @@ export function ComboboxDemo() {
                   {getInitials(userName)}
                 </div>
               )}
+
+
               <span className="font-medium">{userName}</span>
             </div>
 
@@ -146,8 +103,8 @@ export function ComboboxDemo() {
                       <CommandItem
                         key={item.value}
                         onSelect={() => {
-                          setOpen(false);       
-                          setOpenDialog(true); 
+                          setOpen(false);
+                          setOpenDialog(true);
                         }}
                       >
                         <Icon className="mr-2 h-4 w-4" />
