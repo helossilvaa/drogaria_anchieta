@@ -3,14 +3,14 @@ import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
     host: '10.189.80.85',
-    user: 'Mariana',
+    user: 'Isabella',
     database: 'drogaria',
     password: 'Anchieta@123',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
- 
+    
 // Função assíncrona que obtém uma conexão do pool.
 // Essa conexão é usada para executar as queries SQL.
 async function getConnection() {
@@ -34,20 +34,21 @@ async function readAll(table, where = null) {
 }
  
 // Função para ler um registro específico
-async function read(table, where) {
+async function read(table, where, columns = '*') {
     const connection = await getConnection();
     try {
-        let sql = `SELECT * FROM ${table}`;
-        if (where) {
-            sql += ` WHERE ${where}`;
-        }
- 
-        const [rows] = await connection.execute(sql);
-        return rows[0] || null;
+      let sql = `SELECT ${columns} FROM ${table}`;
+      if (where) {
+        sql += ` WHERE ${where}`;
+      }
+  
+      const [rows] = await connection.execute(sql);
+      return rows[0] || null;
     } finally {
-        connection.release();
+      connection.release();
     }
-}
+  }
+  
  
 // Função para inserir um novo registro
 // Função assíncrona para inserir dados em uma tabela do banco de dados

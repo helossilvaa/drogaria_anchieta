@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 export default function Salarios() {
   const estadoInicialSalario = {
     id_funcionario: "",
-    setor_id: "",
     departamento_id: "",
-    unidade_id: "",
     valor: "",
     status_pagamento: "pendente",
     data_atualizado: "",
@@ -19,24 +17,18 @@ export default function Salarios() {
   const [excluirSalarioId, setExcluirSalarioId] = useState(null);
   const [abrirModalExcluir, setAbrirModalExcluir] = useState(false);
 
-  // listas para selects
-  const [setores, setSetores] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
-  const [unidades, setUnidades] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
 
-  // filtros 
-  const [filtroMes, setFiltroMes] = useState(""); // formato YYYY-MM
+  const [filtroMes, setFiltroMes] = useState("");
   const [filtroDepartamento, setFiltroDepartamento] = useState("");
 
-  // paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
   const API_URL = "http://localhost:8080/api/salarios";
   const API_BASE = "http://localhost:8080/api";
 
-  // util: data para input date
   const toInputDate = (dataString) => {
     if (!dataString) return "";
     try {
@@ -94,38 +86,41 @@ export default function Salarios() {
     return valor.toFixed(2).replace(".", ",");
   };
 
-  useEffect(() => {
-    fetchSalarios();
-    carregarListas();
-  }, []);
+ 
 
   const fetchSalarios = async () => {
-    try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      setSalarios(data);
-    } catch (err) {
-      console.error("Erro ao carregar salários:", err);
-    }
-  };
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
 
-  const carregarListas = async () => {
-    try {
-      const [setoresRes, departamentosRes, unidadesRes, usuariosRes] =
-        await Promise.all([
-          fetch(`${API_BASE}/setores`).then((r) => r.json()),
-          fetch(`${API_BASE}/departamentos`).then((r) => r.json()),
-          fetch(`${API_BASE}/unidades`).then((r) => r.json()),
-          fetch(`${API_BASE}/usuarios`).then((r) => r.json()),
-        ]);
-      setSetores(setoresRes);
-      setDepartamentos(departamentosRes);
-      setUnidades(unidadesRes);
-      setUsuarios(usuariosRes);
-    } catch (err) {
-      console.error("Erro ao carregar listas:", err);
-    }
-  };
+    console.log("💾 Dados recebidos da API:", JSON.stringify(data, null, 2));
+
+    setSalarios(data);
+  } catch (err) {
+    console.error("Erro ao carregar salários:", err);
+  }
+};
+
+
+const carregarListas = async () => {
+  try {
+    const resDepartamentos = await fetch("http://localhost:8080/api/departamento");
+    const resUsuarios = await fetch("http://localhost:8080/usuarios");
+
+    const departamentosData = await resDepartamentos.json();
+    const usuariosData = await resUsuarios.json();
+
+    // ✅ Garante que o estado sempre seja um array
+    setDepartamentos(Array.isArray(departamentosData) ? departamentosData : []);
+    setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+  } catch (erro) {
+    console.error("Erro ao carregar listas:", erro);
+    setDepartamentos([]);
+    setUsuarios([]);
+  }
+};
+
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -133,7 +128,6 @@ export default function Salarios() {
     if (type === "checkbox") {
       novoValor = checked;
     } else if (name === "valor") {
-      // mantém formato numérico para envio
       novoValor = value.replace(/,/g, ".").replace(/[^\d.]/g, "");
       const partes = novoValor.split(".");
       if (partes.length > 2) {
@@ -148,14 +142,7 @@ export default function Salarios() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // validação simples
-    if (
-      !novoSalario.id_funcionario ||
-      !novoSalario.setor_id ||
-      !novoSalario.departamento_id ||
-      !novoSalario.unidade_id ||
-      !novoSalario.valor
-    ) {
+    if (!novoSalario.id_funcionario || !novoSalario.departamento_id || !novoSalario.valor) {
       alert("Preencha todos os campos obrigatórios.");
       return;
     }
@@ -177,11 +164,7 @@ export default function Salarios() {
         body: JSON.stringify(salarioParaAPI),
       });
 
-      if (!res.ok) {
-        const erroText = await res.text();
-        console.error("Erro na resposta do servidor:", res.status, erroText);
-        throw new Error("Erro ao salvar salário");
-      }
+      if (!res.ok) throw new Error("Erro ao salvar salário");
 
       alert(`Salário ${editarSalarioId ? "editado" : "cadastrado"} com sucesso!`);
       setAbrirModal(false);
@@ -204,9 +187,7 @@ export default function Salarios() {
     setEditarSalarioId(s.id);
     setNovoSalario({
       id_funcionario: s.id_funcionario ?? "",
-      setor_id: s.setor_id ?? "",
       departamento_id: s.departamento_id ?? "",
-      unidade_id: s.unidade_id ?? "",
       valor: getValorParaInput(s.valor ?? ""),
       status_pagamento: s.status_pagamento ?? "pendente",
       data_atualizado: toInputDate(s.data_atualizado ?? ""),
@@ -233,19 +214,14 @@ export default function Salarios() {
     }
   };
 
-  // --- FILTRAGEM ---
   const salariosFiltrados = salarios.filter((s) => {
-    // filtro mes (YYYY-MM) com data_atualizado
     const mesMatch =
-      !filtroMes ||
-      (s.data_atualizado &&
-        s.data_atualizado.slice(0, 7) === filtroMes); // 'YYYY-MM'
+      !filtroMes || (s.data_atualizado && s.data_atualizado.slice(0, 7) === filtroMes);
     const departamentoMatch =
       !filtroDepartamento || String(s.departamento_id) === String(filtroDepartamento);
     return mesMatch && departamentoMatch;
   });
 
-  // PAGINAÇÃO
   const indexUltimo = paginaAtual * itensPorPagina;
   const indexPrimeiro = indexUltimo - itensPorPagina;
   const salariosPagina = salariosFiltrados.slice(indexPrimeiro, indexUltimo);
@@ -261,12 +237,17 @@ export default function Salarios() {
     setPaginaAtual(1);
   }, [filtroMes, filtroDepartamento]);
 
+  useEffect(() => {
+  fetchSalarios();
+  carregarListas();
+}, []);
+
+
   return (
     <>
       {/* FILTROS */}
       <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
         <div className="flex gap-4 flex-wrap">
-          {/* Mês */}
           <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600">Mês</label>
             <input
@@ -277,7 +258,6 @@ export default function Salarios() {
             />
           </div>
 
-          {/* Departamento (select) */}
           <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600">Departamento</label>
             <select
@@ -288,7 +268,7 @@ export default function Salarios() {
               <option value="">Todos</option>
               {departamentos.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.nome} {d.setor ? `— ${d.setor}` : ""}
+                  {d.nome}
                 </option>
               ))}
             </select>
@@ -304,7 +284,7 @@ export default function Salarios() {
         </button>
       </div>
 
-      {/* Modal Cadastro/Edição */}
+      {/* MODAL ADICIONAR / EDITAR */}
       {abrirModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
@@ -312,7 +292,6 @@ export default function Salarios() {
               {editarSalarioId ? "Editar Salário" : "Nova Conta"}
             </h2>
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              {/* Campos (igual estilo) */}
               <div>
                 <label htmlFor="id_funcionario" className="block">
                   Funcionário
@@ -335,34 +314,6 @@ export default function Salarios() {
               </div>
 
               <div>
-                <label htmlFor="setor_id" className="block">
-                  Setor
-                </label>
-                <select
-                  id="setor_id"
-                  name="setor_id"
-                  value={novoSalario.setor_id}
-                  onChange={(e) => {
-                    // ao mudar setor limpa departamento selecionado
-                    setNovoSalario((prev) => ({
-                      ...prev,
-                      setor_id: e.target.value,
-                      departamento_id: "",
-                    }));
-                  }}
-                  className="border rounded-md p-2 w-full"
-                  required
-                >
-                  <option value="">Selecione o setor</option>
-                  {setores.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
                 <label htmlFor="departamento_id" className="block">
                   Departamento
                 </label>
@@ -375,32 +326,9 @@ export default function Salarios() {
                   required
                 >
                   <option value="">Selecione o departamento</option>
-                  {departamentos
-                    .filter((d) => !novoSalario.setor_id || String(d.setor_id) === String(novoSalario.setor_id))
-                    .map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.nome}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="unidade_id" className="block">
-                  Unidade
-                </label>
-                <select
-                  id="unidade_id"
-                  name="unidade_id"
-                  value={novoSalario.unidade_id}
-                  onChange={handleChange}
-                  className="border rounded-md p-2 w-full"
-                  required
-                >
-                  <option value="">Selecione a unidade</option>
-                  {unidades.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.nome}
+                  {departamentos.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nome}
                     </option>
                   ))}
                 </select>
@@ -434,8 +362,6 @@ export default function Salarios() {
                   className="border rounded-md p-2 w-full"
                 />
               </div>
-
-              {/* Status */}
               <div className="flex flex-col gap-2 mt-2">
                 <label className="block font-medium text-gray-700">Status</label>
                 <div className="flex items-center gap-6">
@@ -486,7 +412,7 @@ export default function Salarios() {
         </div>
       )}
 
-      {/* Modal Exclusão */}
+      {/* MODAL EXCLUSÃO */}
       {abrirModalExcluir && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
@@ -504,17 +430,14 @@ export default function Salarios() {
         </div>
       )}
 
-      {/* Tabela */}
+      {/* TABELA */}
       <div className="mt-6 overflow-x-auto">
         <table className="w-full border-collapse min-w-[1000px]">
           <thead>
             <tr className="bg-[#245757] text-left text-white rounded-t-lg">
-              <th className="p-2">ID</th>
               <th className="p-2">Registro</th>
               <th className="p-2">Funcionário</th>
-              <th className="p-2">Setor</th>
               <th className="p-2">Departamento</th>
-              <th className="p-2">Unidade</th>
               <th className="p-2">Valor</th>
               <th className="p-2">Status</th>
               <th className="p-2">Atualizado</th>
@@ -525,28 +448,23 @@ export default function Salarios() {
           <tbody>
             {salariosPagina.map((u) => (
               <tr key={u.id} className="border-t hover:bg-gray-50">
-                <td className="p-2">{u.id}</td>
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
-                <td className="p-2">{u.setor}</td>
                 <td className="p-2">{u.departamento}</td>
-                <td className="p-2">{u.unidade}</td>
                 <td className="p-2">{formatarValor(u.valor)}</td>
 
                 <td className="p-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      u.status_pagamento === "pendente"
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${u.status_pagamento === "pendente"
                         ? "bg-[#245757]/20 text-[#245757]"
                         : "bg-gray-300 text-gray-700"
-                    }`}
+                      }`}
                   >
                     {u.status_pagamento === "pendente" ? "Pendente" : "Pago"}
                   </span>
                 </td>
 
                 <td className="p-2">{formatarData(u.data_atualizado)}</td>
-
                 <td className="p-2 text-center flex gap-2 justify-center">
                   <button
                     onClick={() => handleEditar(u)}
