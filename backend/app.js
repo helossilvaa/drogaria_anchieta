@@ -52,7 +52,7 @@ app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
 app.use('/caixa', abrirFechar_CaixaRotas);
-app.use('/categoria', categoriaRotas);
+app.use('/categorias', categoriaRotas);
 app.use('/api', filiadosRotas);
 app.use("/api", tiposDescontosRotas);
 app.use("/api", parceriaRotas);
@@ -60,10 +60,6 @@ app.use("/api", descontosRotas);
 app.use('/api', fornecedoresRotas);
 app.use('/api', contasFilialRotas);
 app.use ('/produtos', produtosRotas);
-<<<<<<< HEAD
-// app.use('/api', salariosRotas);
-=======
->>>>>>> f6c897d58e57525e34555a44df429ca0f25edbe9
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

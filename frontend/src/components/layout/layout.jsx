@@ -106,7 +106,7 @@ export default function Layout({ children }) {
         </div>
 
        
-        <div className="conteudo bg-gray-50 h-screen rounded-2xl p-3">
+        <div className="conteudo bg-gray-50 rounded-2xl p-3">
           {children}
         </div>
       </div>
