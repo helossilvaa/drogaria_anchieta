@@ -30,7 +30,7 @@ const obterUsuarioIdController = async (req, res) => {
 const atualizarUsuarioController = async (req, res) => {
   try {
     
-    const usuario = await obterUsuarioId (req.params.id);
+    const usuario = await obterUsuarioId(req.params.id);
     
     if (!usuario) {
       return res.status(404).json({mensagem: 'usuário não encontrado'});
@@ -38,12 +38,12 @@ const atualizarUsuarioController = async (req, res) => {
    
     const {
       telefone = usuario.telefone,
-      datanascimento = usuario.data_nascimento,
+      data_nascimento = usuario.data_nascimento,
       genero = usuario.genero,
       nome = usuario.nome,
       senha = usuario.senha,
       email = usuario.email,
-      departamento = usuario.departamento_id,
+      departamento_id = usuario.departamento_id,
       endereco = usuario.endereco,
       cidade = usuario.cidade,
       estado = usuario.estado,
@@ -55,12 +55,12 @@ const atualizarUsuarioController = async (req, res) => {
 
     const usuarioData = {
       telefone,
-      datanascimento,
+      data_nascimento,
       genero,
       nome,
       senha,
       email,
-      departamento,
+      departamento_id,
       endereco,
       cidade,
       estado,
@@ -69,7 +69,7 @@ const atualizarUsuarioController = async (req, res) => {
       foto
     };
 
-    await atualizarUsuario(usuario, usuarioData);
+    await atualizarUsuario(req.params.id, usuarioData);
     res.status(200).json({mensagem: 'Dados atualizados com sucesso!'})
 
   } catch (error) {
@@ -97,7 +97,7 @@ const mudarStatusFuncionarioController = async (req, res) => {
         const usuarioFuncao = req.usuarioFuncao;
 
         
-        if (usuarioFuncao !== 'admin') {
+        if (usuarioFuncao !== 'Diretor Administrativo' || 'Diretor Geral') {
             return res.status(403).json({ mensagem: 'Acesso negado. Apenas administradores podem realizar esta ação.' });
         }
 

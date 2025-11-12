@@ -11,6 +11,29 @@ export const listarParcerias = async (req, res) => {
   }
 };
 
+// Buscar por parceiro (convênio)
+export const buscarParceriaPorNome = async (req, res) => {
+  try {
+    const { parceiro } = req.query;
+
+    if (!parceiro) {
+      return res.status(400).json({ message: "Informe o nome do parceiro." });
+    }
+
+    const convenio = await Parcerias.getByNome(parceiro);
+
+    if (!convenio) {
+      return res.status(404).json({ message: "Convênio não encontrado." });
+    }
+
+    return res.status(200).json(convenio);
+  } catch (err) {
+    console.error("Erro ao buscar convênio:", err);
+    return res.status(500).json({ message: "Erro ao buscar convênio." });
+  }
+};
+
+
 // Criar nova parceria
 export const criarParceria = async (req, res) => {
   try {

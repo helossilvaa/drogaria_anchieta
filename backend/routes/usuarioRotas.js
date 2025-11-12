@@ -23,14 +23,14 @@ router.options(':id/status', (req, res) => {
 
 router.get('/:id', authMiddleware, obterUsuarioIdController);
 router.options('/:id', (req, res) => {
-    res.setHeader('Allow', 'GET, PUT, DELETE, OPTIONS');
+    res.setHeader('Allow', 'GET, PATCH, DELETE, OPTIONS');
     res.status(204).send();
 });
 
 router.post('/', authMiddleware, cadastroUsuarioController);
 router.delete('/:id', authMiddleware, deletarUsuarioController);
 
-router.put('/:id', authMiddleware, atualizarUsuarioController);
+router.patch('/:id', authMiddleware, atualizarUsuarioController);
 
 router.get('/', authMiddleware, listarUsuariosController);
 

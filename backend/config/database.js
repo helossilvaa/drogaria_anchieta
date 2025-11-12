@@ -2,15 +2,15 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
-    host: '10.189.80.59',
-    user: 'Beatriz',
+    host: '10.189.80.85',
+    user: 'Isabella',
     database: 'drogaria',
     password: 'Anchieta@123',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
- 
+    
 // Função assíncrona que obtém uma conexão do pool.
 // Essa conexão é usada para executar as queries SQL.
 async function getConnection() {
@@ -81,21 +81,31 @@ async function create(table, data) {
  
 // Função para atualizar um registro
 async function update(table, data, where) {
-    const connection = await getConnection();
-    try {
-        const set = Object.keys(data)
-            .map(column => `${column} = ?`)
-            .join(', ');
- 
-        const sql = `UPDATE ${table} SET ${set} WHERE ${where}`;
-        const values = Object.values(data);
- 
-        const [result] = await connection.execute(sql, [...values]);
-        return result.affectedRows;
-    } finally {
-        connection.release();
+  const connection = await getConnection();
+  try {
+    
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== undefined)
+    );
+
+    if (Object.keys(cleanData).length === 0) {
+      throw new Error("Nenhum campo válido para atualizar");
     }
+
+    const set = Object.keys(cleanData)
+      .map((column) => `${column} = ?`)
+      .join(", ");
+
+    const sql = `UPDATE ${table} SET ${set} WHERE ${where}`;
+    const values = Object.values(cleanData);
+
+    const [result] = await connection.execute(sql, values);
+    return result.affectedRows;
+  } finally {
+    connection.release();
+  }
 }
+
  
 // Função para excluir um registro
 async function deleteRecord(table, where) {

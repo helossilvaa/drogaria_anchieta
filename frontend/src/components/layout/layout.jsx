@@ -70,8 +70,6 @@ export default function Layout({ children }) {
   }, [router]);
   
   
-
-
   if (erro) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -82,7 +80,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen p-2">
-      <Sidebar />
+      <Sidebar usuario={usuario} />
       <div className="flex-1 flex flex-col p-6 pt-2 gap-4">
        
         <div className="flex items-center justify-end gap-3">
@@ -100,12 +98,12 @@ export default function Layout({ children }) {
           </div>
 
           <div className="profile">
-            <ComboboxDemo />
+            <ComboboxDemo usuario={usuario}/>
           </div>
         </div>
 
        
-        <div className="conteudo bg-gray-50 h-screen rounded-2xl p-3">
+        <div className="conteudo bg-gray-50 rounded-2xl p-3">
           {children}
         </div>
       </div>

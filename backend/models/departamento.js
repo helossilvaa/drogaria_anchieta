@@ -2,11 +2,11 @@ import {create, readAll, read, update, deleteRecord} from '../config/database.js
 
 
 //criar usuario
-const criarDepartamento = async (setorData) => {
+const criarDepartamento = async (departamentoData) => {
     try {
-        return await create('setor', setorData)
+        return await create('departamento', departamentoData)
     } catch (error) {
-        console.error('Erro ao criar setor: ', error);
+        console.error('Erro ao criar departamento: ', error);
         throw error;
     }
 };
@@ -15,9 +15,9 @@ const criarDepartamento = async (setorData) => {
 //listar usuario
 const listarDepartamento = async () => {
     try {
-        return await readAll('setor');
+        return await readAll('departamento');
     } catch (error) {
-       console.error('Erro ao listar setor: ', error);
+       console.error('Erro ao listar departamento: ', error);
         throw error;
     }
 }
@@ -26,20 +26,20 @@ const listarDepartamento = async () => {
 //obter usuario
 const obterDepartamentoId = async (id)=> {
     try {
-        return await read('setor', `id = ${id}`)
+        return await read('departamento', `id = ${id}`)
     } catch (error) {
-        console.error('Erro ao obter setor por id: ', error);
+        console.error('Erro ao obter departamento por id: ', error);
         throw error;
     }
 };
 
 
 //atualizar usuario
-const atualizarDepartamento = async (id, setorData) => {
+const atualizarDepartamento = async (id, departamentoData) => {
   try {
-    return await update('usuarios', setorData, `id = ${id}`);
+    return await update('usuarios', departamentoData, `id = ${id}`);
   } catch (error) {
-    console.error('Erro ao atualizar setor por id:', error);
+    console.error('Erro ao atualizar departamento por id:', error);
     throw error;
   }
 };
@@ -47,9 +47,9 @@ const atualizarDepartamento = async (id, setorData) => {
 //deletar o usuario
 const deletarDepartamento = async (id) => {
     try {
-        return await deleteRecord('setor', `id = '${id}'`);
+        return await deleteRecord('departamento', `id = '${id}'`);
     } catch (error) {
-        console.error('Erro ao excluir setor: ', error);
+        console.error('Erro ao excluir departamento: ', error);
         throw error;
     }
     

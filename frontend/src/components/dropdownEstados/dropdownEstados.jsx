@@ -24,7 +24,9 @@ export default function DropdownMenuEstados({ value, onChange }) {
   }, []);
 
   // tenta encontrar o estado atual pelo valor (sigla)
-  const estadoSelecionado = estados.find((e) => e.sigla === value);
+  const estadoSelecionado = estados.find(
+    (e) => e.sigla.toLowerCase() === value.toLowerCase()
+  );  
 
   return (
     <DropdownMenu>

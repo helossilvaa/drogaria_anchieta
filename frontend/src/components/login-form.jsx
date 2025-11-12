@@ -35,7 +35,7 @@ export function LoginForm() {
         localStorage.setItem("token", data.token);
         toast.success("Login realizado com sucesso!");
         const departamento = data.usuario?.departamento; 
-        console.log("Departamento do usuário:", departamento);
+    
         setTimeout(() => {
           if (departamento === "Diretor Geral") router.push("/matriz");
           else if (departamento === "Diretor Administrativo") router.push("/filial");
