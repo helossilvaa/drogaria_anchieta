@@ -112,7 +112,7 @@ export default function Produtos() {
   const produtosFiltrados = produtos.filter((produto) => {
     if (
       categoriaSelecionada &&
-      produto.categoria?.id !== parseInt(categoriaSelecionada)
+      produto.categoria.id !== parseInt(categoriaSelecionada)
     ) {
       return false;
     }
@@ -155,7 +155,7 @@ export default function Produtos() {
   };
 
   //editar o produto
-  const handleEditarClick = (produto) => {
+  const handleEditar = (produto) => {
     setProdutoEditando(produto);
     setIsEditDialogOpen(true);
   };
@@ -375,8 +375,8 @@ export default function Produtos() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
               className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg border ${mensagemFeedback.type === "success"
-                  ? "bg-green-100 text-green-800 border-green-300"
-                  : "bg-red-100 text-red-800 border-red-300"
+                ? "bg-green-100 text-green-800 border-green-300"
+                : "bg-red-100 text-red-800 border-red-300"
                 }`}
             >
               {mensagemFeedback.text}
@@ -407,35 +407,32 @@ export default function Produtos() {
 
         {/* Filtro de Categoria */}
         <div className="mb-4 w-64">
-          <Select value={categoriaSelecionada} onValueChange={setCategoriaSelecionada}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Filtrar por categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Categorias</SelectLabel>
+          <div className="mb-4 w-64">
+            <Select value={novoProduto.categoria_id} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v })}>
+              <SelectTrigger ><SelectValue placeholder="Selecione a Categoria" /></SelectTrigger>
+              <SelectContent>
                 <SelectItem>Todas</SelectItem>
                 {categorias.map((cat) => (
                   <SelectItem key={cat.id} value={String(cat.id)}>
-                    {cat.categoria_id}
+                    {cat.categoria}
                   </SelectItem>
                 ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Tabela */}
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <table className="w-full text-sm text-center text-gray-500">
-            <thead className="text-xs uppercase bg-gray-200 text-gray-700">
+          <table className="w-full text-sm text-gray-500">
+            <thead className="uppercase bg-gray-200 text-gray-540">
               <tr>
-                <th className="py-3 px-6">Nome</th>
-                <th className="py-3 px-6">Categoria</th>
+                <th className="py-3">Nome</th>
+                <th className="py-3  px-6">Categoria</th>
                 <th className="py-3 px-6">Marca</th>
-                <th className="py-3 px-6">Registro ANVISA</th>
-                <th className="py-3 px-6">Validade</th>
-                <th className="py-3 px-6">Ações</th>
+                <th className="py-3">Código</th>
+                <th className="py-3">Validade</th>
+                <th className="py-3">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -453,23 +450,31 @@ export default function Produtos() {
                 </tr>
               ) : (
                 produtosPaginados.map((produto) => (
-                  <tr key={produto.id} className="odd:bg-white even:bg-gray-50 border-b">
-                    <td className="px-6 py-4 font-medium text-gray-900">{produto.nome}</td>
-                    <td className="px-6 py-4">{produto.categoria}</td>
-                    <td className="px-6 py-4">{produto.marca_id || "N/A"}</td>
-                    <td className="px-6 py-4">{produto.registro_anvisa || "-"}</td>
-                    <td className="px-6 py-4">
+                  <tr key={produto.id} className="odd:bg-white even:bg-gray-50 border-b text-center">
+                    <td className="px-4 py-6 font-normal text-gray-900">{produto.nome}</td>
+                    <td className="px-10 py-6">{produto.categoria_id}</td>
+                    <td className="px-10 py-6">{produto.marca_id || "N/A"}</td>
+                    <td className="px-10 py-6">{produto.codigo_barras || "-"}</td>
+                    <td className="px-10 py-6">
                       {produto.validade
                         ? new Date(produto.validade).toLocaleDateString("pt-BR")
                         : "N/A"}
                     </td>
-                    <td className=" flex px-6 py-4">
+                    <td className="flex py-4 px-6 justify-center">
+                      <button
+                        onClick={() => handleEditar(produto)}
+                        className="rounded-full p-2 hover:bg-[#4b9c861f]"
+                      >
+                        <svg className="w-6 h-6 text-[#659b8d] dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28" />
+                        </svg>
+                      </button>
                       <button
                         onClick={() => handleExcluirProduto(produto.id)}
-                        className="rounded-full p-1 hover:bg-red-900"
+                        className="rounded-full p-2 hover:bg-[#9c4b5e1f]"
                       >
                         <svg
-                          className="w-6 h-6 text-gray-800 dark:text-white"
+                          className="w-6 h-6 text-[#89394c] dark:text-white"
                           aria-hidden="true"
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
