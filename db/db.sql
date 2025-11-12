@@ -219,7 +219,7 @@ CREATE TABLE filiados (
     tipodesconto INT NOT NULL,
     unidade_id INT NOT NULL,
     FOREIGN KEY (tipodesconto) REFERENCES tiposdescontos (id),
-    FOREIGN KEY (fk_usuario_unidade) REFERENCES unidade(id)
+    FOREIGN KEY (unidade_id) REFERENCES unidade(id)
 );
 
 CREATE TABLE servicos (
@@ -308,6 +308,10 @@ CREATE TABLE movimentacoes_estoque (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
+INSERT INTO unidade (tipo, nome, cnpj, logradouro, cidade, estado, cep, numero, telefone, email, data_abertura) VALUES
+('matriz', 'Drogaria Anchieta Matriz', '61270294000166', 'Via Anchieta', 'São Paulo', 'SP', '04246-001', 1248, '1195345-6564', 'matriz@anchieta.com.br', '2000-01-01'),
+('franquia',  'Drogaria Anchieta São Bernardo', '61279665478990','Rua Marechal Deodoro', 'São Bernardo do Campo', 'SP', '1197667-2009', 1845, '11 4335-2121', 'sbc@anchieta.com.br', '2005-05-10');
+
 INSERT INTO tipos_pagamento (tipo) VALUES 
 ('debito'), ('credito'), ('pix');
 
@@ -342,7 +346,7 @@ insert into tiposdescontos (tipo) values
 ("Programa de Fidelidade");
 
 INSERT INTO categorias (categoria) VALUES
-('medicamento')('cosmetico')('higiene')('alimentacao')('conveniencia');
+('medicamento'), ('cosmetico'), ('higiene'), ('alimentacao'), ('conveniencia');
 
 INSERT INTO contas (nomeConta, categoria, dataPostada, dataVencimento, valor, status, conta_pdf) VALUES
 ('Compra de medicamentos Genéricos SA', 'Fornecedores', '2025-10-01', '2025-10-15', 12480.00, true, ''),
@@ -392,7 +396,7 @@ insert into departamento (departamento, tipoUnidade_id) VALUES
 ('Caixa', 2 ), 
 ('Gerente', 2 ),
 ('Diretor Administrativo', 2 ),  
-('Diretor Geral', 1 )
+('Diretor Geral', 1 );
 
 INSERT INTO unidade (tipo, nome, cnpj, logradouro, cidade, estado, cep, numero, telefone, email, data_abertura, status) VALUES
 ('matriz', 'Drogaria Anchieta Matriz', '12345678000199', 'Av. Paulista', 'São Paulo', 'SP', '01310-000', 1000, '345678901', 'contato@techstore.com.br', '2015-03-12', 'ativa'),
@@ -461,7 +465,7 @@ INSERT INTO lotes_matriz (numero_lote, data_validade, quantidade, data_entrada, 
 (1057, '2028-03-15', 320, '2024-04-05', 17),
 (1058, '2027-08-18', 440, '2024-04-20', 18),
 (1059, '2026-05-12', 170, '2024-05-03', 19),
-(1060, '2028-06-22', 280, '2024-05-18', 20);
+(1060, '2028-06-22', 280, '2024-05-18', 20),
 (1061, '2026-08-28', 310, '2024-06-02', 1),
 (1062, '2027-12-10', 260, '2024-06-17', 2),
 (1063, '2028-03-25', 420, '2024-07-01', 3),
@@ -521,7 +525,7 @@ INSERT INTO lotes_matriz (numero_lote, data_validade, quantidade, data_entrada, 
 (1117, '2028-05-19', 200, '2024-10-01', 17),
 (1118, '2027-03-27', 390, '2024-10-15', 18),
 (1119, '2026-08-30', 180, '2024-10-29', 19),
-(1120, '2028-01-09', 320, '2024-11-11', 20);
+(1120, '2028-01-09', 320, '2024-11-11', 20),
 (1121, '2026-09-25', 340, '2024-11-25', 1),
 (1122, '2027-12-18', 270, '2024-12-09', 2),
 (1123, '2028-03-29', 420, '2024-12-23', 3),
@@ -661,7 +665,7 @@ INSERT INTO estoque_matriz (produto_id, lote_id, quantidade, estoque_minimo, est
 (77, 255, 55, 15, 110, 'Corredor C - Estante 7', '2028-04-25'),
 (78, 256, 40, 10, 80, 'Corredor C - Estante 8', '2028-05-12'),
 (79, 257, 25, 5, 60, 'Corredor C - Estante 9', '2028-06-05'),
-(80, 258, 30, 5, 70, 'Corredor C - Estante 10', '2028-07-10');
+(80, 258, 30, 5, 70, 'Corredor C - Estante 10', '2028-07-10'),
 (82, 260, 35, 10, 80, 'Corredor D - Estante 2', '2028-09-12'),
 (83, 261, 25, 5, 60, 'Corredor D - Estante 3', '2028-10-05'),
 (84, 262, 40, 10, 90, 'Corredor D - Estante 4', '2028-11-18'),
@@ -863,8 +867,8 @@ INSERT INTO produtos (registro_anvisa, nome, foto, medida_id, tarja_id, categori
 ('954987622', 'Absorvente Diário', 'absorventeDiario.webp', '5', '1', '5', '32', '2145783647', 'Absorvente diário para peles sensíveis: Hipoalergênico (40 Unid.)', '10', '2029-05-01', '17', '155', 'Prateleira'),
 ('102340137', 'Gel Lubrificante para Barbear', 'gelBarbear.webp', '3', '1', '3', '2', '2143083647', 'Facilita o deslize da lâmina e acalma a pele: 150g (farmacêutico)', '18', '2026-12-01', '9', '156', 'Temperatura ambiente'),
 ('897654332', 'Absorvente Noturno', 'absorventeNoturno.webp', '5', '1', '5', '25', '2143183647', 'Absorvente para uso noturno, sem perfume: (8 Unid.) - Hipoalergênico', '9', '2029-02-01', '16', '157', 'Prateleira'),
-('203567902', 'Removedor de Esmalte', 'removedorEsmalte.webp', '1', '1', '2', '1', '2143283647', 'Remoção suave ideal para unhas frágeis.', '7', '2027-07-20', '4', '158', 'Prateleira'),
-('457891245', 'Sabonete em Barra Glicerina', 'saboneteBarraGlicerina.webp', ?'3''1', '3', '44', '2143383647', 'Sabonete suave para pele sensível: (90g) - Dermatológico', '5', '2026-04-01', '12', '159', 'Prateleira'),
+('203567902', 'Removedor de Esmalte', 'removedorEsmalte.webp', '1', '1', '2', '1', '2143283647', 'Remoção suave ideal para unhas frágeis', '7', '2027-07-20', '4', '158', 'Prateleira'),
+('457891245', 'Sabonete em Barra Glicerina', 'saboneteBarraGlicerina.webp', '3''1', '3', '44', '2143383647', 'Sabonete suave para pele sensível: (90g) - Dermatológico', '5', '2026-04-01', '12', '159', 'Prateleira'),
 ('107643973', 'Spray Antisséptico', 'sprayAntissepticoFerida.webp', '1', '1', '1', '35', '2143483647', 'Limpa e desinfeta pequenas feridas.', '21', '2027-09-01', '6', '160', 'Prateleira'),
 ('102340138', 'AAS 100mg', 'AAS100mg.webp', '5', '1', '1', '17', '2143583647', 'Antiagregante plaquetário e analgésico: 30 Comprimidos', '6', '2026-10-01', '15', '161', 'Ambiente natural'),
 ('457891246', 'Sinvastatina', 'sinvastatina.webp', '5', '2', '1', '30', '2143683647', 'Medicamento para controle do colesterol: 20mg - 30 Comprimidos', '45', '2028-01-20', '11', '162', 'Local fresco e seco'),
@@ -971,7 +975,7 @@ INSERT INTO parcerias (parceiro, porcentagem) VALUES
     ("SulAmérica", 0.45);
 
 
-INSERT INTO produtos  (nomeConta  categoria   conta_pdf   status  dataVencimento  valor) VALUES
+INSERT INTO fornecedores  (nomeConta,  categoria,   conta_pdf,   status,  dataVencimento,  valor) VALUES
 ('Compra de cosméticos Dermavida''Fornecedores','paga','2025-10-20',8600.00),
 ('Reabastecimento de vitaminas NutriMais','Fornecedores','pendente','2025-10-19',5320.009),
 ('Conta de energia elétrica outubro','Despesas Fixas','paga','2025-10-18',980.750),
