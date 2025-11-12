@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 export default function Salarios() {
   const estadoInicialSalario = {
     id_funcionario: "",
+    registro: "",
+    nome: "",
     departamento_id: "",
     valor: "",
     status_pagamento: "pendente",
@@ -19,10 +21,7 @@ export default function Salarios() {
 
   const [departamentos, setDepartamentos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
-
   const [filtroMes, setFiltroMes] = useState("");
-  const [filtroDepartamento, setFiltroDepartamento] = useState("");
-
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
@@ -86,41 +85,41 @@ export default function Salarios() {
     return valor.toFixed(2).replace(".", ",");
   };
 
- 
-
   const fetchSalarios = async () => {
-  try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      console.log("💾 Dados recebidos da API:", JSON.stringify(data, null, 2));
+      setSalarios(data);
+    } catch (err) {
+      console.error("Erro ao carregar salários:", err);
+    }
+  };
 
-    console.log("💾 Dados recebidos da API:", JSON.stringify(data, null, 2));
+  const carregarListas = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const resDepartamentos = await fetch("http://localhost:8080/api/departamento", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const resUsuarios = await fetch("http://localhost:8080/usuarios", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setSalarios(data);
-  } catch (err) {
-    console.error("Erro ao carregar salários:", err);
-  }
-};
+      const departamentosData = await resDepartamentos.json();
+      const usuariosData = await resUsuarios.json();
 
-
-const carregarListas = async () => {
-  try {
-    const resDepartamentos = await fetch("http://localhost:8080/api/departamento");
-    const resUsuarios = await fetch("http://localhost:8080/usuarios");
-
-    const departamentosData = await resDepartamentos.json();
-    const usuariosData = await resUsuarios.json();
-
-    // ✅ Garante que o estado sempre seja um array
-    setDepartamentos(Array.isArray(departamentosData) ? departamentosData : []);
-    setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
-  } catch (erro) {
-    console.error("Erro ao carregar listas:", erro);
-    setDepartamentos([]);
-    setUsuarios([]);
-  }
-};
-
-
+      setDepartamentos(Array.isArray(departamentosData) ? departamentosData : []);
+      setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+    } catch (erro) {
+      console.error("Erro ao carregar listas:", erro);
+      setDepartamentos([]);
+      setUsuarios([]);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -158,9 +157,13 @@ const carregarListas = async () => {
     const url = editarSalarioId ? `${API_URL}/${editarSalarioId}` : API_URL;
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(salarioParaAPI),
       });
 
@@ -185,13 +188,19 @@ const carregarListas = async () => {
 
   const handleEditar = (s) => {
     setEditarSalarioId(s.id);
+    const funcionarioSelecionado = usuarios.find((u) => u.id === s.id_funcionario);
+    const departamentoSelecionado = departamentos.find((d) => d.id === s.departamento_id);
+
     setNovoSalario({
       id_funcionario: s.id_funcionario ?? "",
+      registro: funcionarioSelecionado?.registro || s.registro || "",
+      nome: funcionarioSelecionado?.nome || s.funcionario || "",
       departamento_id: s.departamento_id ?? "",
       valor: getValorParaInput(s.valor ?? ""),
       status_pagamento: s.status_pagamento ?? "pendente",
       data_atualizado: toInputDate(s.data_atualizado ?? ""),
     });
+
     setAbrirModal(true);
   };
 
@@ -202,7 +211,11 @@ const carregarListas = async () => {
 
   const confirmarExcluir = async () => {
     try {
-      const res = await fetch(`${API_URL}/${excluirSalarioId}`, { method: "DELETE" });
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/${excluirSalarioId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error("Erro ao excluir salário");
       alert("Salário excluído com sucesso!");
       setAbrirModalExcluir(false);
@@ -217,8 +230,7 @@ const carregarListas = async () => {
   const salariosFiltrados = salarios.filter((s) => {
     const mesMatch =
       !filtroMes || (s.data_atualizado && s.data_atualizado.slice(0, 7) === filtroMes);
-    const departamentoMatch =
-      !filtroDepartamento || String(s.departamento_id) === String(filtroDepartamento);
+    const departamentoMatch = ["Gerente", "Caixa"].includes(s.departamento);
     return mesMatch && departamentoMatch;
   });
 
@@ -235,13 +247,12 @@ const carregarListas = async () => {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [filtroMes, filtroDepartamento]);
+  }, [filtroMes]);
 
   useEffect(() => {
-  fetchSalarios();
-  carregarListas();
-}, []);
-
+    fetchSalarios();
+    carregarListas();
+  }, []);
 
   return (
     <>
@@ -261,8 +272,6 @@ const carregarListas = async () => {
           <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600">Departamento</label>
             <select
-              value={filtroDepartamento}
-              onChange={(e) => setFiltroDepartamento(e.target.value)}
               className="border rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
             >
               <option value="">Todos</option>
@@ -289,30 +298,80 @@ const carregarListas = async () => {
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl mb-3 font-bold">
-              {editarSalarioId ? "Editar Salário" : "Nova Conta"}
+              {editarSalarioId ? "Editar Salário" : "Novo Salário"}
             </h2>
+
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+
+              {/* ✅ REGISTRO */}
               <div>
-                <label htmlFor="id_funcionario" className="block">
-                  Funcionário
+                <label htmlFor="registro" className="block">
+                  Registro
                 </label>
-                <select
-                  id="id_funcionario"
-                  name="id_funcionario"
-                  value={novoSalario.id_funcionario}
-                  onChange={handleChange}
+                <input
+                  id="registro"
+                  name="registro"
+                  list="listaRegistros"
+                  value={novoSalario.registro || ""}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    const funcionarioSelecionado = usuarios.find(
+                      (u) => String(u.registro) === String(valor)
+                    );
+                    setNovoSalario((prev) => ({
+                      ...prev,
+                      registro: valor,
+                      id_funcionario: funcionarioSelecionado?.id || prev.id_funcionario,
+                      nome: funcionarioSelecionado?.nome || prev.nome,
+                    }));
+                  }}
                   className="border rounded-md p-2 w-full"
-                  required
-                >
-                  <option value="">Selecione o funcionário</option>
+                  placeholder="Digite ou selecione o registro"
+                />
+                <datalist id="listaRegistros">
                   {usuarios.map((u) => (
-                    <option key={u.id} value={u.id}>
+                    <option key={u.id} value={u.registro}>
                       {u.registro} - {u.nome}
                     </option>
                   ))}
-                </select>
+                </datalist>
               </div>
 
+              {/* ✅ FUNCIONÁRIO */}
+              <div>
+                <label htmlFor="nome" className="block">
+                  Funcionário
+                </label>
+                <input
+                  id="nome"
+                  name="nome"
+                  list="listaFuncionarios"
+                  value={novoSalario.nome || ""}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    const funcionarioSelecionado = usuarios.find(
+                      (u) => String(u.nome) === String(valor)
+                    );
+                    setNovoSalario((prev) => ({
+                      ...prev,
+                      nome: valor,
+                      id_funcionario: funcionarioSelecionado?.id || prev.id_funcionario,
+                      registro: funcionarioSelecionado?.registro || prev.registro,
+                    }));
+                  }}
+                  className="border rounded-md p-2 w-full"
+                  placeholder="Digite ou selecione o funcionário"
+                />
+                <datalist id="listaFuncionarios">
+                  {usuarios.map((u) => (
+                    <option key={u.id} value={u.nome}>
+                      {u.nome} - {u.registro}
+                    </option>
+                  ))}
+                </datalist>
+              </div>
+
+              {/* EXISTENTES - sem alteração */}
               <div>
                 <label htmlFor="departamento_id" className="block">
                   Departamento
@@ -362,6 +421,7 @@ const carregarListas = async () => {
                   className="border rounded-md p-2 w-full"
                 />
               </div>
+
               <div className="flex flex-col gap-2 mt-2">
                 <label className="block font-medium text-gray-700">Status</label>
                 <div className="flex items-center gap-6">
@@ -411,7 +471,6 @@ const carregarListas = async () => {
           </div>
         </div>
       )}
-
       {/* MODAL EXCLUSÃO */}
       {abrirModalExcluir && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
@@ -456,8 +515,8 @@ const carregarListas = async () => {
                 <td className="p-2">
                   <span
                     className={`px-3 py-1 rounded-full text-sm font-medium ${u.status_pagamento === "pendente"
-                        ? "bg-[#245757]/20 text-[#245757]"
-                        : "bg-gray-300 text-gray-700"
+                      ? "bg-[#245757]/20 text-[#245757]"
+                      : "bg-gray-300 text-gray-700"
                       }`}
                   >
                     {u.status_pagamento === "pendente" ? "Pendente" : "Pago"}

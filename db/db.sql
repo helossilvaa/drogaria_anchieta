@@ -530,3 +530,5 @@ INSERT INTO produtos (registro_anvisa, nome, medida_id, tarja_id, categoria_id, 
 ('102340176', 'Solução Ringer Lactato 500mL', '4', '1', '1', '20', '2147483597', 'Sol. para reposição hidroeletrolítica (uso hospitalar).', '23', '2028-04-04', '16', '229', 'Temperatura controlada'),
 ('102340177', 'Clonidina 150mcg - 30 Comprimidos', '5', '2', '1', '10', '2147483207', 'Anti-hipertensivo com ação central.', '21', '2027-09-09', '4', '230', 'Temperatura ambiente'),
 ('102340178', 'Bacitracina Pomada 20g', '3', '1', '1', '42', '2147483217', 'Pomada antibacteriana para uso tópico.', '10', '2029-02-02', '12', '231', 'Prateleira');
+
+
