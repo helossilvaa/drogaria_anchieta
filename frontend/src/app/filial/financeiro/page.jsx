@@ -5,6 +5,7 @@ import Dashboard from '@/components/DashboardFinanceiro/page';
 import Contas from '@/components/Contas/page';
 import Salarios from '@/components/Salarios/page';
 import Transacoes from '@/components/Transacoes/page';
+import Layout from '@/components/layout/layout';
 
 export default function Financeiro() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -34,7 +35,7 @@ export default function Financeiro() {
 }
 
   return (
-    <>
+    <Layout>
       <style>{`
         .underline {
           position: absolute;
@@ -73,6 +74,6 @@ export default function Financeiro() {
       <div className="mt-6">
         {contentMap[activeIndex]}
       </div>
-    </>
+    </Layout>
   );
 }
