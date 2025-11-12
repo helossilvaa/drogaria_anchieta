@@ -257,9 +257,9 @@ export default function NovaVendaPage() {
     setCodigoDesconto("");
   };
 
-    
-
-
+  const imprimirNota = () => {
+    window.print();
+  };
 
     const imprimirNota = () => {
       window.print();
