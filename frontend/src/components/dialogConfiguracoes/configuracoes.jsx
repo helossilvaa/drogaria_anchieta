@@ -17,10 +17,12 @@ import DropdowMenuEstados from "../dropdownEstados/dropdownEstados";
 import { Button } from "@/components/ui/button";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
 
-export function DialogConfig({ open, onOpenChange }) {
+export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) {
 
   const [previewImage, setPreviewImage] = useState(null);
+  const [userImage, setUserImage] = useState(usuario?.foto || null);
   const [formValues, setFormValues] = useState({
     nome: "",
     cpf: "",
@@ -40,8 +42,8 @@ export function DialogConfig({ open, onOpenChange }) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImage(reader.result); // mostra no preview
-        setFormValues((prev) => ({ ...prev, foto: reader.result })); // salva no formValues
+        setPreviewImage(reader.result);
+        setFormValues((prev) => ({ ...prev, foto: reader.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -85,6 +87,8 @@ export function DialogConfig({ open, onOpenChange }) {
     fetchUser();
   }, [open]);
 
+  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
@@ -93,10 +97,16 @@ export function DialogConfig({ open, onOpenChange }) {
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
-
+  
     const decoded = jwtDecode(token);
     const id = decoded.id;
+  
 
+    let fotoBase64 = null;
+    if (formValues.foto && formValues.foto.startsWith("data:image")) {
+      fotoBase64 = formValues.foto.split(",")[1];
+    }
+  
     try {
       const res = await fetch(`${API_URL}/usuarios/${id}`, {
         method: "PATCH",
@@ -106,26 +116,34 @@ export function DialogConfig({ open, onOpenChange }) {
         },
         body: JSON.stringify({
           ...formValues,
+          foto: fotoBase64,
           data_nascimento: formValues.data_nascimento
             ? new Date(formValues.data_nascimento)
-              .toISOString()
-              .split("T")[0]
+                .toISOString()
+                .split("T")[0]
             : null,
         }),
       });
-
+  
       if (!res.ok) throw new Error("Erro ao atualizar usuário");
-
-      alert("Dados atualizados com sucesso!");
+  
+      toast.success("Dados atualizados com sucesso!");
+  
+      if (onFotoAtualizada && formValues.foto) {
+        onFotoAtualizada(formValues.foto);
+      }
+  
       onOpenChange(false);
     } catch (err) {
       console.error(err);
       alert("Erro ao salvar alterações");
     }
   };
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <ToastContainer position="top-right" autoClose={2000} pauseOnHover={false} theme="light" />
       <DialogContent className="!max-w-[900px] p-6">
         <DialogHeader>
           <DialogTitle>Configurações</DialogTitle>
@@ -152,7 +170,7 @@ export function DialogConfig({ open, onOpenChange }) {
               >
                 {previewImage ? (
                   <img
-                    src={previewImage}
+                    src={previewImage || userImage}
                     alt="Pré-visualização"
                     className="w-full h-full object-cover"
                   />
@@ -161,90 +179,13 @@ export function DialogConfig({ open, onOpenChange }) {
                 )}
               </label>
 
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input
-              id="nome"
-              name="nome"
-              value={formValues.nome}
-              onChange={handleChange}
-              size="sm"
-              className="shadow-none focus:ring-0"
-            />
-          </div>
-        </div>
-
-        {/* Linha 2: CPF + Data de Nascimento */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="grid gap-2">
-            <Label htmlFor="cpf">CPF</Label>
-            <Input
-              id="cpf"
-              name="cpf"
-              value={formValues.cpf}
-              onChange={handleChange}
-              size="sm"
-              className="shadow-none focus:ring-0"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Data de Nascimento</Label>
-            <CalendarioConfig
-              value={formValues.data_nascimento}
-              onChange={(val) =>
-                setFormValues((prev) => ({ ...prev, data_nascimento: val }))
-              }
-            />
-          </div>
-        </div>
-
-        {/* Linha 3: Email + Telefone */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              value={formValues.email}
-              onChange={handleChange}
-              size="sm"
-              className="shadow-none focus:ring-0"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="telefone">Telefone</Label>
-            <Input
-              id="telefone"
-              name="telefone"
-              value={formValues.telefone}
-              onChange={handleChange}
-              size="sm"
-              className="shadow-none focus:ring-0"
-            />
-          </div>
-        </div>
-
-        {/* Linha 4: Endereço */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="grid grid-cols-[1fr_100px] gap-2">
-            <div className="grid gap-2">
-              <Label htmlFor="rua">Rua</Label>
-              <Input
-                id="rua"
-                name="rua"
-                value={formValues.rua}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="numero">Nº</Label>
+              <Label htmlFor="nome">Nome</Label>
               <Input
-                id="numero"
-                name="numero"
-                value={formValues.numero}
+                id="nome"
+                name="nome"
+                value={formValues.nome}
                 onChange={handleChange}
                 size="sm"
                 className="shadow-none focus:ring-0"
@@ -252,43 +193,120 @@ export function DialogConfig({ open, onOpenChange }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-[1fr_200px] gap-2">
+          {/* Linha 2: CPF + Data de Nascimento */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="cidade">Cidade</Label>
+              <Label htmlFor="cpf">CPF</Label>
               <Input
-                id="cidade"
-                name="cidade"
-                value={formValues.cidade}
+                id="cpf"
+                name="cpf"
+                value={formValues.cpf}
                 onChange={handleChange}
                 size="sm"
                 className="shadow-none focus:ring-0"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="estado">Estado</Label>
-              <DropdowMenuEstados
-                value={formValues.estado}
+              <Label>Data de Nascimento</Label>
+              <CalendarioConfig
+                value={formValues.data_nascimento}
                 onChange={(val) =>
-                  setFormValues((prev) => ({ ...prev, estado: val }))
+                  setFormValues((prev) => ({ ...prev, data_nascimento: val }))
                 }
               />
+            </div>
+          </div>
 
+          {/* Linha 3: Email + Telefone */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                value={formValues.email}
+                onChange={handleChange}
+                size="sm"
+                className="shadow-none focus:ring-0"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="telefone">Telefone</Label>
+              <Input
+                id="telefone"
+                name="telefone"
+                value={formValues.telefone}
+                onChange={handleChange}
+                size="sm"
+                className="shadow-none focus:ring-0"
+              />
+            </div>
+          </div>
+
+          {/* Linha 4: Endereço */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-[1fr_100px] gap-2">
+              <div className="grid gap-2">
+                <Label htmlFor="rua">Rua</Label>
+                <Input
+                  id="rua"
+                  name="rua"
+                  value={formValues.rua}
+                  onChange={handleChange}
+                  size="sm"
+                  className="shadow-none focus:ring-0"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="numero">Nº</Label>
+                <Input
+                  id="numero"
+                  name="numero"
+                  value={formValues.numero}
+                  onChange={handleChange}
+                  size="sm"
+                  className="shadow-none focus:ring-0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[1fr_200px] gap-2">
+              <div className="grid gap-2">
+                <Label htmlFor="cidade">Cidade</Label>
+                <Input
+                  id="cidade"
+                  name="cidade"
+                  value={formValues.cidade}
+                  onChange={handleChange}
+                  size="sm"
+                  className="shadow-none focus:ring-0"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="estado">Estado</Label>
+                <DropdowMenuEstados
+                  value={formValues.estado}
+                  onChange={(val) =>
+                    setFormValues((prev) => ({ ...prev, estado: val }))
+                  }
+                />
+
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <DialogFooter className="pt-4 mt-2 flex justify-end gap-2">
-        <DialogClose asChild>
-          <Button variant="outline" size="sm">
-            Cancelar
+        <DialogFooter className="pt-4 mt-2 flex justify-end gap-2">
+          <DialogClose asChild>
+            <Button variant="outline" size="sm">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button onClick={handleSubmit} size="sm">
+            Salvar alterações
           </Button>
-        </DialogClose>
-        <Button onClick={handleSubmit} size="sm">
-          Salvar alterações
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        </DialogFooter>
+      </DialogContent>
     </Dialog >
   );
 }

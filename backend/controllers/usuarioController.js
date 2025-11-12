@@ -10,31 +10,82 @@ import {
 const listarUsuariosController = async (req, res) => {
   try {
     const usuarios = await listarUsuarios();
-    res.status(200).json(usuarios);
+
+    const usuariosFormatados = usuarios.map((u) => ({
+      ...u,
+      foto:
+        u.foto && Buffer.isBuffer(u.foto)
+          ? `data:image/jpeg;base64,${u.foto.toString("base64")}`
+          : null,
+    }));
+
+    res.status(200).json(usuariosFormatados);
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
-    res.status(500).json({ mensagem: 'Erro ao listar usuários', error });
+    console.error("Erro ao listar usuários:", error);
+    res
+      .status(500)
+      .json({ mensagem: "Erro ao listar usuários", error });
   }
 };
+
 
 const obterUsuarioIdController = async (req, res) => {
   try {
     const usuario = await obterUsuarioId(req.params.id);
+
+    if (!usuario) {
+      return res.status(404).json({ mensagem: "Usuário não encontrado" });
+    }
+
+    // Só tenta converter se realmente existir o campo foto e ele for um Buffer válido
+    if (usuario.foto && Buffer.isBuffer(usuario.foto) && usuario.foto.length > 0) {
+      let mimeType = "image/jpeg"; // padrão
+
+      // tenta detectar o tipo pelos primeiros bytes
+      const header = usuario.foto.toString("hex", 0, 4).toUpperCase();
+      if (header.startsWith("89504E47")) mimeType = "image/png";
+      else if (header.startsWith("FFD8FF")) mimeType = "image/jpeg";
+      else if (header.startsWith("52494646")) mimeType = "image/webp";
+      else if (header.startsWith("47494638")) mimeType = "image/gif";
+
+      usuario.foto = `data:${mimeType};base64,${usuario.foto.toString("base64")}`;
+    } else {
+      // garante que não manda dado quebrado
+      usuario.foto = null;
+    }
+
     res.status(200).json(usuario);
   } catch (error) {
-    console.error('Erro ao obter usuário por id:', error);
-    res.status(500).json({ mensagem: 'Erro ao obter usuário por id', error });
+    console.error("Erro ao obter usuário por id:", error);
+    res.status(500).json({
+      mensagem: "Erro ao obter usuário por id",
+      erro: error.message || error,
+    });
   }
 };
+
+
 
 const atualizarUsuarioController = async (req, res) => {
   try {
     
     const usuario = await obterUsuarioId(req.params.id);
+    let { foto } = req.body;
     
     if (!usuario) {
       return res.status(404).json({mensagem: 'usuário não encontrado'});
     };
+
+    if (foto && typeof foto === "string" && foto.trim() !== "") {
+      try {
+        foto = Buffer.from(foto, "base64");
+      } catch (err) {
+        console.error("Erro ao converter foto base64:", err);
+        foto = null;
+      }
+    } else if (foto === null || foto === undefined) {
+      foto = null;
+    }
    
     const {
       telefone = usuario.telefone,
@@ -48,8 +99,7 @@ const atualizarUsuarioController = async (req, res) => {
       cidade = usuario.cidade,
       estado = usuario.estado,
       cep = usuario.cep,
-      numero = usuario.numero,
-      foto = usuario.foto
+      numero = usuario.numero
 
     } = req.body;
 
@@ -68,6 +118,8 @@ const atualizarUsuarioController = async (req, res) => {
       numero,
       foto
     };
+
+    
 
     await atualizarUsuario(req.params.id, usuarioData);
     res.status(200).json({mensagem: 'Dados atualizados com sucesso!'})

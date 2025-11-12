@@ -261,9 +261,6 @@ export default function NovaVendaPage() {
   };
 
 
-
-
-
   const imprimirNota = () => {
     window.print();
   };
