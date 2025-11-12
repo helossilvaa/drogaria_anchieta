@@ -6,30 +6,33 @@ export const Salario = {
     return await create("salarios", data);
   },
 
-  // 🔹 Buscar todos os salários com JOINs corretos
-  getAll: async () => {
-    const sql = `
-      SELECT 
-        s.id,
-        u.registro,
-        u.nome AS funcionario,
-        d.departamento AS departamento,
-        s.valor,
-        s.status_pagamento,
-        s.data_atualizado
-      FROM salarios s
-      JOIN usuarios u ON s.id_funcionario = u.id
-      JOIN departamento d ON s.departamento_id = d.id
-      ORDER BY s.id DESC
-    `;
+getAll : async (cargoFiltro) => {
+  let sql = `
+    SELECT 
+      s.id,
+      u.registro,
+      u.nome AS funcionario,
+      d.departamento AS departamento,
+      s.valor,
+      s.status_pagamento,
+      s.data_atualizado
+    FROM salarios s
+    JOIN usuarios u ON s.id_funcionario = u.id
+    JOIN departamento d ON s.departamento_id = d.id
+  `;
 
-    try {
-      const result = await query(sql);
-      return result;
+  if (cargoFiltro === "restrito") {
+    sql += " WHERE d.departamento IN ('Gerente', 'Caixa')";
+  }
+
+  sql += " ORDER BY s.id DESC";
+
+  try {
+      return await query(sql);
     } catch (err) {
       console.error("Erro ao buscar salários:", err);
       throw err;
-    }
+    } 
   },
 
   // 🔹 Atualizar salário

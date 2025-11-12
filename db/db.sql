@@ -1030,5 +1030,3 @@ insert into marcas (marca) values
 -- Outros Produtos Populares  
 ('Band-Aid'), ('Neosaldina'), ('Engov'), ('Dorfax'), ('Novalgina'), ('Coristina'), ('Caladryl'), ('Maalox');
  
-
-

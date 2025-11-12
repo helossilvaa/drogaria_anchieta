@@ -80,16 +80,16 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen p-2">
-      <Sidebar usuario={usuario} />
+      <Sidebar usuario={usuario} className="fixed"/>
       <div className="flex-1 flex flex-col p-6 pt-2 gap-4">
        
         <div className="flex items-center justify-end gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"/>
             <input
               type="text"
               placeholder="Buscar..."
-              className="border rounded-full pl-9 pr-15 py-1 text-black focus:outline-none focus:ring focus:ring-gray-200"
+              className="border rounded-full pl-9 pr-15 py-1 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5"
             />
           </div>
 
@@ -98,12 +98,12 @@ export default function Layout({ children }) {
           </div>
 
           <div className="profile">
-            <ComboboxDemo usuario={usuario}/>
+            <ComboboxDemo className="h-40" usuario={usuario}/>
           </div>
         </div>
 
        
-        <div className="conteudo bg-gray-50 rounded-2xl p-3">
+        <div className="conteudo bg-gray-50 rounded-2xl p-3 sm:flex justify-center align-center">
           {children}
         </div>
       </div>
