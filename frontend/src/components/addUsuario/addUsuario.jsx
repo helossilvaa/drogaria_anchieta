@@ -1,4 +1,6 @@
-import React, { useEffect } from 'react';
+"use client";
+
+import React, { useEffect, useState } from "react";
 import {
     Dialog,
     DialogTrigger,
@@ -7,38 +9,65 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-    DialogClose
-} from '../ui/dialog';
-import { Select, SelectTrigger, SelectContent, SelectGroup, SelectLabel, SelectItem, SelectValue} from '../ui/select';
-import { Calendar } from '../ui/calendar';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import DropdownEstados from '@/components/dropdownEstados/dropdownEstados';
-import { useState } from 'react';
+    DialogClose,
+} from "../ui/dialog";
+import {
+    Select,
+    SelectTrigger,
+    SelectContent,
+    SelectGroup,
+    SelectLabel,
+    SelectItem,
+    SelectValue,
+} from "../ui/select";
+import { Button } from "@/components/ui/button";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Plus } from "lucide-react";
+import DropdownEstados from "@/components/dropdownEstados/dropdownEstados";
+import DropdownCidades from "../dropdownCidades/cidades";
+import InputTelefoneComPais from '../InputTelefone/telefone';
 
 export default function DialogNovoUsuario() {
+    const [departamentos, setDepartamentos] = useState([]);
+    const [unidades, setUnidades] = useState([]);
+    const [estado, setEstado] = useState("");
+    const [cidade, setCidade] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [telefone, setTelefone] = useState("");
 
-    const [setor, setSetor] = useState([]);
+    useEffect(() => {
+        const API_URL = "http://localhost:8080";
+        const token = localStorage.getItem("token") || "";
 
-    useEffect (() => {
-        const fetchDate = async () => {
+        const fetchData = async (endpoint, setter) => {
             try {
-                const res = await fetch(`${API_URL}/departamento`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                const res = await fetch(`${API_URL}/${endpoint}`, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
-                if (!res.ok) throw new Error('Erro ao buscar ');
+
+                const contentType = res.headers.get("content-type");
+                if (!res.ok) {
+                    throw new Error(`Erro ${res.status} ao acessar /${endpoint}`);
+                }
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await res.text();
+                    throw new Error(`Resposta não é JSON: ${text.slice(0, 100)}...`);
+                }
 
                 const data = await res.json();
-                setChamados(data);
-                
-            } catch (error) {
-                
+                setter(data);
+            } catch (err) {
+                console.error(`Erro ao buscar /${endpoint}:`, err);
             }
         };
-    },[]) 
+
+        Promise.all([
+            fetchData("unidade", setUnidades),
+            fetchData("departamento", setDepartamentos),
+        ]).finally(() => setIsLoading(false));
+    }, []);
 
     return (
         <Dialog>
@@ -49,6 +78,7 @@ export default function DialogNovoUsuario() {
                         Adicionar novo usuário
                     </Button>
                 </DialogTrigger>
+
                 <DialogContent className="!max-w-[900px]">
                     <DialogHeader>
                         <DialogTitle>Adicionar novo usuário</DialogTitle>
@@ -58,7 +88,7 @@ export default function DialogNovoUsuario() {
                     </DialogHeader>
 
                     <div className="grid gap-4">
-                        {/* Nome + CNPJ */}
+                        {/* Nome + CPF */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label>Nome</Label>
@@ -69,10 +99,9 @@ export default function DialogNovoUsuario() {
                                 <Input placeholder="CPF" />
                             </div>
                         </div>
-
-                        {/* Email + Telefone */}
-                        <div className="grid grid-cols-3 gap-2">
-                        <div className="grid gap-2">
+                        {/* Gênero + Email + Telefone */}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="grid gap-2">
                                 <Label>Gênero</Label>
                                 <Select>
                                     <SelectTrigger className="w-[200px]">
@@ -88,13 +117,17 @@ export default function DialogNovoUsuario() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
                             <div className="grid gap-2">
                                 <Label>Email</Label>
                                 <Input placeholder="Email do usuário" />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Telefone</Label>
-                                <Input placeholder="Telefone de contato" />
+                                <InputTelefoneComPais
+                                    value={telefone}
+                                    onChange={setTelefone}
+                                />
                             </div>
                         </div>
 
@@ -102,17 +135,22 @@ export default function DialogNovoUsuario() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label>Estado</Label>
-                                <DropdownEstados />
+                                <DropdownEstados value={estado} onChange={setEstado} />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Cidade</Label>
-                                <Input placeholder="Cidade" />
+                                <DropdownCidades
+                                    estadoSigla={estado}
+                                    value={cidade}
+                                    onChange={setCidade}
+                                />
                             </div>
                         </div>
 
-                        {/* Rua + Número */}
+
+                        {/* CEP + Rua + Número */}
                         <div className="grid grid-cols-3 gap-4">
-                        <div className="grid gap-2">
+                            <div className="grid gap-2">
                                 <Label>CEP</Label>
                                 <Input placeholder="CEP" />
                             </div>
@@ -126,9 +164,9 @@ export default function DialogNovoUsuario() {
                             </div>
                         </div>
 
-                        
+                        {/* Unidade + Departamento */}
                         <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
+                            <div className="grid gap-2">
                                 <Label>Unidade</Label>
                                 <Select>
                                     <SelectTrigger className="w-[200px]">
@@ -136,24 +174,37 @@ export default function DialogNovoUsuario() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectLabel>Gêneros</SelectLabel>
-                                            <SelectItem value="feminino">Unidade São Bernardo 123</SelectItem>
-                                            <SelectItem value="masculino">Unidade São Bernardo 321</SelectItem>
-                                            <SelectItem value="nao-binario">Unidade Santo André 222 </SelectItem>
+                                            <SelectLabel>Unidades</SelectLabel>
+                                            {unidades.map((unidade) => (
+                                                <SelectItem
+                                                    key={unidade.id}
+                                                    value={unidade.nome}
+                                                >
+                                                    {unidade.nome}
+                                                </SelectItem>
+                                            ))}
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
                             </div>
+
                             <div className="grid gap-2">
-                                <Label>Setor</Label>
+                                <Label>Departamento</Label>
                                 <Select>
                                     <SelectTrigger className="w-[200px]">
                                         <SelectValue placeholder="Selecione um setor" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectLabel>Setor</SelectLabel>
-                                            <SelectItem value=""></SelectItem>
+                                            <SelectLabel>Departamentos</SelectLabel>
+                                            {departamentos.map((departamento) => (
+                                                <SelectItem
+                                                    key={departamento.id}
+                                                    value={departamento.departamento}
+                                                >
+                                                    {departamento.departamento}
+                                                </SelectItem>
+                                            ))}
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
@@ -161,15 +212,16 @@ export default function DialogNovoUsuario() {
                         </div>
                     </div>
 
-
                     <DialogFooter className="pt-4">
                         <DialogClose asChild>
                             <Button variant="outline">Cancelar</Button>
                         </DialogClose>
-                        <Button type="submit" variant="verde">Criar unidade</Button>
+                        <Button type="submit" variant="verde">
+                            Criar usuário
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </form>
         </Dialog>
     );
-};
+}

@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DialogConfig } from "../dialogConfiguracoes/configuracoes";
+import { useRouter } from "next/navigation";
 
 
 
@@ -25,15 +26,14 @@ export function ComboboxDemo({ usuario }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-  
+  const [userImage, setUserImage] = useState(usuario?.foto || null);
+
+  const router = useRouter();
 
   useEffect(() => {
-
-    if (!usuario) return;
-
-    const { nome, foto } = usuario;
-
+    if (usuario?.foto) setUserImage(usuario.foto);
   }, [usuario]);
+
 
   const menuItems = [
     { value: "configuracoes", label: "Configurações", icon: Settings },
@@ -51,8 +51,6 @@ export function ComboboxDemo({ usuario }) {
 
 
   const userName = usuario?.nome || "Usuário";
-  const userImage = usuario?.foto;
-  console.log("FOTO DO USUÁRIO:", usuario?.foto);
 
 
   return (
@@ -68,7 +66,6 @@ export function ComboboxDemo({ usuario }) {
           >
             <div className="flex items-center gap-2">
               {typeof userImage === "string" && userImage.trim() !== "" ? (
-                
                 <Image
                   src={userImage}
                   alt={userName}
@@ -81,7 +78,6 @@ export function ComboboxDemo({ usuario }) {
                   {getInitials(userName)}
                 </div>
               )}
-
 
               <span className="font-medium">{userName}</span>
             </div>
@@ -136,7 +132,7 @@ export function ComboboxDemo({ usuario }) {
       </Popover>
 
 
-      <DialogConfig open={openDialog} onOpenChange={setOpenDialog} />
+      <DialogConfig open={openDialog} onOpenChange={setOpenDialog} onFotoAtualizada={setUserImage} />
 
     </>
   );

@@ -6,45 +6,43 @@ import {
   DropdownMenuItem,
 } from "../ui/dropdown-menu";
 
-export default function DropdownMenuEstados({ value, onChange }) {
+export default function DropdownEstados({ value, onChange }) {
   const [estados, setEstados] = useState([]);
 
   useEffect(() => {
     fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados")
       .then((response) => response.json())
       .then((data) => {
-        const estadosOrdenados = data.sort((a, b) =>
+        const ordenados = data.sort((a, b) =>
           a.nome.localeCompare(b.nome)
         );
-        setEstados(estadosOrdenados);
+        setEstados(ordenados);
       })
-      .catch((error) => {
-        console.error("Erro ao buscar estados:", error);
-      });
+      .catch((error) => console.error("Erro ao buscar estados:", error));
   }, []);
 
-  // tenta encontrar o estado atual pelo valor (sigla)
   const estadoSelecionado = estados.find(
-    (e) => e.sigla.toLowerCase() === value.toLowerCase()
-  );  
+    (e) => e.sigla?.toLowerCase() === (value ? value.toLowerCase() : "")
+  );
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="w-full text-left border border-input bg-background rounded-md px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="w-full text-left border border-input bg-background rounded-md px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           {estadoSelecionado
             ? `${estadoSelecionado.nome} (${estadoSelecionado.sigla})`
             : "Escolha um estado"}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-full">
+
+      <DropdownMenuContent className="w-full max-h-64 overflow-y-auto">
         {estados.map((estado) => (
           <DropdownMenuItem
             key={estado.id}
-            onClick={() => onChange(estado.sigla)}
+            onClick={() => onChange?.(estado.sigla)}
           >
             {estado.nome} ({estado.sigla})
           </DropdownMenuItem>

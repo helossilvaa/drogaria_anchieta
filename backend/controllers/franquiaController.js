@@ -1,5 +1,5 @@
-import { obterUsuario } from "../../../Senaliza/backend/models/usuario";
-import { criarUnidade, listarUnidades, obterunidadeId, atualizarUnidade, deletarUnidade } from "../models/franquia";
+import { obterUsuarioId } from "../models/usuario.js";
+import { criarUnidade, listarUnidades, obterunidadeId, atualizarUnidade, deletarUnidade } from "../models/franquia.js";
 
 
 // criar franquia
@@ -149,7 +149,7 @@ const atribuirDiretorAdmController = async (req, res) => {
         const { unidadeId, diretorId } = req.body;
 
         const unidade = await obterunidadeId(unidadeId);
-        const diretor = await obterUsuario(diretorId);
+        const diretor = await obterUsuarioId(diretorId);
 
         if (!unidade) return res.status(404).json({ mensagem: 'Unidade não encontrada' });
         if (!diretor) return res.status(404).json({ mensagem: 'Diretor não encontrado' });
