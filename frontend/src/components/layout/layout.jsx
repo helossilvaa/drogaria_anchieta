@@ -7,6 +7,7 @@ import { PopoverNotificacoes } from "../notificacoes/notificacoes";
 import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import loading from "../../app/loading";
 
 export default function Layout({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -17,49 +18,45 @@ export default function Layout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUsuario = async () => {
+    const fetchUsuarioCompleto = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/");
-          return;
-        }
+        if (!token) return router.push("/");
 
         const decoded = jwtDecode(token);
+
+        // Verifica expiração
+        if (decoded.exp < Date.now() / 1000) {
+          localStorage.removeItem("token");
+          return router.push("/");
+        }
 
         // Verifica departamento permitido
         const allowed = ["diretor geral", "diretor administrativo", "gerente", "caixa"];
         if (!allowed.includes(decoded.departamento.toLowerCase())) {
           localStorage.removeItem("token");
-          router.push("/");
-          return;
+          return router.push("/");
         }
 
-        // Verifica expiração do token
-        if (decoded.exp < Date.now() / 1000) {
-          localStorage.removeItem("token");
-          router.push("/");
-          return;
-        }
-
-        // Fetch do usuário + funcionário via JOIN no backend
-        const res = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
+        // Fetch do usuário
+        const usuarioRes = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (!usuarioRes.ok) throw new Error("Usuário não encontrado");
+        const usuarioData = await usuarioRes.json();
 
-        if (!res.ok) {
-          localStorage.removeItem("token");
-          throw new Error("Usuário não encontrado");
-        }
+        // Fetch do funcionário relacionado
+        const funcionarioId = usuarioData.funcionario_id;
+        const funcionarioRes = await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!funcionarioRes.ok) throw new Error("Funcionário não encontrado");
+        const funcionarioData = await funcionarioRes.json();
 
-        const data = await res.json();
-
+        // Combina os dados
         setUsuario({
-          id: data.id,
-          status: data.status,
-          foto: data.foto || null, 
-          departamento: decoded.departamento,
-          funcionario: data.funcionario || null, 
+          ...usuarioData,
+          funcionario: funcionarioData,
         });
 
       } catch (err) {
@@ -70,13 +67,13 @@ export default function Layout({ children }) {
       }
     };
 
-    fetchUsuario();
+    fetchUsuarioCompleto();
   }, [router]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p>Carregando usuário...</p>
+        <p><loading/></p>
       </div>
     );
   }
@@ -112,14 +109,14 @@ export default function Layout({ children }) {
             {usuario && (
               <ComboboxDemo
                 usuario={usuario}
-                onFotoAtualizada={(fotoAtualizada, isFuncionario = false) => {
+                onFotoAtualizada={(novaFoto, isFuncionario = false) => {
                   if (isFuncionario && usuario.funcionario) {
                     setUsuario(prev => ({
                       ...prev,
-                      funcionario: { ...prev.funcionario, foto: fotoAtualizada }
+                      funcionario: { ...prev.funcionario, foto: novaFoto }
                     }));
                   } else {
-                    setUsuario(prev => ({ ...prev, foto: fotoAtualizada }));
+                    setUsuario(prev => ({ ...prev, foto: novaFoto }));
                   }
                 }}
               />

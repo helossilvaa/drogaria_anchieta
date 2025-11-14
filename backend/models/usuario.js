@@ -55,20 +55,6 @@ const deletarUsuario = async (id) => {
     
 };
 
-
-//atualizar status do funcionario (ativo ou inativo)
-const mudarStatusFuncionario = async (id, novoStatus) => {
-    try {
-        const dadosParaAtualizar = { status: novoStatus };
-        const usuarioid = `id = ${id}`;
-        return await update('usuarios', dadosParaAtualizar, usuarioid);
-    } catch (error) {
-        console.error('Erro ao mudar status do funcionário:', error);
-        throw error;
-    }
-};
-
-
 const obterStatusUsuario = async (id) => {
     try {
         const usuario = await read('usuarios', `id = ${id}`);
@@ -80,4 +66,4 @@ const obterStatusUsuario = async (id) => {
 };
 
 
-export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, mudarStatusFuncionario, obterStatusUsuario};
+export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario};
