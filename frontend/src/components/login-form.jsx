@@ -37,9 +37,9 @@ export function LoginForm() {
         const departamento = data.usuario?.departamento; 
     
         setTimeout(() => {
-          if (departamento === "Diretor Geral") router.push("/matriz");
-          else if (departamento === "Diretor Administrativo") router.push("/filial");
-          else if (departamento === "Gerente") router.push("/filial");
+          if (departamento === "diretor geral") router.push("/matriz");
+          else if (departamento === "diretor administrativo") router.push("/filial");
+          else if (departamento === "gerente") router.push("/filial");
           else router.push("/pdv");
         }, 1000);
       } else {

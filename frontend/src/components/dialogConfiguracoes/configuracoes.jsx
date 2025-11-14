@@ -1,28 +1,18 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Input } from "@heroui/react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import DropdowMenuEstados from "../dropdownEstados/dropdownEstados";
 import { CalendarioConfig } from "../calendarioConfig/calendario";
 import { ImagePlus } from "lucide-react";
-import DropdowMenuEstados from "../dropdownEstados/dropdownEstados";
-import { Button } from "@/components/ui/button";
-import { jwtDecode } from "jwt-decode";
-import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) {
-
   const [previewImage, setPreviewImage] = useState(null);
-  const [userImage, setUserImage] = useState(usuario?.foto || null);
   const [formValues, setFormValues] = useState({
     nome: "",
     cpf: "",
@@ -33,9 +23,32 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
     numero: "",
     cidade: "",
     estado: "",
+    foto: null
   });
 
   const API_URL = "http://localhost:8080";
+
+  useEffect(() => {
+    if (!open || !usuario) return;
+
+    const funcionario = usuario.funcionario;
+
+    setFormValues({
+      nome: funcionario?.nome || usuario.nome || "",
+      cpf: funcionario?.cpf || "",
+      data_nascimento: funcionario?.data_nascimento?.split("T")[0] || "",
+      email: funcionario?.email || "",
+      telefone: funcionario?.telefone || "",
+      rua: funcionario?.logradouro || "",
+      numero: funcionario?.numero || "",
+      cidade: funcionario?.cidade || "",
+      estado: funcionario?.estado || "",
+      foto: funcionario?.foto || usuario.foto || null
+    });
+
+    setPreviewImage(funcionario?.foto || usuario.foto || null);
+
+  }, [open, usuario]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -43,103 +56,55 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
-        setFormValues((prev) => ({ ...prev, foto: reader.result }));
+        setFormValues(prev => ({ ...prev, foto: reader.result }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  useEffect(() => {
-    if (!open) return;
-
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const decoded = jwtDecode(token);
-      const id = decoded.id;
-
-      try {
-        const res = await fetch(`${API_URL}/usuarios/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Erro ao carregar usuário");
-
-        const data = await res.json();
-
-        setFormValues({
-          nome: data.nome || "",
-          cpf: data.cpf || "",
-          data_nascimento: data.data_nascimento
-            ? data.data_nascimento.split("T")[0] : "",
-          email: data.email || "",
-          telefone: data.telefone || "",
-          rua: data.logradouro || "",
-          numero: data.numero || "",
-          cidade: data.cidade || "",
-          estado: data.estado || "",
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchUser();
-  }, [open]);
-
-  
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormValues((prev) => ({ ...prev, [name]: value }));
+    setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
-    if (!token) return;
-  
-    const decoded = jwtDecode(token);
-    const id = decoded.id;
-  
+    if (!token || !usuario) return;
 
-    let fotoBase64 = null;
-    if (formValues.foto && formValues.foto.startsWith("data:image")) {
-      fotoBase64 = formValues.foto.split(",")[1];
-    }
-  
+    const funcionarioId = usuario.funcionario?.id;
+
+    let fotoBase64 = formValues.foto?.startsWith("data:image") ? formValues.foto.split(",")[1] : null;
+
     try {
-      const res = await fetch(`${API_URL}/usuarios/${id}`, {
+      const res = await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           ...formValues,
           foto: fotoBase64,
           data_nascimento: formValues.data_nascimento
-            ? new Date(formValues.data_nascimento)
-                .toISOString()
-                .split("T")[0]
-            : null,
-        }),
+            ? new Date(formValues.data_nascimento).toISOString().split("T")[0]
+            : null
+        })
       });
-  
-      if (!res.ok) throw new Error("Erro ao atualizar usuário");
-  
+
+      if (!res.ok) throw new Error("Erro ao atualizar funcionário");
+
       toast.success("Dados atualizados com sucesso!");
-  
+
       if (onFotoAtualizada && formValues.foto) {
-        onFotoAtualizada(formValues.foto);
+        onFotoAtualizada(formValues.foto, true);
       }
-  
+
       onOpenChange(false);
     } catch (err) {
       console.error(err);
-      alert("Erro ao salvar alterações");
+      toast.error("Erro ao salvar alterações");
     }
   };
-  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,161 +117,80 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 gap-4 py-2">
-          {/* Linha 1: Foto + Nome */}
-          <div className="grid grid-cols-[80px_1fr] gap-3 items-center">
-            <div className="flex flex-col items-center">
-              <Label htmlFor="file-upload">Foto</Label>
-              <input
-                id="file-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <label
-                htmlFor="file-upload"
-                className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition overflow-hidden"
-              >
-                {previewImage ? (
-                  <img
-                    src={previewImage || userImage}
-                    alt="Pré-visualização"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <ImagePlus className="w-5 h-5 text-gray-600" />
-                )}
-              </label>
+        {/* Foto + Nome */}
+        <div className="grid grid-cols-[80px_1fr] gap-3 items-center mb-4">
+          <div className="flex flex-col items-center">
+            <Label htmlFor="file-upload">Foto</Label>
+            <input id="file-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <label htmlFor="file-upload" className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition overflow-hidden">
+              {previewImage ? (
+                <img src={previewImage} alt="Pré-visualização" className="w-full h-full object-cover" />
+              ) : (
+                <ImagePlus className="w-5 h-5 text-gray-600" />
+              )}
+            </label>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="nome">Nome</Label>
+            <Input id="nome" name="nome" value={formValues.nome} onChange={handleChange} size="sm" />
+          </div>
+        </div>
 
+        {/* CPF + Data de Nascimento */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid gap-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input id="cpf" name="cpf" value={formValues.cpf} onChange={handleChange} size="sm" />
+          </div>
+          <div className="grid gap-2">
+            <Label>Data de Nascimento</Label>
+            <CalendarioConfig value={formValues.data_nascimento} onChange={val => setFormValues(prev => ({ ...prev, data_nascimento: val }))} />
+          </div>
+        </div>
+
+        {/* Email + Telefone */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" value={formValues.email} onChange={handleChange} size="sm" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="telefone">Telefone</Label>
+            <Input id="telefone" name="telefone" value={formValues.telefone} onChange={handleChange} size="sm" />
+          </div>
+        </div>
+
+        {/* Endereço */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-[1fr_100px] gap-2">
+            <div className="grid gap-2">
+              <Label htmlFor="rua">Rua</Label>
+              <Input id="rua" name="rua" value={formValues.rua} onChange={handleChange} size="sm" />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                name="nome"
-                value={formValues.nome}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
+              <Label htmlFor="numero">Nº</Label>
+              <Input id="numero" name="numero" value={formValues.numero} onChange={handleChange} size="sm" />
             </div>
           </div>
-
-          {/* Linha 2: CPF + Data de Nascimento */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[1fr_200px] gap-2">
             <div className="grid gap-2">
-              <Label htmlFor="cpf">CPF</Label>
-              <Input
-                id="cpf"
-                name="cpf"
-                value={formValues.cpf}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
+              <Label htmlFor="cidade">Cidade</Label>
+              <Input id="cidade" name="cidade" value={formValues.cidade} onChange={handleChange} size="sm" />
             </div>
             <div className="grid gap-2">
-              <Label>Data de Nascimento</Label>
-              <CalendarioConfig
-                value={formValues.data_nascimento}
-                onChange={(val) =>
-                  setFormValues((prev) => ({ ...prev, data_nascimento: val }))
-                }
-              />
-            </div>
-          </div>
-
-          {/* Linha 3: Email + Telefone */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                value={formValues.email}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                name="telefone"
-                value={formValues.telefone}
-                onChange={handleChange}
-                size="sm"
-                className="shadow-none focus:ring-0"
-              />
-            </div>
-          </div>
-
-          {/* Linha 4: Endereço */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid grid-cols-[1fr_100px] gap-2">
-              <div className="grid gap-2">
-                <Label htmlFor="rua">Rua</Label>
-                <Input
-                  id="rua"
-                  name="rua"
-                  value={formValues.rua}
-                  onChange={handleChange}
-                  size="sm"
-                  className="shadow-none focus:ring-0"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="numero">Nº</Label>
-                <Input
-                  id="numero"
-                  name="numero"
-                  value={formValues.numero}
-                  onChange={handleChange}
-                  size="sm"
-                  className="shadow-none focus:ring-0"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-[1fr_200px] gap-2">
-              <div className="grid gap-2">
-                <Label htmlFor="cidade">Cidade</Label>
-                <Input
-                  id="cidade"
-                  name="cidade"
-                  value={formValues.cidade}
-                  onChange={handleChange}
-                  size="sm"
-                  className="shadow-none focus:ring-0"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="estado">Estado</Label>
-                <DropdowMenuEstados
-                  value={formValues.estado}
-                  onChange={(val) =>
-                    setFormValues((prev) => ({ ...prev, estado: val }))
-                  }
-                />
-
-              </div>
+              <Label htmlFor="estado">Estado</Label>
+              <DropdowMenuEstados value={formValues.estado} onChange={val => setFormValues(prev => ({ ...prev, estado: val }))} />
             </div>
           </div>
         </div>
 
-        <DialogFooter className="pt-4 mt-2 flex justify-end gap-2">
+        <DialogFooter className="flex justify-end gap-2">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">
-              Cancelar
-            </Button>
+            <Button variant="outline" size="sm">Cancelar</Button>
           </DialogClose>
-          <Button onClick={handleSubmit} size="sm">
-            Salvar alterações
-          </Button>
+          <Button onClick={handleSubmit} size="sm">Salvar alterações</Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog >
+    </Dialog>
   );
 }
