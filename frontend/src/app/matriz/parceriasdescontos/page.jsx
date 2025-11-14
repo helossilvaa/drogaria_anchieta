@@ -343,14 +343,14 @@ export default function ParceriasDescontos() {
         <h1 className="text-xl font-bold mb-4 mt-4 ml-2">PARCERIAS E DESCONTOS</h1>
 
         {/* Barra de navegação */}
-        <div className="flex gap-6 mb-6 relative">
+        <div className="flex gap-6 mb-6 relative ml-2">
           <button
             ref={refs.parcerias}
             onClick={() => setActiveTab("parcerias")}
             className={`${activeTab === "parcerias"
                 ? "text-[#245757]"
                 : "text-gray-700"
-              } hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out ml-2`}
+              } hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out pb-2`}
           >
             Parcerias
           </button>
@@ -361,15 +361,15 @@ export default function ParceriasDescontos() {
             className={`${activeTab === "descontos"
                 ? "text-[#245757]"
                 : "text-gray-700"
-              } hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out ml-2`}
+              } hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out pb-2`}
           >
             Descontos
           </button>
 
           {/* Linha cinza de fundo */}
           <div
-            className="absolute h-1 bg-gray-300 w-full ml-2"
-            style={{ top: "calc(100% + 5px)", left: 0 }}
+            className="absolute h-1 bg-gray-300 left-0 right-0"
+            style={{ top: "100%" }}
           ></div>
 
           {/* Linha ativa */}
@@ -503,12 +503,12 @@ export default function ParceriasDescontos() {
                           <td className="p-3">{p.parceiro}</td>
                           <td className="p-3">{parseFloat(p.porcentagem * 100).toFixed(0)}%</td>
                           <td className="p-3 flex justify-center items-center gap-3">
-                            <button onClick={() => abrirEdicao(p)} title="Editar" className="text-green-600 hover:text-green-800 transition-colors">
+                            <button onClick={() => abrirEdicao(p)} title="Editar" className="text-[#245757] hover:text-green-600 transition-colors">
                               <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
                               </svg>
                             </button>
-                            <button onClick={() => abrirExclusao(p)} title="Excluir" className="text-red-600 hover:text-red-800 transition-colors">
+                            <button onClick={() => abrirExclusao(p)} title="Excluir" className="text-[#245757] hover:text-green-600 transition-colors">
                               <svg className="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                                 <path fillRule="evenodd" clipRule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" />
                               </svg>
@@ -701,12 +701,12 @@ export default function ParceriasDescontos() {
                             {parseFloat(d.desconto * 100).toFixed(0)}%
                           </td>
                           <td className="p-3 flex justify-center items-center gap-3">
-                            <button onClick={() => abrirEdicaoDesconto(d)} title="Editar" className="text-green-600 hover:text-green-800 transition-colors">
+                            <button onClick={() => abrirEdicaoDesconto(d)} title="Editar" className="text-[#245757] hover:text-green-600 transition-colors">
                               <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
                               </svg>
                             </button>
-                            <button onClick={() => abrirExclusaoDesconto(d)} title="Excluir" className="text-red-600 hover:text-red-800 transition-colors">
+                            <button onClick={() => abrirExclusaoDesconto(d)} title="Excluir" className="text-[#245757] hover:text-green-600 transition-colors">
                               <svg className="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                                 <path fillRule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clipRule="evenodd" />
                               </svg>

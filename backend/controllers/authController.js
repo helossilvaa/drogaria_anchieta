@@ -72,7 +72,7 @@ const cadastroUsuarioController = async (req, res) => {
 const loginController = async (req, res) => {
 
   const { email, senha } = req.body;
-  console.log(req.body)
+
   try {
 
     const resultado = await read(

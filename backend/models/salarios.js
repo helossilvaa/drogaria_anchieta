@@ -17,7 +17,7 @@ getAll : async (cargoFiltro) => {
       s.status_pagamento,
       s.data_atualizado
     FROM salarios s
-    JOIN usuarios u ON s.id_funcionario = u.id
+    JOIN funcionarios u ON s.id_funcionario = u.id
     JOIN departamento d ON s.departamento_id = d.id
   `;
 

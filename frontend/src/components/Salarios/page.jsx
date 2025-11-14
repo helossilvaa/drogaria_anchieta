@@ -20,7 +20,7 @@ export default function Salarios() {
   const [abrirModalExcluir, setAbrirModalExcluir] = useState(false);
 
   const [departamentos, setDepartamentos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
+  const [funcionarios, setFuncionarios] = useState([]);
   const [filtroMes, setFiltroMes] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
@@ -102,22 +102,22 @@ export default function Salarios() {
   const carregarListas = async () => {
     try {
       const token = localStorage.getItem("token");
-      const resDepartamentos = await fetch("http://localhost:8080/api/departamento", {
+      const resDepartamentos = await fetch("http://localhost:8080/departamento", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const resUsuarios = await fetch("http://localhost:8080/usuarios", {
+      const resFuncionarios = await fetch("http://localhost:8080/funcionarios", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const departamentosData = await resDepartamentos.json();
-      const usuariosData = await resUsuarios.json();
+      const funcionariosData = await resFuncionarios.json();
 
       setDepartamentos(Array.isArray(departamentosData) ? departamentosData : []);
-      setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+      setFuncionarios(Array.isArray(funcionariosData) ? funcionariosData : []);
     } catch (erro) {
       console.error("Erro ao carregar listas:", erro);
       setDepartamentos([]);
-      setUsuarios([]);
+      setFuncionarios([]);
     }
   };
 
@@ -188,7 +188,7 @@ export default function Salarios() {
 
   const handleEditar = (s) => {
     setEditarSalarioId(s.id);
-    const funcionarioSelecionado = usuarios.find((u) => u.id === s.id_funcionario);
+    const funcionarioSelecionado = funcionarios.find((u) => u.id === s.id_funcionario);
     const departamentoSelecionado = departamentos.find((d) => d.id === s.departamento_id);
 
     setNovoSalario({
@@ -315,7 +315,7 @@ export default function Salarios() {
                   value={novoSalario.registro || ""}
                   onChange={(e) => {
                     const valor = e.target.value;
-                    const funcionarioSelecionado = usuarios.find(
+                    const funcionarioSelecionado = funcionarios.find(
                       (u) => String(u.registro) === String(valor)
                     );
                     setNovoSalario((prev) => ({
@@ -329,7 +329,7 @@ export default function Salarios() {
                   placeholder="Digite ou selecione o registro"
                 />
                 <datalist id="listaRegistros">
-                  {usuarios.map((u) => (
+                  {funcionarios.map((u) => (
                     <option key={u.id} value={u.registro}>
                       {u.registro} - {u.nome}
                     </option>
@@ -349,7 +349,7 @@ export default function Salarios() {
                   value={novoSalario.nome || ""}
                   onChange={(e) => {
                     const valor = e.target.value;
-                    const funcionarioSelecionado = usuarios.find(
+                    const funcionarioSelecionado = funcionarios.find(
                       (u) => String(u.nome) === String(valor)
                     );
                     setNovoSalario((prev) => ({
@@ -363,7 +363,7 @@ export default function Salarios() {
                   placeholder="Digite ou selecione o funcionário"
                 />
                 <datalist id="listaFuncionarios">
-                  {usuarios.map((u) => (
+                  {funcionarios.map((u) => (
                     <option key={u.id} value={u.nome}>
                       {u.nome} - {u.registro}
                     </option>
