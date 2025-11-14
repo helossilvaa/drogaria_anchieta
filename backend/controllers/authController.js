@@ -76,9 +76,7 @@ const loginController = async (req, res) => {
   try {
 
     const resultado = await read(
-      'usuarios u LEFT JOIN departamento d ON u.departamento_id = d.id',
-      `u.email = '${email}'`,
-      'u.*, d.departamento AS departamento'
+      'usuarios u JOIN funcionarios f ON f.id = u.funcionario_id LEFT JOIN departamento d ON u.departamento_id = d.id', `f.email = '${email}'`,'u.*, f.nome, f.email, d.departamento'
     );
     
     // garante que sempre pegue o primeiro usuário retornado
@@ -87,10 +85,6 @@ const loginController = async (req, res) => {
     if (!usuario) {
       return res.status(404).json({ mensagem: 'Usuário não encontrado' });
     }
-    
-    console.log("Usuário autenticado:", usuario.id, usuario.nome);
-    
-    
     
     // compara senha
     const senhaCorreta = await compare(senha, usuario.senha);
