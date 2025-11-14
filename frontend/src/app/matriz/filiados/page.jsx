@@ -31,6 +31,8 @@ export default function Filiados() {
 
   const API_URL = "http://localhost:8080/api/filiados";
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   // Buscar usuários do backend
   useEffect(() => {
     fetchUsuarios();
@@ -59,7 +61,6 @@ export default function Filiados() {
 
   const fetchUsuarios = async () => {
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch(API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -72,7 +73,6 @@ export default function Filiados() {
 
   const fetchTiposDescontos = async () => {
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:8080/api/tiposdescontos", {
         headers: { Authorization: `Bearer ${token}` },
       });
