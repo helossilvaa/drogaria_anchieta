@@ -2,9 +2,8 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { LogOut, Settings, Check, ChevronsUpDown } from "lucide-react";
+import { LogOut, Settings, ChevronsUpDown } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -12,27 +11,19 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogConfig } from "../dialogConfiguracoes/configuracoes";
+import { useRouter } from "next/navigation";
 
-
-
-export function ComboboxDemo({ usuario }) {
+export function ComboboxDemo({ usuario, onFotoAtualizada }) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-  
+  const [userImage, setUserImage] = useState(usuario?.funcionario?.foto || usuario?.foto || null);
+
+  const router = useRouter();
 
   useEffect(() => {
-
-    if (!usuario) return;
-
-    const { nome, foto } = usuario;
-
+    setUserImage(usuario?.funcionario?.foto || usuario?.foto || null);
   }, [usuario]);
 
   const menuItems = [
@@ -40,35 +31,21 @@ export function ComboboxDemo({ usuario }) {
     { value: "sair", label: "Sair", icon: LogOut },
   ];
 
-  function getInitials(name) {
+  const getInitials = (name) => {
     if (!name) return "";
     const parts = name.trim().split(" ");
-    return parts
-      .slice(0, 2)
-      .map((p) => p[0].toUpperCase())
-      .join("");
-  }
+    return parts.slice(0, 2).map(p => p[0].toUpperCase()).join("");
+  };
 
-
-  const userName = usuario?.nome || "Usuário";
-  const userImage = usuario?.foto;
-  console.log("FOTO DO USUÁRIO:", usuario?.foto);
-
+  const userName = usuario?.funcionario?.nome || usuario?.nome || "Usuário";
 
   return (
     <>
-      {/* Popover do combobox */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-[220px] justify-between"
-          >
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-[220px] justify-between">
             <div className="flex items-center gap-2">
-              {typeof userImage === "string" && userImage.trim() !== "" ? (
-                
+              {userImage ? (
                 <Image
                   src={userImage}
                   alt={userName}
@@ -81,11 +58,8 @@ export function ComboboxDemo({ usuario }) {
                   {getInitials(userName)}
                 </div>
               )}
-
-
               <span className="font-medium">{userName}</span>
             </div>
-
             <ChevronsUpDown className="opacity-50 h-4 w-4" />
           </Button>
         </PopoverTrigger>
@@ -96,31 +70,17 @@ export function ComboboxDemo({ usuario }) {
               <CommandGroup>
                 {menuItems.map((item) => {
                   const Icon = item.icon;
-
-                  // Se for CONFIGURAÇÕES
-                  if (item.value === "configuracoes") {
-                    return (
-                      <CommandItem
-                        key={item.value}
-                        onSelect={() => {
-                          setOpen(false);
-                          setOpenDialog(true);
-                        }}
-                      >
-                        <Icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                      </CommandItem>
-                    );
-                  }
-
-                  // Se for SAIR
                   return (
                     <CommandItem
                       key={item.value}
                       onSelect={() => {
                         setOpen(false);
-                        localStorage.removeItem("token");
-                        router.push("/");
+                        if (item.value === "configuracoes") {
+                          setOpenDialog(true);
+                        } else if (item.value === "sair") {
+                          localStorage.removeItem("token");
+                          router.push("/");
+                        }
                       }}
                     >
                       <Icon className="mr-2 h-4 w-4" />
@@ -128,16 +88,20 @@ export function ComboboxDemo({ usuario }) {
                     </CommandItem>
                   );
                 })}
-
               </CommandGroup>
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
 
-
-      <DialogConfig open={openDialog} onOpenChange={setOpenDialog} />
-
+      <DialogConfig
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        onFotoAtualizada={(novaFoto, isFuncionario = false) => {
+          setUserImage(novaFoto);
+          if (onFotoAtualizada) onFotoAtualizada(novaFoto, isFuncionario);
+        }}
+      />
     </>
   );
 }

@@ -2,123 +2,99 @@ import {
   listarUsuarios,
   obterUsuarioId,
   atualizarUsuario,
-  mudarStatusFuncionario,
   deletarUsuario
-} from '../models/usuario.js';
+} from "../models/usuario.js";
+import generateHashedPassword from '../utils/hashPassword.js';
 
-
+// listar usuários
 const listarUsuariosController = async (req, res) => {
   try {
-    const usuarios = await listarUsuarios();
-    res.status(200).json(usuarios);
+
+      const usuarios = await listarUsuarios();
+      res.status(200).json(usuarios);
+
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
-    res.status(500).json({ mensagem: 'Erro ao listar usuários', error });
+      console.error('Erro ao listar usuários:', error);
+      res.status(500).json({ mensagem: 'Erro ao listar usuários!' });
   }
 };
 
+// obter usuário por id
 const obterUsuarioIdController = async (req, res) => {
   try {
-    const usuario = await obterUsuarioId(req.params.id);
-    res.status(200).json(usuario);
+
+      const usuario = await obterUsuarioId(req.params.id);
+
+      if (!usuario) {
+          return res.status(404).json({ mensagem: 'Usuário não encontrado' });
+      }
+
+      res.status(200).json(usuario);
+
   } catch (error) {
-    console.error('Erro ao obter usuário por id:', error);
-    res.status(500).json({ mensagem: 'Erro ao obter usuário por id', error });
+      console.error('Erro ao obter usuário por id:', error);
+      res.status(500).json({ mensagem: 'Erro ao obter usuário por id' });
   }
 };
 
+// atualizar usuário
 const atualizarUsuarioController = async (req, res) => {
   try {
-    
-    const usuario = await obterUsuarioId(req.params.id);
-    
-    if (!usuario) {
-      return res.status(404).json({mensagem: 'usuário não encontrado'});
-    };
-   
-    const {
-      telefone = usuario.telefone,
-      data_nascimento = usuario.data_nascimento,
-      genero = usuario.genero,
-      nome = usuario.nome,
-      senha = usuario.senha,
-      email = usuario.email,
-      departamento_id = usuario.departamento_id,
-      endereco = usuario.endereco,
-      cidade = usuario.cidade,
-      estado = usuario.estado,
-      cep = usuario.cep,
-      numero = usuario.numero,
-      foto = usuario.foto
+      const usuario = await obterUsuarioId(req.params.id);
 
+      if (!usuario) {
+          return res.status(404).json({ mensagem: 'Usuário não encontrado!' });
+      }
+
+      const {
+        senha,
+        departamento_id = usuario.departamento_id,
+        funcionario_id = usuario.funcionario_id,
+        status = usuario.status,
+        foto = usuario.foto
     } = req.body;
-
+    
+    const senhaHash = await generateHashedPassword(usuario.senha);
+    
     const usuarioData = {
-      telefone,
-      data_nascimento,
-      genero,
-      nome,
-      senha,
-      email,
-      departamento_id,
-      endereco,
-      cidade,
-      estado,
-      cep,
-      numero,
-      foto
+        senha: senhaHash,
+        departamento_id,
+        funcionario_id,
+        status,
+        foto
     };
 
-    await atualizarUsuario(req.params.id, usuarioData);
-    res.status(200).json({mensagem: 'Dados atualizados com sucesso!'})
+      await atualizarUsuario(req.params.id, usuarioData);
+      res.status(200).json({ mensagem: 'Usuário atualizado com sucesso!' });
 
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    res.status(500).json({mensagem: 'Erro ao atualizar usuário', error})
+      console.error('Erro ao atualizar usuário:', error);
+      res.status(500).json({ mensagem: 'Erro ao atualizar usuário!' });
   }
 };
 
+// deletar usuário
 const deletarUsuarioController = async (req, res) => {
   try {
 
-    const usuarioId = await obterUsuarioId(req.params.id);
-    await deletarUsuario(usuarioId);
+      const usuario = await obterUsuarioId(req.params.id);
+
+      if (!usuario) {
+          return res.status(404).json({ mensagem: 'Usuário não encontrado!' });
+      }
+
+      await deletarUsuario(req.params.id);
+      res.status(200).json({ mensagem: 'Usuário excluído com sucesso!' });
 
   } catch (error) {
-    console.error('Erro ao deletar usuário: ', error);
-    res.status(500).json({mensagem: 'Erro ao deletar usuário', error})
+      console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ mensagem: 'Erro ao deletar usuário!' });
   }
-}
-
-const mudarStatusFuncionarioController = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
-        const usuarioFuncao = req.usuarioFuncao;
-
-        
-        if (usuarioFuncao !== 'Diretor Administrativo' || 'Diretor Geral') {
-            return res.status(403).json({ mensagem: 'Acesso negado. Apenas administradores podem realizar esta ação.' });
-        }
-
-        if (status !== 'ativo' && status !== 'inativo') {
-            return res.status(400).json({ mensagem: 'Status inválido. Use "ativo" ou "inativo".' });
-        }
-
-        await mudarStatusFuncionario(id, status);
-        res.status(200).json({ mensagem: `Status do técnico alterado para ${status} com sucesso!` });
-
-    } catch (error) {
-        console.error('Erro ao mudar o status do técnico:', error);
-        res.status(500).json({ mensagem: 'Erro ao mudar o status do funcionário.', error });
-    }
 };
-
 
 export {
   listarUsuariosController,
   obterUsuarioIdController,
   atualizarUsuarioController,
-  mudarStatusFuncionarioController,
   deletarUsuarioController
 };
