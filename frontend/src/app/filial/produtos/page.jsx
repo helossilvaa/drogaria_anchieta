@@ -112,11 +112,10 @@ export default function Produtos() {
   const produtosFiltrados = produtos.filter((produto) => {
     if (
       categoriaSelecionada &&
-      produto.categoria.id !== parseInt(categoriaSelecionada)
+      produto.categoria_id !== parseInt(categoriaSelecionada)
     ) {
       return false;
     }
-
     switch (abaAtiva) {
       case ABAS.VENCIDOS:
         return isProdutoVencido(produto);
@@ -128,7 +127,6 @@ export default function Produtos() {
   });
 
   const handleAtualizarProduto = async () => {
-    if (!produtoEditando) return;
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_URL}/${produtoEditando.id}`, {
@@ -140,19 +138,17 @@ export default function Produtos() {
         body: JSON.stringify(produtoEditando),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.mensagem || "Erro ao atualizar produto");
-      }
+      const data = await res.json();
+      alert("Produto atualizado com sucesso!");
+      setProdutoEditando(null);
+      fetchProdutos();
 
-      setMensagemFeedback({ type: "success", text: "Produto atualizado com sucesso!" });
-      setIsEditDialogOpen(false);
-      await fetchProdutos();
-    } catch (err) {
-      console.error(err);
-      setMensagemFeedback({ type: "error", text: err.message });
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+      alert(error.message);
     }
   };
+
 
   //editar o produto
   const handleEditar = (produto) => {
@@ -165,20 +161,16 @@ export default function Produtos() {
     const token = localStorage.getItem("token");
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
 
-    try {
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      if (!res.ok) throw new Error("Erro ao excluir produto");
+    if (!res.ok) throw new Error("Erro ao excluir produto");
 
-      setMensagemFeedback({ type: "success", text: "Produto excluído com sucesso!" });
-      await fetchProdutos();
-    } catch (err) {
-      console.error(err);
-      setMensagemFeedback({ type: "error", text: err.message });
-    }
+    setMensagemFeedback({ type: "success", text: "Produto excluído com sucesso!" });
+    await fetchProdutos();
+
   };
 
   // Paginação
@@ -234,9 +226,6 @@ export default function Produtos() {
     }
   };
 
-
-
-
   return (
     <Layout>
       <div className="p-6">
@@ -274,16 +263,17 @@ export default function Produtos() {
               </Select>
 
               {/* Select Categoria */}
-              <Select value={novoProduto.categoria_id} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione a Categoria" /></SelectTrigger>
+              <Select value={String(novoProduto.categoria_id)} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v })}>              <SelectTrigger><SelectValue placeholder="Todas as Categorias" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="medicamento">Medicamento</SelectItem>
-                  <SelectItem value="cosmetico">Cosmético</SelectItem>
-                  <SelectItem value="alimento">Alimento</SelectItem>
-                  <SelectItem value="conveniencia">Conveniência</SelectItem>
-                  <SelectItem value="higiene">Higiene</SelectItem>
+                  <SelectItem value="">Todas</SelectItem>
+                  {categorias.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {cat.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+
 
               <Input placeholder="Medida ID" value={novoProduto.medida_id} onChange={(e) => setNovoProduto({ ...novoProduto, medida_id: e.target.value })} />
               <Input placeholder="Marca ID" value={novoProduto.marca_id} onChange={(e) => setNovoProduto({ ...novoProduto, marca_id: e.target.value })} />
@@ -307,7 +297,9 @@ export default function Produtos() {
             </DialogHeader>
 
             {produtoEditando && (
-              <div className="grid gap-2 mt-2">
+              <div className="grid gap-3 mt-2">
+
+                {/* Nome */}
                 <Input
                   placeholder="Nome"
                   value={produtoEditando.nome}
@@ -315,6 +307,8 @@ export default function Produtos() {
                     setProdutoEditando({ ...produtoEditando, nome: e.target.value })
                   }
                 />
+
+                {/* Registro Anvisa */}
                 <Input
                   placeholder="Registro ANVISA"
                   value={produtoEditando.registro_anvisa || ""}
@@ -322,6 +316,8 @@ export default function Produtos() {
                     setProdutoEditando({ ...produtoEditando, registro_anvisa: e.target.value })
                   }
                 />
+
+                {/* Código de Barras */}
                 <Input
                   placeholder="Código de Barras"
                   value={produtoEditando.codigo_barras || ""}
@@ -329,26 +325,131 @@ export default function Produtos() {
                     setProdutoEditando({ ...produtoEditando, codigo_barras: e.target.value })
                   }
                 />
+
+                {/* Preço */}
                 <Input
                   type="number"
                   placeholder="Preço Unitário"
-                  value={produtoEditando.preco_unitario || ""}
+                  value={produtoEditando.preco_unitario ?? ""}
                   onChange={(e) =>
-                    setProdutoEditando({ ...produtoEditando, preco_unitario: e.target.value })
+                    setProdutoEditando({
+                      ...produtoEditando,
+                      preco_unitario: parseFloat(e.target.value),
+                    })
                   }
                 />
+
+                {/* Validade */}
                 <Input
                   type="date"
-                  value={produtoEditando.validade ? produtoEditando.validade.split("T")[0] : ""}
+                  value={
+                    produtoEditando.validade
+                      ? produtoEditando.validade.split("T")[0]
+                      : ""
+                  }
                   onChange={(e) =>
                     setProdutoEditando({ ...produtoEditando, validade: e.target.value })
                   }
                 />
+
+                {/* Descrição */}
                 <Input
                   placeholder="Descrição"
                   value={produtoEditando.descricao || ""}
                   onChange={(e) =>
                     setProdutoEditando({ ...produtoEditando, descricao: e.target.value })
+                  }
+                />
+
+                {/* Tarja */}
+                <Select
+                  value={produtoEditando.tarja || ""}
+                  onValueChange={(v) =>
+                    setProdutoEditando({ ...produtoEditando, tarja: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tarja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sem tarja">Sem Tarja</SelectItem>
+                    <SelectItem value="vermelha">Vermelha</SelectItem>
+                    <SelectItem value="amarela">Amarela</SelectItem>
+                    <SelectItem value="preta">Preta</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Categoria */}
+                <Select
+                  value={categoriaSelecionada}
+                  onValueChange={(v) => {
+                    setCategoriaSelecionada(v);
+                    setProdutoEditando({ ...produtoEditando, categoria_id: Number(v) });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categorias.map((cat) => (
+                      <SelectItem key={cat.id} value={String(cat.id)}>
+                        {cat.categoria}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* IDs Relacionados */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Medida ID"
+                    value={produtoEditando.medida_id || ""}
+                    onChange={(e) =>
+                      setProdutoEditando({
+                        ...produtoEditando,
+                        medida_id: Number(e.target.value),
+                      })
+                    }
+                  />
+                  <Input
+                    placeholder="Marca ID"
+                    value={produtoEditando.marca_id || ""}
+                    onChange={(e) =>
+                      setProdutoEditando({
+                        ...produtoEditando,
+                        marca_id: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+
+                <Input
+                  placeholder="Fornecedor ID"
+                  value={produtoEditando.fornecedor_id || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({
+                      ...produtoEditando,
+                      fornecedor_id: Number(e.target.value),
+                    })
+                  }
+                />
+
+                <Input
+                  placeholder="Lote ID"
+                  value={produtoEditando.lote_id || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({
+                      ...produtoEditando,
+                      lote_id: Number(e.target.value),
+                    })
+                  }
+                />
+
+                <Input
+                  placeholder="Armazenamento"
+                  value={produtoEditando.armazenamento || ""}
+                  onChange={(e) =>
+                    setProdutoEditando({ ...produtoEditando, armazenamento: e.target.value })
                   }
                 />
               </div>
@@ -358,6 +459,7 @@ export default function Produtos() {
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancelar
               </Button>
+
               <Button
                 className="bg-[#4b9c86] text-white hover:bg-[#3e8473]"
                 onClick={handleAtualizarProduto}
@@ -367,8 +469,9 @@ export default function Produtos() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* 
         <AnimatePresence>
-          {mensagemFeedback?.text && (
+       {mensagemFeedback.text && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -382,7 +485,7 @@ export default function Produtos() {
               {mensagemFeedback.text}
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
 
         {/* Abas */}
         <div className="border-b mb-4">
@@ -408,8 +511,7 @@ export default function Produtos() {
         {/* Filtro de Categoria */}
         <div className="mb-4 w-64">
           <div className="mb-4 w-64">
-            <Select value={novoProduto.categoria_id} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v })}>
-              <SelectTrigger ><SelectValue placeholder="Selecione a Categoria" /></SelectTrigger>
+            <Select value={novoProduto.categoria_id} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v })}>              <SelectTrigger ><SelectValue placeholder="Selecione a Categoria" /></SelectTrigger>
               <SelectContent>
                 <SelectItem>Todas</SelectItem>
                 {categorias.map((cat) => (
@@ -428,7 +530,7 @@ export default function Produtos() {
             <thead className="uppercase bg-gray-200 text-gray-540">
               <tr>
                 <th className="py-3">Nome</th>
-                <th className="py-3  px-6">Categoria</th>
+                <th className="py-3 px-6">Categoria</th>
                 <th className="py-3 px-6">Marca</th>
                 <th className="py-3">Código</th>
                 <th className="py-3">Validade</th>
