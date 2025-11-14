@@ -261,10 +261,6 @@ export default function NovaVendaPage() {
     window.print();
   };
 
-    const imprimirNota = () => {
-      window.print();
-    };
-
     const [novoFiliado, setNovoFiliado] = useState({
       nome: "",
       cpf: "",
