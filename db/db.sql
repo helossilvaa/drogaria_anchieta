@@ -246,7 +246,7 @@ CREATE TABLE  salarios (
   valor DECIMAL(10,2) NOT NULL,
   status_pagamento ENUM('pendente', 'pago') DEFAULT 'pendente',
   data_atualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (id_funcionario) REFERENCES usuarios(id),
+  FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id),
   FOREIGN KEY (departamento_id) REFERENCES departamento(id),
   FOREIGN KEY (unidade_id) REFERENCES unidade(id)
 );

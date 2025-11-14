@@ -22,11 +22,11 @@ export default function Salarios() {
   const [departamentos, setDepartamentos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
   const [filtroMes, setFiltroMes] = useState("");
+  const [filtroDepartamento, setFiltroDepartamento] = useState(""); // NECESSÁRIO: Adicionado estado para o filtro de departamento
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
   const API_URL = "http://localhost:8080/api/salarios";
-  const API_BASE = "http://localhost:8080/api";
 
   const toInputDate = (dataString) => {
     if (!dataString) return "";
@@ -85,6 +85,12 @@ export default function Salarios() {
     return valor.toFixed(2).replace(".", ",");
   };
 
+  const getNomeDepartamento = (id) => {
+    const depto = departamentos.find(d => String(d.id) === String(id));
+    // Assumimos que o nome do departamento está na propriedade 'departamento' (como usado no modal)
+    return depto ? depto.departamento : id;
+  };
+
   const fetchSalarios = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -113,6 +119,8 @@ export default function Salarios() {
       const funcionariosData = await resFuncionarios.json();
 
       setDepartamentos(Array.isArray(departamentosData) ? departamentosData : []);
+      console.log("DEPARTAMENTOS RECEBIDOS:", departamentosData);
+
       setFuncionarios(Array.isArray(funcionariosData) ? funcionariosData : []);
     } catch (erro) {
       console.error("Erro ao carregar listas:", erro);
@@ -127,11 +135,15 @@ export default function Salarios() {
     if (type === "checkbox") {
       novoValor = checked;
     } else if (name === "valor") {
+      // Permite que o usuário digite a vírgula, mas mantém o estado interno limpo para parseFloat
       novoValor = value.replace(/,/g, ".").replace(/[^\d.]/g, "");
       const partes = novoValor.split(".");
       if (partes.length > 2) {
         novoValor = partes[0] + "." + partes.slice(1).join("");
       }
+      // Se for o campo valor, mantemos o valor como string para que o input reflita a formatação
+      setNovoSalario((prev) => ({ ...prev, [name]: value.replace(/[^\d,]/g, '') }));
+      return;
     } else {
       novoValor = value;
     }
@@ -145,13 +157,20 @@ export default function Salarios() {
       alert("Preencha todos os campos obrigatórios.");
       return;
     }
+    
+    // Converte o valor para float, usando a lógica de limpeza para garantir que o input com vírgula seja tratado
+    const valorLimpo = novoSalario.valor.replace(/,/g, ".").replace(/[^\d.]/g, "");
 
     const salarioParaAPI = {
       ...novoSalario,
-      valor: novoSalario.valor ? parseFloat(novoSalario.valor).toFixed(2) : "0.00",
+      valor: valorLimpo ? parseFloat(valorLimpo).toFixed(2) : "0.00", // Fix: usa valorLimpo
       data_atualizado:
         novoSalario.data_atualizado || new Date().toISOString().slice(0, 10),
     };
+    
+    // Remove as propriedades não esperadas pela API de um salário
+    delete salarioParaAPI.nome;
+    delete salarioParaAPI.registro;
 
     const method = editarSalarioId ? "PUT" : "POST";
     const url = editarSalarioId ? `${API_URL}/${editarSalarioId}` : API_URL;
@@ -188,13 +207,11 @@ export default function Salarios() {
 
   const handleEditar = (s) => {
     setEditarSalarioId(s.id);
-    const funcionarioSelecionado = funcionarios.find((u) => u.id === s.id_funcionario);
-    const departamentoSelecionado = departamentos.find((d) => d.id === s.departamento_id);
 
     setNovoSalario({
       id_funcionario: s.id_funcionario ?? "",
-      registro: funcionarioSelecionado?.registro || s.registro || "",
-      nome: funcionarioSelecionado?.nome || s.funcionario || "",
+      registro: s.registro || "",
+      nome: s.funcionario || "", // Usamos 'funcionario' aqui pois é o nome do funcionário
       departamento_id: s.departamento_id ?? "",
       valor: getValorParaInput(s.valor ?? ""),
       status_pagamento: s.status_pagamento ?? "pendente",
@@ -203,6 +220,7 @@ export default function Salarios() {
 
     setAbrirModal(true);
   };
+
 
   const handleExcluir = (id) => {
     setExcluirSalarioId(id);
@@ -228,9 +246,14 @@ export default function Salarios() {
   };
 
   const salariosFiltrados = salarios.filter((s) => {
+
     const mesMatch =
       !filtroMes || (s.data_atualizado && s.data_atualizado.slice(0, 7) === filtroMes);
-    const departamentoMatch = ["Gerente", "Caixa"].includes(s.departamento);
+    
+    // NECESSÁRIO: Lógica de filtro corrigida para usar o estado `filtroDepartamento`
+    const departamentoMatch =
+      !filtroDepartamento || String(s.departamento_id) === String(filtroDepartamento);
+
     return mesMatch && departamentoMatch;
   });
 
@@ -247,7 +270,7 @@ export default function Salarios() {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [filtroMes]);
+  }, [filtroMes, filtroDepartamento]); // NECESSÁRIO: Adicionado filtroDepartamento
 
   useEffect(() => {
     fetchSalarios();
@@ -272,12 +295,15 @@ export default function Salarios() {
           <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600">Departamento</label>
             <select
+              // NECESSÁRIO: Adicionado value e onChange para o filtro de departamento
+              value={filtroDepartamento}
+              onChange={(e) => setFiltroDepartamento(e.target.value)}
               className="border rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
             >
               <option value="">Todos</option>
               {departamentos.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.nome}
+                  {d.departamento} {/* Mantendo 'departamento' para consistência com o modal */}
                 </option>
               ))}
             </select>
@@ -387,7 +413,7 @@ export default function Salarios() {
                   <option value="">Selecione o departamento</option>
                   {departamentos.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.nome}
+                      {d.departamento}
                     </option>
                   ))}
                 </select>
@@ -509,7 +535,7 @@ export default function Salarios() {
               <tr key={u.id} className="border-t hover:bg-gray-50">
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
-                <td className="p-2">{u.departamento}</td>
+                <td className="p-2">{getNomeDepartamento(u.departamento_id)}</td> {/* NECESSÁRIO: Exibe o nome do departamento */}
                 <td className="p-2">{formatarValor(u.valor)}</td>
 
                 <td className="p-2">
