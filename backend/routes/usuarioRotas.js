@@ -2,7 +2,6 @@ import express from 'express';
 import { 
   listarUsuariosController,
   obterUsuarioIdController,
-  mudarStatusFuncionarioController,
   deletarUsuarioController,
   atualizarUsuarioController
 } from '../controllers/usuarioController.js';
@@ -13,7 +12,6 @@ import authMiddleware from '../middlewares/authMiddleware.js';
  
 const router = express.Router();
  
-router.put('/:id/status', authMiddleware, mudarStatusFuncionarioController);
 
 router.options(':id/status', (req, res) => {
     res.setHeader('Allow', 'PUT, OPTIONS');

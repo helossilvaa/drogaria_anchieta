@@ -8,7 +8,6 @@ import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-
 export default function Layout({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,8 +17,6 @@ export default function Layout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    
-    
     const fetchUsuario = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -29,33 +26,40 @@ export default function Layout({ children }) {
         }
 
         const decoded = jwtDecode(token);
-        
-      
 
-        if (!["Diretor Geral", "Diretor Administrativo", "Gerente", "Caixa"].includes(decoded.departamento)) {
+        // Verifica departamento permitido
+        const allowed = ["diretor geral", "diretor administrativo", "gerente", "caixa"];
+        if (!allowed.includes(decoded.departamento.toLowerCase())) {
+          localStorage.removeItem("token");
           router.push("/");
           return;
         }
 
+        // Verifica expiração do token
         if (decoded.exp < Date.now() / 1000) {
           localStorage.removeItem("token");
           router.push("/");
           return;
         }
 
-        const id = decoded.id; 
-        
-        const res = await fetch(`${API_URL}/usuarios/${id}`, {
+        // Fetch do usuário + funcionário via JOIN no backend
+        const res = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) throw new Error("Usuário não encontrado");
+        if (!res.ok) {
+          localStorage.removeItem("token");
+          throw new Error("Usuário não encontrado");
+        }
 
         const data = await res.json();
+
         setUsuario({
-          nome: data.nome,
-          foto: data.foto || null,
+          id: data.id,
+          status: data.status,
+          foto: data.foto || null, 
           departamento: decoded.departamento,
+          funcionario: data.funcionario || null, 
         });
 
       } catch (err) {
@@ -68,8 +72,15 @@ export default function Layout({ children }) {
 
     fetchUsuario();
   }, [router]);
-  
-  
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Carregando usuário...</p>
+      </div>
+    );
+  }
+
   if (erro) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -80,12 +91,12 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen p-2">
-      <Sidebar usuario={usuario} className="fixed"/>
+      <Sidebar usuario={usuario} className="fixed" />
       <div className="flex-1 flex flex-col p-6 pt-2 gap-4">
-       
+        {/* Barra superior */}
         <div className="flex items-center justify-end gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"/>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Buscar..."
@@ -98,11 +109,25 @@ export default function Layout({ children }) {
           </div>
 
           <div className="profile">
-            <ComboboxDemo className="h-40" usuario={usuario}/>
+            {usuario && (
+              <ComboboxDemo
+                usuario={usuario}
+                onFotoAtualizada={(fotoAtualizada, isFuncionario = false) => {
+                  if (isFuncionario && usuario.funcionario) {
+                    setUsuario(prev => ({
+                      ...prev,
+                      funcionario: { ...prev.funcionario, foto: fotoAtualizada }
+                    }));
+                  } else {
+                    setUsuario(prev => ({ ...prev, foto: fotoAtualizada }));
+                  }
+                }}
+              />
+            )}
           </div>
         </div>
 
-       
+        {/* Conteúdo */}
         <div className="conteudo bg-gray-50 rounded-2xl p-3 sm:flex justify-center align-center">
           {children}
         </div>
