@@ -45,7 +45,10 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} className="w-[220px] justify-between">
             <div className="flex items-center gap-2">
-              {typeof userImage === "string" && userImage.includes("base64") ? (
+              {(typeof userImage === "string" &&
+                userImage.trim() !== "" &&
+                userImage !== "null" &&
+                userImage !== "undefined") ? (
                 <Image
                   src={userImage}
                   alt={userName}
