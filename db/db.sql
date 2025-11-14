@@ -217,9 +217,7 @@ CREATE TABLE filiados (
     logradouro VARCHAR(200) NOT NULL,
     bairro VARCHAR(200) NOT NULL,
     tipodesconto INT NOT NULL,
-    unidade_id INT NOT NULL,
     FOREIGN KEY (tipodesconto) REFERENCES tiposdescontos (id),
-    FOREIGN KEY (unidade_id) REFERENCES unidade(id)
 );
 
 CREATE TABLE servicos (
