@@ -28,13 +28,16 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
 
   const API_URL = "http://localhost:8080";
 
+  // Inicializa formulário com dados existentes
   useEffect(() => {
     if (!open || !usuario) return;
 
     const funcionario = usuario.funcionario;
 
+    console.log(funcionario);
+
     setFormValues({
-      nome: funcionario?.nome || usuario.nome || "",
+      nome: funcionario?.nome || "",
       cpf: funcionario?.cpf || "",
       data_nascimento: funcionario?.data_nascimento?.split("T")[0] || "",
       email: funcionario?.email || "",
@@ -43,10 +46,10 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
       numero: funcionario?.numero || "",
       cidade: funcionario?.cidade || "",
       estado: funcionario?.estado || "",
-      foto: funcionario?.foto || usuario.foto || null
+      foto: usuario.foto || null
     });
 
-    setPreviewImage(funcionario?.foto || usuario.foto || null);
+    setPreviewImage(usuario.foto || null);
 
   }, [open, usuario]);
 
@@ -72,34 +75,50 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
     if (!token || !usuario) return;
 
     const funcionarioId = usuario.funcionario?.id;
-
-    let fotoBase64 = formValues.foto?.startsWith("data:image") ? formValues.foto.split(",")[1] : null;
+    const usuarioId = usuario.id;
+    const fotoBase64 = formValues.foto?.startsWith("data:image") ? formValues.foto.split(",")[1] : null;
 
     try {
-      const res = await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
+      // Atualiza dados do funcionário
+      await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...formValues,
-          foto: fotoBase64,
+          nome: formValues.nome,
+          cpf: formValues.cpf,
           data_nascimento: formValues.data_nascimento
             ? new Date(formValues.data_nascimento).toISOString().split("T")[0]
-            : null
+            : null,
+          email: formValues.email,
+          telefone: formValues.telefone,
+          logradouro: formValues.rua,
+          numero: formValues.numero,
+          cidade: formValues.cidade,
+          estado: formValues.estado
         })
       });
 
-      if (!res.ok) throw new Error("Erro ao atualizar funcionário");
+    
 
-      toast.success("Dados atualizados com sucesso!");
-
-      if (onFotoAtualizada && formValues.foto) {
-        onFotoAtualizada(formValues.foto, true);
+      // Atualiza foto do usuário
+      if (fotoBase64) {
+        await fetch(`${API_URL}/usuarios/${usuarioId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ foto: fotoBase64.foto })
+        });
       }
 
+      toast.success("Dados atualizados com sucesso!");
+      if (onFotoAtualizada && formValues.foto) onFotoAtualizada(formValues.foto, false);
       onOpenChange(false);
+
     } catch (err) {
       console.error(err);
       toast.error("Erro ao salvar alterações");

@@ -22,7 +22,6 @@ const listarUsuarios = async () => {
     }
 }
 
-
 //obter usuario
 const obterUsuarioId = async (id)=> {
     try {

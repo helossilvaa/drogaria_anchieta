@@ -7,7 +7,7 @@ import { PopoverNotificacoes } from "../notificacoes/notificacoes";
 import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import loading from "../../app/loading";
+import Loading from "../../app/loading";
 
 export default function Layout({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -73,7 +73,7 @@ export default function Layout({ children }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p><loading/></p>
+        <div className="loading"><Loading/></div>
       </div>
     );
   }
