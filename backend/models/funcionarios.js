@@ -50,10 +50,22 @@ const deletarFuncionario = async (id) => {
   }
 };
 
+const mudarStatusFuncionario = async (id, novoStatus) => {
+  try {
+      const dadosParaAtualizar = { status: novoStatus };
+      const usuarioid = `id = ${id}`;
+      return await update('usuarios', dadosParaAtualizar, usuarioid);
+  } catch (error) {
+      console.error('Erro ao mudar status do funcionário:', error);
+      throw error;
+  }
+};
+
 export {
   criarFuncionario,
   listarFuncionarios,
   obterFuncionarioId,
   atualizarFuncionario,
-  deletarFuncionario
+  deletarFuncionario,
+  mudarStatusFuncionario
 };

@@ -45,19 +45,22 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} className="w-[220px] justify-between">
             <div className="flex items-center gap-2">
-              {userImage ? (
+              {(typeof userImage === "string" &&
+                userImage.trim() !== "" &&
+                userImage !== "null" &&
+                userImage !== "undefined") ? (
                 <Image
                   src={userImage}
                   alt={userName}
                   width={24}
                   height={24}
-                  className="rounded-full object-cover"
+                  className="rounded-full"
                 />
               ) : (
-                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-medium uppercase">
-                  {getInitials(userName)}
-                </div>
+                <div className="w-6 h-6 rounded-full bg-gray-300" />
               )}
+
+
               <span className="font-medium">{userName}</span>
             </div>
             <ChevronsUpDown className="opacity-50 h-4 w-4" />
@@ -96,6 +99,7 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
 
       <DialogConfig
         open={openDialog}
+        usuario={usuario}
         onOpenChange={setOpenDialog}
         onFotoAtualizada={(novaFoto, isFuncionario = false) => {
           setUserImage(novaFoto);

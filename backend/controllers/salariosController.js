@@ -16,7 +16,7 @@ export const criarSalario = async (req, res) => {
   if (!id_funcionario || !departamento_id || !valor) {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
-
+ 
   try {
     const insertId = await Salario.create({
       id_funcionario,

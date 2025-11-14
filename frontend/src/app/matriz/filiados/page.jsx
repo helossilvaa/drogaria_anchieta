@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/layout/layout";
 
 export default function Filiados() {
-  //Função global para obter o token
-  const getToken = () => localStorage.getItem("token");
   //Constantes utilizadas nas funcionalidades do código
   const [abrirModal, setAbrirModal] = useState(false);
   const [abrirModalEditar, setAbrirModalEditar] = useState(false);
@@ -32,6 +30,8 @@ export default function Filiados() {
   });
 
   const API_URL = "http://localhost:8080/api/filiados";
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   // Buscar usuários do backend
   useEffect(() => {
@@ -61,9 +61,8 @@ export default function Filiados() {
 
   const fetchUsuarios = async () => {
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch(API_URL, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       setUsuarios(data);
@@ -74,9 +73,8 @@ export default function Filiados() {
 
   const fetchTiposDescontos = async () => {
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:8080/api/tiposdescontos", {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       setTiposDescontos(data);
@@ -182,7 +180,7 @@ export default function Filiados() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(novoUsuario),
       });
@@ -254,7 +252,7 @@ export default function Filiados() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(novoUsuario),
       });
@@ -277,7 +275,7 @@ export default function Filiados() {
     try {
       const res = await fetch(`${API_URL}/${usuarioSelecionado.id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) {
