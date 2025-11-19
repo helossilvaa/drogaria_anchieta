@@ -83,7 +83,6 @@ async function create(table, data) {
 async function update(table, data, where) {
   const connection = await getConnection();
   try {
-    
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined)
     );
