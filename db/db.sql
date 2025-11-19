@@ -30,7 +30,7 @@ CREATE TABLE funcionarios (
     estado CHAR(2) NOT NULL,
     cep VARCHAR(9) NOT NULL,
     numero INT NOT NULL,
-    foto BLOB,
+    foto VARCHAR(500) NULL,
     status ENUM('ativo', 'inativo') DEFAULT 'ativo',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -41,7 +41,7 @@ CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     senha VARCHAR(255) NOT NULL,
     departamento_id INT NOT NULL,
-    foto BLOB,
+    foto VARCHAR(500) NULL,
     funcionario_id INT NOT NULL,
     status ENUM('ativo', 'inativo', 'de férias', 'de licença', 'de atestado') DEFAULT 'ativo',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -130,7 +130,7 @@ CREATE TABLE produtos (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     registro_anvisa INT NOT NULL,
     nome VARCHAR(400) NOT NULL,
-    foto LONGBLOB NULL,
+    foto VARCHAR(500) NULL,
     medida_id INT NOT NULL,
     tarja_id INT NOT NULL,
     categoria_id INT NOT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE filiados (
     logradouro VARCHAR(200) NOT NULL,
     bairro VARCHAR(200) NOT NULL,
     tipodesconto INT NOT NULL,
-    FOREIGN KEY (tipodesconto) REFERENCES tiposdescontos (id),
+    FOREIGN KEY (tipodesconto) REFERENCES tiposdescontos (id)
 );
 
 CREATE TABLE servicos (

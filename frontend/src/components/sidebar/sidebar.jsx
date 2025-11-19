@@ -24,38 +24,39 @@ export default function Sidebar({ usuario }) {
   const [menuItems, setMenuItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (!usuario) return;
 
-    const { departamento } = usuario;
-
-    if (departamento === "Diretor Geral") {
-      setMenuItems([
-        { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/" },
-        { label: "Filiais", icon: <Building2 />, href: "/matriz/filiais" },
-        { label: "Relatórios", icon: <FileChartPie />, href: "/matriz/relatorios" },
-        { label: "Funcionários", icon: <Users />, href: "/matriz/funcionarios" },
-        { label: "Financeiro", icon: <BadgeDollarSign />, href: "/matriz/financeiro" },
-        { label: "Estoque", icon: <PackageOpen />, href: "/matriz/estoque" },
-        { label: "Produtos", icon: <PackageSearch />, href: "/matriz/produtos" },
-      ]);
-    } else if (departamento === "Diretor Administrativo") {
-      setMenuItems([
-        { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/" },
-        { label: "Produtos", icon: <Box />, href: "/filial/produtos" },
-        { label: "Financeiro", icon: <CircleDollarSign />, href: "/filial/financeiro" },
-        { label: "Estoque", icon: <PackageOpen />, href: "/filial/estoque" },
-        { label: "Funcionários", icon: <Users />, href: "/filial/funcionarios" },
-      ]);
-    } else {
-      setMenuItems([
-        { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/" },
-        { label: "Nova venda", icon: <ShoppingBag />, href: "/caixa/venda" },
-        { label: "Produtos", icon: <PackageSearch />, href: "/caixa/produtos" },
-        { label: "Programa de fidelidade", icon: <Handshake />, href: "/caixa/fidelidade" },
-      ]);
-    }
-  }, [usuario]);
+    useEffect(() => {
+      if (!usuario) return;
+  
+      const { departamento } = usuario;
+  
+      if (departamento === "diretor geral") {
+        setMenuItems([
+          { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/" },
+          { label: "Filiais", icon: <Building2 />, href: "/filiais" },
+          { label: "Relatórios", icon: <FileChartPie />, href: "/relatorios" },
+          { label: "Funcionários", icon: <Users />, href: "/funcionarios" },
+          { label: "Financeiro", icon: <BadgeDollarSign />, href: "/financeiro" },
+          { label: "Estoque", icon: <PackageOpen />, href: "/estoque" },
+          { label: "Produtos", icon: <PackageSearch />, href: "/produtos" },
+        ]);
+      } else if (departamento === "diretor administrativo") {
+        setMenuItems([
+          { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/" },
+          { label: "Produtos", icon: <Box />, href: "/produtos" },
+          { label: "Financeiro", icon: <CircleDollarSign />, href: "/financeiro" },
+          { label: "Estoque", icon: <PackageOpen />, href: "/estoque" },
+          { label: "Funcionários", icon: <Users />, href: "/funcionarios" },
+        ]);
+      } else {
+        setMenuItems([
+          { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/" },
+          { label: "Nova venda", icon: <ShoppingBag />, href: "/venda" },
+          { label: "Produtos", icon: <PackageSearch />, href: "/produtos" },
+          { label: "Programa de fidelidade", icon: <Handshake />, href: "/fidelidade" },
+        ]);
+      }
+    }, [usuario]);
 
   if (!usuario || menuItems.length === 0) return null;
 
