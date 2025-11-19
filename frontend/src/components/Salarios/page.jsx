@@ -21,8 +21,7 @@ export default function Salarios() {
 
   const [departamentos, setDepartamentos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
-  const [filtroMes, setFiltroMes] = useState("");
-  const [filtroDepartamento, setFiltroDepartamento] = useState(""); // NECESSÁRIO: Adicionado estado para o filtro de departamento
+  const [filtroDepartamento, setFiltroDepartamento] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
@@ -157,18 +156,15 @@ export default function Salarios() {
       alert("Preencha todos os campos obrigatórios.");
       return;
     }
-    
-    // Converte o valor para float, usando a lógica de limpeza para garantir que o input com vírgula seja tratado
+
+
     const valorLimpo = novoSalario.valor.replace(/,/g, ".").replace(/[^\d.]/g, "");
 
     const salarioParaAPI = {
       ...novoSalario,
-      valor: valorLimpo ? parseFloat(valorLimpo).toFixed(2) : "0.00", // Fix: usa valorLimpo
-      data_atualizado:
-        novoSalario.data_atualizado || new Date().toISOString().slice(0, 10),
+      valor: valorLimpo ? parseFloat(valorLimpo).toFixed(2) : "0.00",
     };
-    
-    // Remove as propriedades não esperadas pela API de um salário
+
     delete salarioParaAPI.nome;
     delete salarioParaAPI.registro;
 
@@ -215,7 +211,6 @@ export default function Salarios() {
       departamento_id: s.departamento_id ?? "",
       valor: getValorParaInput(s.valor ?? ""),
       status_pagamento: s.status_pagamento ?? "pendente",
-      data_atualizado: toInputDate(s.data_atualizado ?? ""),
     });
 
     setAbrirModal(true);
@@ -246,15 +241,10 @@ export default function Salarios() {
   };
 
   const salariosFiltrados = salarios.filter((s) => {
-
-    const mesMatch =
-      !filtroMes || (s.data_atualizado && s.data_atualizado.slice(0, 7) === filtroMes);
-    
-    // NECESSÁRIO: Lógica de filtro corrigida para usar o estado `filtroDepartamento`
     const departamentoMatch =
       !filtroDepartamento || String(s.departamento_id) === String(filtroDepartamento);
 
-    return mesMatch && departamentoMatch;
+    return departamentoMatch;
   });
 
   const indexUltimo = paginaAtual * itensPorPagina;
@@ -270,7 +260,7 @@ export default function Salarios() {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [filtroMes, filtroDepartamento]); // NECESSÁRIO: Adicionado filtroDepartamento
+  }, [filtroDepartamento]);
 
   useEffect(() => {
     fetchSalarios();
@@ -283,19 +273,8 @@ export default function Salarios() {
       <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
         <div className="flex gap-4 flex-wrap">
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-600">Mês</label>
-            <input
-              type="month"
-              value={filtroMes}
-              onChange={(e) => setFiltroMes(e.target.value)}
-              className="border rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-            />
-          </div>
-
-          <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600">Departamento</label>
             <select
-              // NECESSÁRIO: Adicionado value e onChange para o filtro de departamento
               value={filtroDepartamento}
               onChange={(e) => setFiltroDepartamento(e.target.value)}
               className="border rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
@@ -303,22 +282,19 @@ export default function Salarios() {
               <option value="">Todos</option>
               {departamentos.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.departamento} {/* Mantendo 'departamento' para consistência com o modal */}
+                  {d.departamento}
                 </option>
               ))}
             </select>
           </div>
         </div>
-
         <button
           type="button"
           onClick={handleNovaSalario}
-          className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white"
-        >
+          className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white">
           Nova Conta
         </button>
       </div>
-
       {/* MODAL ADICIONAR / EDITAR */}
       {abrirModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
@@ -330,74 +306,65 @@ export default function Salarios() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
               {/* ✅ REGISTRO */}
-              <div>
-                <label htmlFor="registro" className="block">
+              <label htmlFor="registro" className="block">
                   Registro
                 </label>
-                <input
-                  id="registro"
-                  name="registro"
-                  list="listaRegistros"
-                  value={novoSalario.registro || ""}
-                  onChange={(e) => {
-                    const valor = e.target.value;
-                    const funcionarioSelecionado = funcionarios.find(
-                      (u) => String(u.registro) === String(valor)
-                    );
-                    setNovoSalario((prev) => ({
-                      ...prev,
-                      registro: valor,
-                      id_funcionario: funcionarioSelecionado?.id || prev.id_funcionario,
-                      nome: funcionarioSelecionado?.nome || prev.nome,
-                    }));
-                  }}
-                  className="border rounded-md p-2 w-full"
-                  placeholder="Digite ou selecione o registro"
-                />
-                <datalist id="listaRegistros">
-                  {funcionarios.map((u) => (
-                    <option key={u.id} value={u.registro}>
-                      {u.registro} - {u.nome}
-                    </option>
-                  ))}
-                </datalist>
-              </div>
+              <input
+                id="registro"
+                name="registro"
+                list="listaRegistros"
+                value={novoSalario.registro || ""}
+                onChange={(e) => {
+                  if (editarSalarioId) return; // 🔥 impede mudanças no modo editar
+                  const valor = e.target.value;
+                  const funcionarioSelecionado = funcionarios.find(
+                    (u) => String(u.registro) === String(valor)
+                  );
+
+                  setNovoSalario((prev) => ({
+                    ...prev,
+                    registro: valor,
+                    id_funcionario: funcionarioSelecionado?.id || "",
+                    nome: funcionarioSelecionado?.nome || "",
+                    departamento_id: funcionarioSelecionado?.departamento_id || "",
+                  }));
+                }}
+                disabled={!!editarSalarioId}   // 🔥 CONGELA NO EDITAR
+                className="border rounded-md p-2 w-full"
+                placeholder="Digite ou selecione o registro"
+              />
+
 
               {/* ✅ FUNCIONÁRIO */}
-              <div>
-                <label htmlFor="nome" className="block">
+              <label htmlFor="nome" className="block">
                   Funcionário
                 </label>
-                <input
-                  id="nome"
-                  name="nome"
-                  list="listaFuncionarios"
-                  value={novoSalario.nome || ""}
-                  onChange={(e) => {
-                    const valor = e.target.value;
-                    const funcionarioSelecionado = funcionarios.find(
-                      (u) => String(u.nome) === String(valor)
-                    );
-                    setNovoSalario((prev) => ({
-                      ...prev,
-                      nome: valor,
-                      id_funcionario: funcionarioSelecionado?.id || prev.id_funcionario,
-                      registro: funcionarioSelecionado?.registro || prev.registro,
-                    }));
-                  }}
-                  className="border rounded-md p-2 w-full"
-                  placeholder="Digite ou selecione o funcionário"
-                />
-                <datalist id="listaFuncionarios">
-                  {funcionarios.map((u) => (
-                    <option key={u.id} value={u.nome}>
-                      {u.nome} - {u.registro}
-                    </option>
-                  ))}
-                </datalist>
-              </div>
+              <input
+                id="nome"
+                name="nome"
+                list="listaFuncionarios"
+                value={novoSalario.nome || ""}
+                onChange={(e) => {
+                  if (editarSalarioId) return; // 🔥 impede mudanças no modo editar
+                  const valor = e.target.value;
+                  const funcionarioSelecionado = funcionarios.find(
+                    (u) => String(u.nome) === String(valor)
+                  );
 
-              {/* EXISTENTES - sem alteração */}
+                  setNovoSalario((prev) => ({
+                    ...prev,
+                    nome: valor,
+                    id_funcionario: funcionarioSelecionado?.id || "",
+                    registro: funcionarioSelecionado?.registro || "",
+                    departamento_id: funcionarioSelecionado?.departamento_id || "",
+                  }));
+                }}
+                disabled={!!editarSalarioId}   // 🔥 CONGELA NO EDITAR
+                className="border rounded-md p-2 w-full"
+                placeholder="Digite ou selecione o funcionário"
+              />
+
+
               <div>
                 <label htmlFor="departamento_id" className="block">
                   Departamento
@@ -405,8 +372,9 @@ export default function Salarios() {
                 <select
                   id="departamento_id"
                   name="departamento_id"
-                  value={novoSalario.departamento_id}
+                  value={novoSalario.departamento_id || ""}
                   onChange={handleChange}
+                  disabled={!!editarSalarioId}  
                   className="border rounded-md p-2 w-full"
                   required
                 >
@@ -431,20 +399,6 @@ export default function Salarios() {
                   value={novoSalario.valor}
                   className="border rounded-md p-2 w-full"
                   required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="data_atualizado" className="block">
-                  Data Atualizado
-                </label>
-                <input
-                  id="data_atualizado"
-                  name="data_atualizado"
-                  type="date"
-                  onChange={handleChange}
-                  value={novoSalario.data_atualizado}
-                  className="border rounded-md p-2 w-full"
                 />
               </div>
 
@@ -525,7 +479,7 @@ export default function Salarios() {
               <th className="p-2">Departamento</th>
               <th className="p-2">Valor</th>
               <th className="p-2">Status</th>
-              <th className="p-2">Atualizado</th>
+              <th className="p-2">Dia do Pagamento</th>
               <th className="p-2 rounded-tr-lg">Ações</th>
             </tr>
           </thead>
@@ -535,7 +489,7 @@ export default function Salarios() {
               <tr key={u.id} className="border-t hover:bg-gray-50">
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
-                <td className="p-2">{getNomeDepartamento(u.departamento_id)}</td> {/* NECESSÁRIO: Exibe o nome do departamento */}
+                <td className="p-2">{getNomeDepartamento(u.departamento)}</td> {/* NECESSÁRIO: Exibe o nome do departamento */}
                 <td className="p-2">{formatarValor(u.valor)}</td>
 
                 <td className="p-2">
@@ -549,7 +503,13 @@ export default function Salarios() {
                   </span>
                 </td>
 
-                <td className="p-2">{formatarData(u.data_atualizado)}</td>
+                <td className="p-2">
+                  {u.data_atualizado
+                    ? new Date(u.data_atualizado).toLocaleDateString("pt-BR")
+                    : ""}
+                </td>
+
+
                 <td className="p-2 text-center flex gap-2 justify-center">
                   <button
                     onClick={() => handleEditar(u)}

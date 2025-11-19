@@ -21,6 +21,7 @@ import salariosRotas from './routes/salariosRotas.js';
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
+import { downloadPDF } from './controllers/contasFilialController.js';
 
 dotenv.config();
 
@@ -68,6 +69,9 @@ app.use('/api', salariosRotas);
 app.use('/departamento', departamentosRotas);
 app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
+app.get("/pdfs/:id", downloadPDF);
+
+
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });
