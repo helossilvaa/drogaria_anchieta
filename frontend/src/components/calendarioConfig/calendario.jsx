@@ -7,21 +7,22 @@ import { useState, useEffect } from "react";
 export function CalendarioConfig({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [month, setMonth] = useState(new Date()); // 👈 controla o mês exibido
+  const [month, setMonth] = useState(new Date());
 
-  // Sincroniza quando o valor vindo do pai mudar
+  
   useEffect(() => {
     if (value) {
-      const date = new Date(value);
-      if (!isNaN(date)) {
-        setSelected(date);
-        setMonth(date); // 👈 posiciona o calendário no mês da data
-      }
+      const [year, month, day] = value.split("-");
+      const date = new Date(year, month - 1, day); 
+  
+      setSelected(date);
+      setMonth(date);
     } else {
       setSelected(null);
-      setMonth(new Date()); // se não tiver valor, mostra mês atual
+      setMonth(new Date());
     }
   }, [value]);
+  
 
   const handleSelect = (date) => {
     if (!date) return;

@@ -3,6 +3,7 @@ import { criarFuncionarioController, listarFuncionariosController, obterFunciona
     deletarFuncionarioController, atualizarFuncionarioController, mudarStatusFuncionarioController} from '../controllers/funcionariosController.js';
 
 import authMiddleware from '../middlewares/authMiddleware.js';
+import upload from "../middlewares/upload.js";
  
 const router = express.Router();
  
@@ -10,7 +11,7 @@ router.post('/', authMiddleware, criarFuncionarioController);
 router.get('/', authMiddleware, listarFuncionariosController);
 router.get('/:id', authMiddleware, obterFuncionarioIdController);
 router.delete('/:id', authMiddleware, deletarFuncionarioController);
-router.patch('/:id', authMiddleware, atualizarFuncionarioController);
+router.patch('/:id', authMiddleware, upload.single("foto"), atualizarFuncionarioController);
 router.put('/:id/status', authMiddleware, mudarStatusFuncionarioController);
 
 router.options(':id/status', (req, res) => {

@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +21,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) {
   const [previewImage, setPreviewImage] = useState(null);
+  const [fotoArquivo, setFotoArquivo] = useState(null);
+  const API_URL = "http://localhost:8080";
+
   const [formValues, setFormValues] = useState({
     nome: "",
     cpf: "",
@@ -23,18 +34,13 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
     numero: "",
     cidade: "",
     estado: "",
-    foto: null
   });
 
-  const API_URL = "http://localhost:8080";
-
-  // Inicializa formulário com dados existentes
+  // 🔥 Carregar dados quando o modal abre
   useEffect(() => {
     if (!open || !usuario) return;
 
     const funcionario = usuario.funcionario;
-
-    console.log(funcionario);
 
     setFormValues({
       nome: funcionario?.nome || "",
@@ -46,28 +52,26 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
       numero: funcionario?.numero || "",
       cidade: funcionario?.cidade || "",
       estado: funcionario?.estado || "",
-      foto: usuario.foto || null
     });
 
-    setPreviewImage(usuario.foto || null);
+    // 🔥 MOSTRA A FOTO REAL DO BACKEND
+    setPreviewImage(usuario.foto ? `${API_URL}${usuario.foto}` : null);
 
   }, [open, usuario]);
 
+  // 🔥 Atualiza preview da foto localmente
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-        setFormValues(prev => ({ ...prev, foto: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    setFotoArquivo(file);
+
+    // Apenas preview. NÃO enviar blob pro backend.
+    setPreviewImage(URL.createObjectURL(file));
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
+    setFormValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async () => {
@@ -76,47 +80,56 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
 
     const funcionarioId = usuario.funcionario?.id;
     const usuarioId = usuario.id;
-    const fotoBase64 = formValues.foto?.startsWith("data:image") ? formValues.foto.split(",")[1] : null;
 
     try {
-      // Atualiza dados do funcionário
+      // 🔷 1 — Atualiza dados do funcionário
       await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           nome: formValues.nome,
           cpf: formValues.cpf,
-          data_nascimento: formValues.data_nascimento
-            ? new Date(formValues.data_nascimento).toISOString().split("T")[0]
-            : null,
+          data_nascimento: formValues.data_nascimento,
           email: formValues.email,
           telefone: formValues.telefone,
           logradouro: formValues.rua,
           numero: formValues.numero,
           cidade: formValues.cidade,
-          estado: formValues.estado
-        })
+          estado: formValues.estado,
+        }),
       });
 
-    
+      let fotoAtualizadaUrl = null;
 
-      // Atualiza foto do usuário
-      if (fotoBase64) {
-        await fetch(`${API_URL}/usuarios/${usuarioId}`, {
+      // 🔷 2 — Atualiza foto SE TIVER arquivo novo
+      if (fotoArquivo) {
+        const formData = new FormData();
+        formData.append("foto", fotoArquivo);
+
+        const response = await fetch(`${API_URL}/usuarios/${usuarioId}`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ foto: fotoBase64.foto })
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
         });
+
+        const data = await response.json();
+
+        // 🔥 PEGA A URL REAL QUE VEIO DO BACKEND
+        if (data?.foto) {
+          fotoAtualizadaUrl = `${API_URL}${data.foto}`;
+        }
       }
 
       toast.success("Dados atualizados com sucesso!");
-      if (onFotoAtualizada && formValues.foto) onFotoAtualizada(formValues.foto, false);
+
+      // 🔥 Só envia para o pai a URL REAL do backend
+      if (onFotoAtualizada && fotoAtualizadaUrl) {
+        onFotoAtualizada(fotoAtualizadaUrl, true);
+      }
+
       onOpenChange(false);
 
     } catch (err) {
@@ -127,87 +140,102 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ToastContainer position="top-right" autoClose={2000} pauseOnHover={false} theme="light" />
+      <ToastContainer position="top-right" autoClose={2000} />
       <DialogContent className="!max-w-[900px] p-6">
         <DialogHeader>
           <DialogTitle>Configurações</DialogTitle>
-          <DialogDescription>
-            Faça alterações no seu perfil aqui. Clique em salvar quando terminar.
-          </DialogDescription>
+          <DialogDescription>Altere seus dados e foto.</DialogDescription>
         </DialogHeader>
 
-        {/* Foto + Nome */}
+        {/* FOTO */}
         <div className="grid grid-cols-[80px_1fr] gap-3 items-center mb-4">
           <div className="flex flex-col items-center">
             <Label htmlFor="file-upload">Foto</Label>
-            <input id="file-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            <label htmlFor="file-upload" className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition overflow-hidden">
+
+            <input
+              id="file-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <label
+              htmlFor="file-upload"
+              className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition overflow-hidden"
+            >
               {previewImage ? (
-                <img src={previewImage} alt="Pré-visualização" className="w-full h-full object-cover" />
+                <img src={previewImage} className="w-full h-full object-cover" />
               ) : (
                 <ImagePlus className="w-5 h-5 text-gray-600" />
               )}
             </label>
           </div>
+
           <div className="grid gap-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input id="nome" name="nome" value={formValues.nome} onChange={handleChange} size="sm" />
+            <Label>Nome</Label>
+            <Input name="nome" value={formValues.nome} onChange={handleChange} size="sm" />
           </div>
         </div>
 
-        {/* CPF + Data de Nascimento */}
+        {/* Resto do formulário */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="grid gap-2">
-            <Label htmlFor="cpf">CPF</Label>
-            <Input id="cpf" name="cpf" value={formValues.cpf} onChange={handleChange} size="sm" />
+            <Label>CPF</Label>
+            <Input name="cpf" value={formValues.cpf} onChange={handleChange} size="sm" />
           </div>
           <div className="grid gap-2">
             <Label>Data de Nascimento</Label>
-            <CalendarioConfig value={formValues.data_nascimento} onChange={val => setFormValues(prev => ({ ...prev, data_nascimento: val }))} />
+            <CalendarioConfig
+              value={formValues.data_nascimento}
+              onChange={(v) => setFormValues(prev => ({ ...prev, data_nascimento: v }))}
+            />
           </div>
         </div>
 
-        {/* Email + Telefone */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" value={formValues.email} onChange={handleChange} size="sm" />
+          <div>
+            <Label>Email</Label>
+            <Input name="email" value={formValues.email} onChange={handleChange} size="sm" />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="telefone">Telefone</Label>
-            <Input id="telefone" name="telefone" value={formValues.telefone} onChange={handleChange} size="sm" />
+          <div>
+            <Label>Telefone</Label>
+            <Input name="telefone" value={formValues.telefone} onChange={handleChange} size="sm" />
           </div>
         </div>
 
-        {/* Endereço */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="grid grid-cols-[1fr_100px] gap-2">
-            <div className="grid gap-2">
-              <Label htmlFor="rua">Rua</Label>
-              <Input id="rua" name="rua" value={formValues.rua} onChange={handleChange} size="sm" />
+            <div>
+              <Label>Rua</Label>
+              <Input name="rua" value={formValues.rua} onChange={handleChange} size="sm" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="numero">Nº</Label>
-              <Input id="numero" name="numero" value={formValues.numero} onChange={handleChange} size="sm" />
+            <div>
+              <Label>Nº</Label>
+              <Input name="numero" value={formValues.numero} onChange={handleChange} size="sm" />
             </div>
           </div>
+
           <div className="grid grid-cols-[1fr_200px] gap-2">
-            <div className="grid gap-2">
-              <Label htmlFor="cidade">Cidade</Label>
-              <Input id="cidade" name="cidade" value={formValues.cidade} onChange={handleChange} size="sm" />
+            <div>
+              <Label>Cidade</Label>
+              <Input name="cidade" value={formValues.cidade} onChange={handleChange} size="sm" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="estado">Estado</Label>
-              <DropdowMenuEstados value={formValues.estado} onChange={val => setFormValues(prev => ({ ...prev, estado: val }))} />
+            <div>
+              <Label>Estado</Label>
+              <DropdowMenuEstados
+                value={formValues.estado}
+                onChange={(v) => setFormValues(prev => ({ ...prev, estado: v }))}
+              />
             </div>
           </div>
         </div>
 
-        <DialogFooter className="flex justify-end gap-2">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" size="sm">Cancelar</Button>
           </DialogClose>
-          <Button onClick={handleSubmit} size="sm">Salvar alterações</Button>
+          <Button size="sm" onClick={handleSubmit}>Salvar alterações</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

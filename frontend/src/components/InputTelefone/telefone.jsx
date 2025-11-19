@@ -17,21 +17,45 @@ export default function InputTelefoneComPais({ value, onChange }) {
   const [paises, setPaises] = useState([]);
   const [paisSelecionado, setPaisSelecionado] = useState(null);
 
-  
+ 
+  const fallbackFlags = {
+    "Afeganistão": "https://flagcdn.com/w320/af.png",
+  "Honduras": "https://flagcdn.com/w320/hn.png",
+  "Ascensão": "https://pt.wikipedia.org/wiki/Ficheiro:Flag_of_Ascension_Island.svg",
+  "Reino Unido": "https://flagcdn.com/w320/gb.png",
+  "Síria": "https://flagcdn.com/w320/sy.png",
+  "Vaticano": "https://flagcdn.com/w320/va.png",
+  "São Tomé e Príncipe": "https://flagcdn.com/w320/st.png"
+  };
+
+ 
+  const corrigirImagem = (pais) => {
+    
+    if (fallbackFlags[pais.pais]) {
+      return fallbackFlags[pais.pais];
+    }
+
+    // Corrige URLs com "https:////"
+    if (pais.img?.includes("https:////")) {
+      return pais.img.replace("https:////", "https://");
+    }
+
+    // Se estiver tudo ok, retorna normal
+    return pais.img;
+  };
+
   useEffect(() => {
     fetch("https://api-paises.pages.dev/paises.json")
       .then((res) => res.json())
       .then((data) => {
-        const arrayPaises = Object.values(data); 
+        const arrayPaises = Object.values(data);
         const ordenados = arrayPaises.sort((a, b) =>
           a.pais.localeCompare(b.pais)
         );
         setPaises(ordenados);
       })
       .catch((err) => console.error("Erro ao buscar países:", err));
-      
   }, []);
-  
 
   return (
     <div className="grid gap-2">
@@ -45,13 +69,13 @@ export default function InputTelefoneComPais({ value, onChange }) {
             setPaisSelecionado(pais);
           }}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[90px]">
             <SelectValue placeholder="País">
               {paisSelecionado ? (
                 <div className="flex items-center gap-2">
                   <Image
-                    src={paisSelecionado.img} 
-                    alt={paisSelecionado.nome}
+                    src={corrigirImagem(paisSelecionado)}
+                    alt={paisSelecionado.pais}
                     width={20}
                     height={14}
                     className="rounded-sm"
@@ -70,7 +94,7 @@ export default function InputTelefoneComPais({ value, onChange }) {
                 <SelectItem key={`${pais.ddi}-${pais.pais}`} value={pais.ddi}>
                   <div className="flex items-center gap-2">
                     <Image
-                      src={pais.img}
+                      src={corrigirImagem(pais)}
                       alt={pais.pais}
                       width={20}
                       height={14}

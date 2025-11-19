@@ -9,6 +9,7 @@ import {
 import { cadastroUsuarioController } from '../controllers/authController.js';
 
 import authMiddleware from '../middlewares/authMiddleware.js';
+import upload from "../middlewares/upload.js";
  
 const router = express.Router();
  
@@ -28,9 +29,11 @@ router.options('/:id', (req, res) => {
 router.post('/', authMiddleware, cadastroUsuarioController);
 router.delete('/:id', authMiddleware, deletarUsuarioController);
 
-router.patch('/:id', authMiddleware, atualizarUsuarioController);
+router.patch('/:id', authMiddleware, upload.single('foto'), atualizarUsuarioController);
 
 router.get('/', authMiddleware, listarUsuariosController);
+
+
 
 router.options('/', (req, res) => {
     res.setHeader('Allow', 'POST, GET,  OPTIONS');
