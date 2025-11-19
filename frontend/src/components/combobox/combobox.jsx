@@ -57,7 +57,7 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
                   className="rounded-full"
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-300" />
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-medium uppercase">{getInitials(userName)}</div>
               )}
 
 
