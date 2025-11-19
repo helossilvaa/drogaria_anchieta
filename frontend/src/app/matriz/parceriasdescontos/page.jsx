@@ -347,36 +347,21 @@ export default function ParceriasDescontos() {
           <button
             ref={refs.parcerias}
             onClick={() => setActiveTab("parcerias")}
-            className={`${activeTab === "parcerias"
-                ? "text-[#245757]"
-                : "text-gray-700"
-              } hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out pb-2`}
-          >
+            className={`${activeTab === "parcerias" ? "text-[#245757]" : "text-gray-700"} hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out pb-2`}>
             Parcerias
           </button>
-
           <button
             ref={refs.descontos}
             onClick={() => setActiveTab("descontos")}
-            className={`${activeTab === "descontos"
-                ? "text-[#245757]"
-                : "text-gray-700"
-              } hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out pb-2`}
-          >
+            className={`${activeTab === "descontos" ? "text-[#245757]" : "text-gray-700"} hover:text-[#245757] focus:outline-none transition-colors duration-300 ease-in-out pb-2`}>
             Descontos
           </button>
 
           {/* Linha cinza de fundo */}
-          <div
-            className="absolute h-1 bg-gray-300 left-0 right-0"
-            style={{ top: "100%" }}
-          ></div>
+          <div className="absolute h-1 bg-gray-300 left-0 right-0" style={{ top: "100%" }}></div>
 
           {/* Linha ativa */}
-          <div
-            className="absolute h-1 bg-[#245757]"
-            style={lineStyle}
-          ></div>
+          <div className="absolute h-1 bg-[#245757]" style={lineStyle}></div>
         </div>
 
         {/* Seção de Parcerias */}
@@ -391,8 +376,7 @@ export default function ParceriasDescontos() {
                 setErro("");
                 setParceriaEditando(null);
               }}
-                className="flex items-center gap-1 border p-2 rounded-md bg-[#245757] text-white mt-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-              >
+                className="flex items-center gap-1 border p-2 rounded-md bg-[#245757] text-white mt-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
                 <svg className="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                   <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5" />
                 </svg>
@@ -401,34 +385,61 @@ export default function ParceriasDescontos() {
 
               {/* Barra de pesquisa */}
               <div className="mb-4">
-                <input type="text" placeholder="Buscar parceiro..." className="p-2 w-64 border rounded focus:ring-blue-500 focus:border-blue-500" value={searchParceria} onChange={(e) => setSearchParceria(e.target.value)} />
-                <button className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">
-                  Pesquisar
-                </button>
+                <div className="relative w-64">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-6 h-6 text-gray-400 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-0 focus:outline-none placeholder-gray-400"
+                    value={searchParceria}
+                    onChange={(e) => setSearchParceria(e.target.value)}
+                  />
+                </div>
               </div>
 
               {/* Modal para criar nova parceria */}
               {abrirModalParceria && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
-                  <div className="bg-white p-6 rounded-md relative w-full max-w-sm">
-                    <button onClick={() => {
-                      setAbrirModalParceria(false);
-                      setParceiro("");
-                      setPorcentagem("");
-                      setErro("");
-                    }}
-                      className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
-                      <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">
+                  <div className="bg-white p-7 rounded-xl shadow-2xl relative w-full max-w-sm animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        setAbrirModalParceria(false);
+                        setParceiro("");
+                        setPorcentagem("");
+                        setErro("");
+                      }}
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-
-                    <h2 className="text-lg font-bold mb-4">Cadastrar Nova Parceria</h2>
-                    <input type="text" value={parceiro} onChange={(e) => setParceiro(e.target.value)} placeholder="Nome do Parceiro" className="p-2 mb-4 w-full border rounded focus:ring-blue-500 focus:border-blue-500" />
-                    <input type="number" value={porcentagem} onChange={(e) => setPorcentagem(e.target.value)} placeholder="Porcentagem" className="p-2 mb-4 w-full border rounded focus:ring-blue-500 focus:border-blue-500" />
-                    {erro && <p className="text-red-500 mt-2 text-sm">{erro}</p>}
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button onClick={criarParceria} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">Criar</button>
+                    <h2 className="text-xl font-bold text-[#245757] tracking-wide">
+                      Criar Parceria
+                    </h2>
+                    <hr className="border-[#245757]/40 mb-5 mt-3" />
+                    <input
+                      type="text"
+                      value={parceiro}
+                      onChange={(e) => setParceiro(e.target.value)}
+                      placeholder="Nome do Parceiro"
+                      className="p-3 mb-4 w-full border rounded-lg bg-gray-100 focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    <input
+                      type="number"
+                      value={porcentagem}
+                      onChange={(e) => setPorcentagem(e.target.value)}
+                      placeholder="Porcentagem (%)"
+                      className="p-3 mb-4 w-full border rounded-lg bg-gray-100 focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    {erro && <p className="text-red-500 mt-1 text-sm">{erro}</p>}
+                    <div className="flex justify-end mt-6">
+                      <button
+                        onClick={criarParceria}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
+                        Criar
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -436,28 +447,44 @@ export default function ParceriasDescontos() {
 
               {/* Modal para editar parceria */}
               {abrirModalEditarParceria && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
-                  <div className="bg-white p-6 rounded-md relative w-full max-w-sm">
-                    <button onClick={() => {
-                      setAbrirModalEditarParceria(false);
-                      setParceriaEditando(null);
-                      setParceiro("");
-                      setPorcentagem("");
-                      setErro("");
-                    }}
-                      className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-                    >
-                      <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">
+                  <div className="bg-white p-7 rounded-xl shadow-2xl relative w-full max-w-sm animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        setAbrirModalEditarParceria(false);
+                        setParceriaEditando(null);
+                        setParceiro("");
+                        setPorcentagem("");
+                        setErro("");
+                      }}
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-
-                    <h2 className="text-lg font-bold mb-4">Editar Parceria</h2>
-                    <input type="text" value={parceiro} onChange={(e) => setParceiro(e.target.value)} placeholder="Nome do Parceiro" className="p-2 mb-4 w-full border rounded focus:ring-green-500 focus:border-green-500" />
-                    <input type="number" value={porcentagem} onChange={(e) => setPorcentagem(e.target.value)} placeholder="Porcentagem" className="p-2 mb-4 w-full border rounded focus:ring-green-500 focus:border-green-500" />
-                    {erro && <p className="text-red-500 mt-2 text-sm">{erro}</p>}
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button onClick={salvarEdicao} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">Salvar</button>
+                    <h2 className="text-xl font-bold text-[#245757] tracking-wide">
+                      Editar Parceria
+                    </h2>
+                    <hr className="border-[#245757]/40 mb-5 mt-3" />
+                    <input
+                      type="text"
+                      value={parceiro}
+                      onChange={(e) => setParceiro(e.target.value)}
+                      placeholder="Nome do Parceiro"
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    <input
+                      type="number"
+                      value={porcentagem}
+                      onChange={(e) => setPorcentagem(e.target.value)}
+                      placeholder="Porcentagem (%)"
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    {erro && <p className="text-red-500 mt-1 text-sm">{erro}</p>}
+                    <div className="flex justify-end mt-6">
+                      <button
+                        onClick={salvarEdicao}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
+                        Salvar
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -465,18 +492,34 @@ export default function ParceriasDescontos() {
 
               {/* Modal para confirmação de exclusão */}
               {abrirModalExcluir && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
-                  <div className="bg-white p-6 rounded-md relative w-full max-w-sm">
-                    <button onClick={() => setAbrirModalExcluir(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
-                      <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">
+                  <div className="bg-white p-7 rounded-xl shadow-2xl relative w-full max-w-sm animate-fadeIn">
+                    <button
+                      onClick={() => setAbrirModalExcluir(false)}
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-                    <h2 className="text-lg font-bold mb-4">Excluir Parceria</h2>
-                    <p>Tem certeza que deseja excluir a parceria "{parceriaExcluindo?.parceiro}"?</p>
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button onClick={() => setAbrirModalExcluir(false)} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">Cancelar</button>
-                      <button onClick={excluirParceria} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors">Excluir</button>
+                    <h2 className="text-xl font-bold text-[#245757] tracking-wide">
+                      Excluir Parceria
+                    </h2>
+                    <hr className="border-[#245757]/40 mb-5 mt-3" />
+                    <p className="text-gray-700 leading-relaxed">
+                      Tem certeza que deseja excluir a parceria{" "}
+                      <span className="font-semibold">{parceriaExcluindo?.parceiro}</span>?
+                    </p>
+                    <div className="flex justify-end gap-3 mt-6">
+                      <button
+                        onClick={() => setAbrirModalExcluir(false)}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={excluirParceria}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
+                        Excluir
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -527,19 +570,18 @@ export default function ParceriasDescontos() {
                   <button
                     onClick={() => setPaginaParceria((prev) => Math.max(prev - 1, 1))}
                     disabled={paginaParceria === 1}
-                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
-                  >
-                    &lt; Anterior
+                    className="px-3 py-1.5 rounded-full border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium hover:bg-gray-100 hover:shadow disabled:opacity-40 disabled:cursor-not-allowed">
+                    ← Anterior
                   </button>
-
-                  <span className="px-3 py-1 bg-red-200 rounded">{paginaParceria}</span>
-
+                  <span
+                    className="px-4 py-1.5 rounded-full bg-[#245757] text-white text-sm font-semibold shadow">
+                    {paginaParceria}
+                  </span>
                   <button
                     onClick={() => setPaginaParceria((prev) => Math.min(prev + 1, totalPaginasParcerias))}
                     disabled={paginaParceria === totalPaginasParcerias || totalPaginasParcerias === 0}
-                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
-                  >
-                    Próxima &gt;
+                    className="px-3 py-1.5 rounded-full border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium hover:bg-gray-100 hover:shadow disabled:opacity-40 disabled:cursor-not-allowed">
+                    Próxima →
                   </button>
                 </div>
               )}
@@ -569,37 +611,66 @@ export default function ParceriasDescontos() {
 
               {/* Barra de pesquisa */}
               <div className="mb-4">
-                <input type="text" placeholder="Buscar desconto..." className="p-2 w-64 border rounded focus:ring-blue-500 focus:border-blue-500" value={searchDesconto} onChange={(e) => setSearchDesconto(e.target.value)} />
-                <button className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">
-                  Pesquisar
-                </button>
+                <div className="relative w-64">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-6 h-6 text-gray-400 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-0 focus:outline-none placeholder-gray-400"
+                    value={searchDesconto}
+                    onChange={(e) => setSearchDesconto(e.target.value)}
+                  />
+                </div>
               </div>
 
               {/* Modal para criar novo desconto */}
               {abrirModalDesconto && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
-                  <div className="bg-white p-6 rounded-md relative w-full max-w-sm">
-                    <button onClick={() => {
-                      setAbrirModalDesconto(false);
-                      setTipoDescontoId("");
-                      setNomeDesconto("");
-                      setValorDesconto("");
-                      setErro("");
-                    }}
-                      className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-                    >
+                <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">
+                  <div className="bg-white p-7 rounded-xl shadow-2xl relative w-full max-w-sm animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        setAbrirModalDesconto(false);
+                        setTipoDescontoId("");
+                        setNomeDesconto("");
+                        setValorDesconto("");
+                        setErro("");
+                      }}
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
                       <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-
-                    <h2 className="text-lg font-bold mb-4">Cadastrar Novo Desconto</h2>
-                    <input type="number" value={tipodescontoId} onChange={(e) => setTipoDescontoId(e.target.value)} placeholder="ID Tipo de Desconto" className="p-2 mb-4 w-full border rounded focus:ring-blue-500 focus:border-blue-500" />
-                    <input type="text" value={nomeDesconto} onChange={(e) => setNomeDesconto(e.target.value)} placeholder="Nome do Desconto" className="p-2 mb-4 w-full border rounded focus:ring-blue-500 focus:border-blue-500" />
-                    <input type="number" value={valorDesconto} onChange={(e) => setValorDesconto(e.target.value)} placeholder="Valor do Desconto" className="p-2 mb-4 w-full border rounded focus:ring-blue-500 focus:border-blue-500" />
-                    {erro && <p className="text-red-500 mt-2 text-sm">{erro}</p>}
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button onClick={criarDesconto} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                    <h2 className="text-xl font-bold text-[#245757] tracking-wide">
+                      Criar Novo Desconto
+                    </h2>
+                    <hr className="border-[#245757]/40 mb-5 mt-3" />
+                    <input
+                      type="number"
+                      value={tipodescontoId}
+                      onChange={(e) => setTipoDescontoId(e.target.value)}
+                      placeholder="ID Tipo de Desconto"
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    <input
+                      type="text"
+                      value={nomeDesconto}
+                      onChange={(e) => setNomeDesconto(e.target.value)}
+                      placeholder="Nome do Desconto"
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    <input
+                      type="number"
+                      value={valorDesconto}
+                      onChange={(e) => setValorDesconto(e.target.value)}
+                      placeholder="Valor do Desconto"
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    {erro && <p className="text-red-500 mt-1 text-sm">{erro}</p>}
+                    <div className="flex justify-end mt-6">
+                      <button
+                        onClick={criarDesconto}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
                         Criar
                       </button>
                     </div>
@@ -609,47 +680,49 @@ export default function ParceriasDescontos() {
 
               {/* Modal para editar desconto */}
               {abrirModalEditarDesconto && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
-                  <div className="bg-white p-6 rounded-md relative w-full max-w-sm">
-                    <button onClick={() => {
-                      setAbrirModalEditarDesconto(false);
-                      setDescontoEditando(null);
-                      setTipoDescontoId("");
-                      setNomeDesconto("");
-                      setValorDesconto("");
-                      setErro("");
-                    }}
-                      className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-                    >
-                      <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">
+                  <div className="bg-white p-7 rounded-xl shadow-2xl relative w-full max-w-sm animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        setAbrirModalEditarDesconto(false);
+                        setDescontoEditando(null);
+                        setTipoDescontoId("");
+                        setNomeDesconto("");
+                        setValorDesconto("");
+                        setErro("");
+                      }}
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-                    <h2 className="text-lg font-bold mb-4">Editar Desconto</h2>
+                    <h2 className="text-xl font-bold text-[#245757] tracking-wide">
+                      Editar Desconto
+                    </h2>
+                    <hr className="border-[#245757]/40 mb-5 mt-3" />
                     <input
                       type="number"
                       value={tipodescontoId}
                       onChange={(e) => setTipoDescontoId(e.target.value)}
                       placeholder="ID Tipo de Desconto"
-                      className="p-2 mb-4 w-full border rounded focus:ring-green-500 focus:border-green-500"
-                    />
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
                     <input
                       type="text"
                       value={nomeDesconto}
                       onChange={(e) => setNomeDesconto(e.target.value)}
                       placeholder="Nome do Desconto"
-                      className="p-2 mb-4 w-full border rounded focus:ring-green-500 focus:border-green-500"
-                    />
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
                     <input
                       type="number"
                       value={valorDesconto}
                       onChange={(e) => setValorDesconto(e.target.value)}
                       placeholder="Valor do Desconto"
-                      className="p-2 mb-4 w-full border rounded focus:ring-green-500 focus:border-green-500"
-                    />
-                    {erro && <p className="text-red-500 mt-2 text-sm">{erro}</p>}
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button onClick={salvarEdicaoDesconto} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#245757] focus:border-[#245757] transition outline-none" />
+                    {erro && <p className="text-red-500 mt-1 text-sm">{erro}</p>}
+                    <div className="flex justify-end mt-6">
+                      <button
+                        onClick={salvarEdicaoDesconto}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
                         Salvar
                       </button>
                     </div>
@@ -659,18 +732,34 @@ export default function ParceriasDescontos() {
 
               {/* Modal para confirmação de exclusão do desconto */}
               {abrirModalExcluirDesconto && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
-                  <div className="bg-white p-6 rounded-md relative w-full max-w-sm">
-                    <button onClick={() => setAbrirModalExcluirDesconto(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">
+                  <div className="bg-white p-7 rounded-xl shadow-2xl relative w-full max-w-sm animate-fadeIn">
+                    <button
+                      onClick={() => setAbrirModalExcluirDesconto(false)}
+                      className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
                       <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-                    <h2 className="text-lg font-bold mb-4">Excluir Desconto</h2>
-                    <p>Tem certeza que deseja excluir o desconto "{descontoExcluindo?.nome}"?</p>
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button onClick={() => setAbrirModalExcluirDesconto(false)} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">Cancelar</button>
-                      <button onClick={excluirDesconto} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors">Excluir</button>
+                    <h2 className="text-xl font-bold text-[#245757] tracking-wide">
+                      Excluir Desconto
+                    </h2>
+                    <hr className="border-[#245757]/40 mb-5 mt-3" />
+                    <p className="text-gray-700 leading-relaxed">
+                      Tem certeza que deseja excluir o desconto{" "}
+                      <span className="font-semibold">{descontoExcluindo?.nome}</span>?
+                    </p>
+                    <div className="flex justify-end gap-3 mt-6">
+                      <button
+                        onClick={() => setAbrirModalExcluirDesconto(false)}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={excluirDesconto}
+                        className="bg-[#245757] text-white px-5 py-2.5 rounded-lg hover:bg-[#1b4343]red-700 transition transform hover:scale-[1.03] active:scale-95 shadow-md">
+                        Excluir
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -725,17 +814,18 @@ export default function ParceriasDescontos() {
                   <button
                     onClick={() => setPaginaDesconto((prev) => Math.max(prev - 1, 1))}
                     disabled={paginaDesconto === 1}
-                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100">
-                    &lt; Anterior
+                    className=" px-3 py-1.5 rounded-full border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium hover:bg-gray-100 hover:shadow disabled:opacity-40 disabled:cursor-not-allowed">
+                    ← Anterior
                   </button>
-
-                  <span className="px-3 py-1 bg-red-200 rounded">{paginaDesconto}</span>
-
+                  <span
+                    className="px-4 py-1.5 rounded-full bg-[#245757] text-white text-sm font-semibold shadow">
+                    {paginaDesconto}
+                  </span>
                   <button
                     onClick={() => setPaginaDesconto((prev) => Math.min(prev + 1, totalPaginasDescontos))}
                     disabled={paginaDesconto === totalPaginasDescontos || totalPaginasDescontos === 0}
-                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100">
-                    Próxima &gt;
+                    className="px-3 py-1.5 rounded-full border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium hover:bg-gray-100 hover:shadow disabled:opacity-40 disabled:cursor-not-allowed">
+                    Próxima →
                   </button>
                 </div>
               )}
