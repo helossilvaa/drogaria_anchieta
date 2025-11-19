@@ -169,9 +169,9 @@ export default function NovaVendaPage() {
     const codigoNormalizado = codigoDesconto.trim().toUpperCase(); // Para CUPOM e CONVENIO
     const cpfLimpo = codigoDesconto.replace(/\D/g, ""); // Apenas números
 
-    // 1. Tenta Desconto por CPF
+
     if (cpfLimpo.length === 11) {
-      // Lógica de CPF
+
       if (subtotalGeral >= 100) {
         const existe = filiados.find(f => f.cpf.replace(/\D/g, "") === cpfLimpo);
         if (!existe) {
@@ -186,9 +186,9 @@ export default function NovaVendaPage() {
       }
     }
 
-    // 2. Tenta Desconto por CUPOM
+
     else if (codigoNormalizado.startsWith("CUPOM")) {
-      // Lógica de Cupom (mantida como estava)
+
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(`http://localhost:8080/api/descontos?nome=${codigoDesconto}`, {
@@ -211,12 +211,12 @@ export default function NovaVendaPage() {
       }
     }
 
-    // 3. Tenta Desconto por CONVÊNIO (se falhou nos dois anteriores)
+
     else {
-      // Tenta usar o que foi digitado (códigoDesconto) como o nome do convênio.
+
       try {
         const token = localStorage.getItem("token");
-        const convenioNome = codigoDesconto.trim(); // Usa o código digitado diretamente
+        const convenioNome = codigoDesconto.trim();
 
         console.log("--- TENTANDO BUSCAR CONVÊNIO POR NOME ---");
         console.log("Busca por nome:", convenioNome);
@@ -226,7 +226,7 @@ export default function NovaVendaPage() {
         });
 
         if (!res.ok) {
-          // Se não for encontrado ou der erro, assume que não é um código válido e lança o erro.
+
           const erroApi = await res.json().catch(() => ({}));
           throw new Error(erroApi.message || "Convênio não encontrado.");
         }
@@ -241,7 +241,7 @@ export default function NovaVendaPage() {
           throw new Error("Dados do convênio inválidos.");
         }
 
-        // Usa o valor direto (ex: 0.70)
+
         valorDesconto = subtotalGeral * porcentagemNumerica;
 
         const porcentagemFormatada = (porcentagemNumerica * 100).toFixed(0);
@@ -249,13 +249,13 @@ export default function NovaVendaPage() {
 
       } catch (err) {
         console.error("ERRO CONVÊNIO:", err);
-        // Se chegou aqui, não é um CPF, nem um CUPOM, nem um CONVÊNIO.
+
         mostrarAlerta(err.message || "Código ou Convênio inválido.", "erro");
         setDesconto(0); setCodigoDesconto(""); return;
       }
     }
 
-    // Aplica o desconto calculado se um dos blocos foi bem-sucedido
+
     setDesconto(valorDesconto);
     setCodigoDesconto("");
   };
@@ -426,11 +426,11 @@ export default function NovaVendaPage() {
       return;
     }
 
-    // verifica se já existe no carrinho (listaVenda)
+
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
 
     if (existeNoCarrinho) {
-      // só aumenta quantidade
+
       setListaVenda(prev =>
         prev.map(p =>
           p.id === produtoEncontrado.id
@@ -439,7 +439,7 @@ export default function NovaVendaPage() {
         )
       );
     } else {
-      // adiciona um novo item ao carrinho
+
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
 
@@ -455,7 +455,7 @@ export default function NovaVendaPage() {
       return;
     }
 
-    // procura no catálogo (produtos)
+
     const produtoEncontrado = produtos.find(p => String(p.codigo_barras) === code);
 
     if (!produtoEncontrado) {
@@ -463,11 +463,11 @@ export default function NovaVendaPage() {
       return;
     }
 
-    // verifica se já existe no carrinho (listaVenda)
+
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
 
     if (existeNoCarrinho) {
-      // só aumenta quantidade
+
       setListaVenda(prev =>
         prev.map(p =>
           p.id === produtoEncontrado.id
@@ -476,7 +476,7 @@ export default function NovaVendaPage() {
         )
       );
     } else {
-      // adiciona um novo item ao carrinho
+
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
 
@@ -525,79 +525,80 @@ export default function NovaVendaPage() {
         <div className="w-full max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6">
           <div className="md:col-span-2">
 
-          <div className="relative w-full max-w-lg">
-  <div className="flex gap-2">
-    <Input
-      placeholder="Digite o nome ou código de barras do produto"
-      value={codigoBarras || nomeProduto}
-      onChange={(e) => {
-        const valor = e.target.value;
-        if (/^\d+$/.test(valor)) {
-          setCodigoBarras(valor);
-          setNomeProduto("");
-        } else {
-          setNomeProduto(valor);
-          setCodigoBarras("");
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          if (codigoBarras) {
-            buscarProdutoPorCodigo(codigoBarras);
-          } else if (nomeProduto) {
-            buscarProdutoPorNome(nomeProduto);
-          } else {
-            mostrarAlerta("Digite o nome ou código de barras.", "erro");
-          }
-        }
-      }}
-      className="bg-white border-pink-300 text-gray-800 placeholder:text-gray-500 rounded-full px-5 py-6 w-full"
-    />
-    <Button
-      onClick={() => {
-        if (codigoBarras) {
-          buscarProdutoPorCodigo(codigoBarras);
-        } else if (nomeProduto) {
-          buscarProdutoPorNome(nomeProduto);
-        } else {
-          mostrarAlerta("Digite o nome ou código de barras.", "erro");
-        }
-      }}
-      className="bg-pink-500 hover:bg-pink-600 text-white rounded-full px-6"
-    >
-      Buscar
-    </Button>
-  </div>
+            <div className="relative w-full max-w-lg">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite o nome ou código de barras do produto"
+                  value={codigoBarras || nomeProduto}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    if (/^\d+$/.test(valor)) {
+                      setCodigoBarras(valor);
+                      setNomeProduto("");
+                    } else {
+                      setNomeProduto(valor);
+                      setCodigoBarras("");
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (codigoBarras) {
+                        buscarProdutoPorCodigo(codigoBarras);
+                      } else if (nomeProduto) {
+                        buscarProdutoPorNome(nomeProduto);
+                      } else {
+                        mostrarAlerta("Digite o nome ou código de barras.", "erro");
+                      }
+                    }
+                  }}
+                  className="bg-white border-pink-300 text-gray-800 placeholder:text-gray-500 rounded-full px-5 py-6 w-full"
+                />
+                <Button
+                  onClick={() => {
+                    if (codigoBarras) {
+                      buscarProdutoPorCodigo(codigoBarras);
+                    } else if (nomeProduto) {
+                      buscarProdutoPorNome(nomeProduto);
+                    } else {
+                      mostrarAlerta("Digite o nome ou código de barras.", "erro");
+                    }
+                  }}
+                  className="bg-pink-500 hover:bg-pink-600 text-white rounded-full px-6"
+                >
+                  Buscar
+                </Button>
+              </div>
 
 
-  {nomeProduto && produtos.length > 0 && (
-    <ul className="absolute z-50 mt-2 w-full bg-white border border-pink-200 rounded-xl shadow-md max-h-60 overflow-y-auto">
-      {produtos
-        .filter((p) =>
-          p.nome.toLowerCase().includes(nomeProduto.toLowerCase())
-        )
-        .slice(0, 8)
-        .map((p) => (
-          <li
-            key={p.id}
-            onClick={() => {
-              buscarProdutoPorNome(p.nome);
-              setNomeProduto("");
-            }}
-            className="px-4 py-2 hover:bg-pink-100 cursor-pointer text-gray-700"
-          >
-            {p.nome}
-          </li>
-        ))}
-    </ul>
-  )}
-</div>
+              {nomeProduto && produtos.length > 0 && (
+                <ul className="absolute z-50 mt-2 w-full bg-white border border-pink-200 rounded-xl shadow-md max-h-60 overflow-y-auto">
+                  {produtos
+                    .filter((p) =>
+                      p.nome.toLowerCase().includes(nomeProduto.toLowerCase())
+                    )
+                    .slice(0, 8)
+                    .map((p) => (
+                      <li
+                        key={p.id}
+                        onClick={() => {
+                          buscarProdutoPorNome(p.nome);
+                          setNomeProduto("");
+                        }}
+                        className="px-4 py-2 hover:bg-pink-100 cursor-pointer text-gray-700"
+                      >
+                        {p.nome}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
             <Card className="mt-6">
               <CardContent className="p-4">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="text-pink-600 font-semibold">
+                      <th>Foto</th>
                       <th>Produto</th>
                       <th>Preço</th>
                       <th className="text-center">Quantidade</th>
@@ -608,6 +609,7 @@ export default function NovaVendaPage() {
                   <tbody>
                     {produtosExibidos.map((produto) => (
                       <tr key={produto.id} className="border-t border-pink-100">
+                        <img src={`http://localhost:3000/produtos/${produto.foto}`} />
                         <td className="py-3">{produto.nome}</td>
                         <td className="py-3">R$ {produto.preco.toFixed(2)}</td>
                         <td className="py-3 flex justify-center items-center gap-2 text-pink-500">
