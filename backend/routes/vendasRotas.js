@@ -1,5 +1,10 @@
 import express from 'express';
-import { criarVendaController, listarVendaController, atualizarVendaController, obterVendaPorIDController } from '../controllers/vendasController.js';
+import {
+    criarVendaController,
+    listarVendaController,
+    atualizarVendaController,
+    obterVendaPorIDController
+} from '../controllers/vendasController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();

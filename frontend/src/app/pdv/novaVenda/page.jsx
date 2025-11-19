@@ -1,39 +1,15 @@
 "use client";
-
 import Layout from "@/components/layout/layout";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Minus, Plus, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 export default function NovaVendaPage() {
-
   const [produtos, setProdutos] = useState([]);
   const [codigoBarras, setCodigoBarras] = useState("");
   const [nomeProduto, setNomeProduto] = useState("");
@@ -65,12 +41,53 @@ export default function NovaVendaPage() {
   const API_PRODUTOS = "http://localhost:8080/produtos";
   const API_URL = "http://localhost:8080/api/filiados";
 
+  async function salvarVenda() {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:8080/vendas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          total: total,
+          data: new Date().toISOString().split("T")[0],
+        }),
+      });
+
+      const texto = await response.text(); 
+      if (!response.ok) {
+        console.log("Erro ao salvar venda:", texto);
+        let mensagemErro = texto;
+        try {
+          const jsonErro = JSON.parse(texto);
+          mensagemErro = jsonErro.mensagem || texto; 
+        } catch {
+
+        }
+        mostrarAlerta(mensagemErro, "erro");
+        
+      }
+      const dados = JSON.parse(texto);
+      console.log("Venda salva com sucesso:", dados);
+      mostrarAlerta("Venda salva com sucesso!", "sucesso");
+      return dados;
+
+    } catch (erro) {
+      console.error("Erro ao salvar venda (catch):", erro);
+      mostrarAlerta(erro.message || "Erro ao salvar venda.", "erro");
+      throw erro;
+    }
+  }
+
+
+
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
     console.log(token);
-
-
     fetch(API_URL, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -78,8 +95,6 @@ export default function NovaVendaPage() {
       .then(data => setFiliados(data))
       .catch(() => mostrarAlerta("Erro ao carregar filiados.", "erro"));
   }, []);
-
-
   const fetchProdutos = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -90,7 +105,6 @@ export default function NovaVendaPage() {
       setIsLoading(false);
       return;
     }
-
     setUserToken(token);
     setIsLoading(true);
 
@@ -102,22 +116,18 @@ export default function NovaVendaPage() {
           "Content-Type": "application/json",
         },
       });
-
       if (!res.ok) {
         throw new Error("Erro ao carregar a lista de produtos");
       }
-
       const data = await res.json();
-
       const produtosComQuantidade = data.map((p, i) => ({
         id: p.id ?? i,
+        foto: p.foto ?? "",
         nome: p.nome ?? p.descricao ?? "Produto sem nome",
         preco: Number(p.preco ?? p.preco_unitario ?? 0),
         codigo_barras: p.codigo_barras ?? p.cod_barras ?? p.barcode ?? "",
         quantidade: 1,
       }));
-
-
       setProdutos(produtosComQuantidade);
     } catch (err) {
       console.error("Erro ao buscar produtos:", err);
@@ -129,33 +139,24 @@ export default function NovaVendaPage() {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchProdutos();
   }, []);
-
 
   const alterarQuantidade = (id, delta) => {
     setListaVenda(prev =>
       prev.map(p => p.id === id ? { ...p, quantidade: Math.max(1, p.quantidade + delta) } : p)
     );
   };
-
-
   const calcularSubtotal = (preco, quantidade) => preco * quantidade;
   const subtotalGeral = listaVenda.reduce((acc, p) => acc + calcularSubtotal(p.preco, p.quantidade), 0);
   const total = subtotalGeral - Number(desconto);
-
-
   const mostrarAlerta = (mensagem, tipo = "info") => {
     setAlerta({ mensagem, tipo });
     setTimeout(() => setAlerta(null), 3000);
   };
-
-
   const paginaAnterior = () => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1);
   const proximaPagina = () => paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
-
   const handleProsseguir = () => {
     if (!formaPagamento) {
       mostrarAlerta("Selecione uma forma de pagamento antes de prosseguir!", "erro");
@@ -163,15 +164,11 @@ export default function NovaVendaPage() {
     }
     setMostrarNota(true);
   };
-
   const aplicarDesconto = async () => {
     let valorDesconto = 0;
     const codigoNormalizado = codigoDesconto.trim().toUpperCase(); // Para CUPOM e CONVENIO
     const cpfLimpo = codigoDesconto.replace(/\D/g, ""); // Apenas números
-
-
     if (cpfLimpo.length === 11) {
-
       if (subtotalGeral >= 100) {
         const existe = filiados.find(f => f.cpf.replace(/\D/g, "") === cpfLimpo);
         if (!existe) {
@@ -185,24 +182,17 @@ export default function NovaVendaPage() {
         setDesconto(0); setCodigoDesconto(""); return;
       }
     }
-
-
     else if (codigoNormalizado.startsWith("CUPOM")) {
-
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(`http://localhost:8080/api/descontos?nome=${codigoDesconto}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         if (!res.ok) throw new Error("Cupom inválido");
-
         const cupomData = await res.json();
-
         const descontoCupom = Array.isArray(cupomData)
           ? Number(cupomData[0].desconto)
           : Number(cupomData.desconto);
-
         valorDesconto = subtotalGeral * descontoCupom;
         mostrarAlerta(`Desconto de ${descontoCupom * 100}% aplicado pelo cupom!`, "sucesso");
       } catch (err) {
@@ -210,61 +200,40 @@ export default function NovaVendaPage() {
         setDesconto(0); setCodigoDesconto(""); return;
       }
     }
-
-
     else {
-
       try {
         const token = localStorage.getItem("token");
         const convenioNome = codigoDesconto.trim();
-
         console.log("--- TENTANDO BUSCAR CONVÊNIO POR NOME ---");
         console.log("Busca por nome:", convenioNome);
-
         const res = await fetch(`http://localhost:8080/parcerias/buscar?parceiro=${convenioNome}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         if (!res.ok) {
-
           const erroApi = await res.json().catch(() => ({}));
           throw new Error(erroApi.message || "Convênio não encontrado.");
         }
-
         const convenioData = await res.json();
         console.log("RETORNO API CONVÊNIO:", convenioData);
-
-
         const porcentagemNumerica = Number(convenioData.porcentagem);
-
         if (isNaN(porcentagemNumerica) || !convenioData) {
           throw new Error("Dados do convênio inválidos.");
         }
-
-
         valorDesconto = subtotalGeral * porcentagemNumerica;
-
         const porcentagemFormatada = (porcentagemNumerica * 100).toFixed(0);
         mostrarAlerta(`Desconto de ${porcentagemFormatada}% aplicado através do convênio!`, "sucesso");
-
       } catch (err) {
         console.error("ERRO CONVÊNIO:", err);
-
         mostrarAlerta(err.message || "Código ou Convênio inválido.", "erro");
         setDesconto(0); setCodigoDesconto(""); return;
       }
     }
-
-
     setDesconto(valorDesconto);
     setCodigoDesconto("");
   };
-
-
   const imprimirNota = () => {
     window.print();
   };
-
   const [novoFiliado, setNovoFiliado] = useState({
     nome: "",
     cpf: "",
@@ -279,16 +248,13 @@ export default function NovaVendaPage() {
     numero: "",
     tipodesconto: "",
   });
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNovoFiliado((prev) => ({ ...prev, [name]: value }));
   };
-
   const buscarEndereco = async () => {
     const cepLimpo = novoFiliado.cep.replace(/\D/g, "");
     if (cepLimpo.length !== 8) return;
-
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
       const data = await res.json();
@@ -307,21 +273,17 @@ export default function NovaVendaPage() {
       console.error("Erro ao buscar CEP:", error);
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensagemFeedback({ type: "", text: "" });
-
     const userToken = localStorage.getItem("token");
     if (!userToken) {
       mostrarAlerta("Você precisa estar logado para cadastrar filiado.", "erro");
       return;
     }
-
     const cpfLimpo = novoFiliado.cpf.replace(/\D/g, "");
     const telefoneLimpo = novoFiliado.telefone.replace(/\D/g, "");
     const cepLimpo = novoFiliado.cep.replace(/\D/g, "");
-
     if (cpfLimpo.length !== 11) {
       mostrarAlerta("CPF deve conter exatamente 11 dígitos.", "erro");
       return;
@@ -338,7 +300,6 @@ export default function NovaVendaPage() {
       mostrarAlerta("Estado deve ser uma sigla de 2 caracteres.", "erro");
       return;
     }
-
     const filiadoEnvio = {
       ...novoFiliado,
       cpf: cpfLimpo,
@@ -346,7 +307,6 @@ export default function NovaVendaPage() {
       cep: cepLimpo,
       tipodesconto: Number(novoFiliado.tipodesconto),
     };
-
     try {
       const res = await fetch(API_URL, {
         method: "POST",
@@ -356,7 +316,6 @@ export default function NovaVendaPage() {
         },
         body: JSON.stringify(filiadoEnvio),
       });
-
       if (!res.ok) {
         let erroMsg = "Erro ao salvar usuário";
         try {
@@ -368,7 +327,6 @@ export default function NovaVendaPage() {
         }
         throw new Error(erroMsg);
       }
-
       mostrarAlerta("Filiado cadastrado com sucesso!", "sucesso");
       setNovoFiliado({
         nome: "",
@@ -389,8 +347,6 @@ export default function NovaVendaPage() {
       mostrarAlerta(erro.message || "Erro ao salvar filiado.", "erro");
     }
   };
-
-
   const parseProduto = (raw) => {
     return {
       id: raw.id,
@@ -398,8 +354,6 @@ export default function NovaVendaPage() {
       preco: Number(raw.preco || raw.preco_unitario || 0),
     };
   };
-
-
   const fetchTentativa = async (url) => {
     try {
       const r = await fetch(url);
@@ -410,27 +364,19 @@ export default function NovaVendaPage() {
       return null;
     }
   };
-
-
   const buscarProdutoPorNome = (nome) => {
     const code = String(nome ?? nomeProduto ?? "").trim();
     if (!code) {
       mostrarAlerta("Digite um nome válido.", "erro");
       return;
     }
-
     const produtoEncontrado = produtos.find(p => String(p.nome) === code);
-
     if (!produtoEncontrado) {
       mostrarAlerta("Produto não encontrado!", "erro");
       return;
     }
-
-
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
-
     if (existeNoCarrinho) {
-
       setListaVenda(prev =>
         prev.map(p =>
           p.id === produtoEncontrado.id
@@ -439,35 +385,24 @@ export default function NovaVendaPage() {
         )
       );
     } else {
-
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
-
     setNomeProduto("");
     mostrarAlerta("Produto adicionado à venda!", "sucesso");
   };
-
-
   const buscarProdutoPorCodigo = (codigo) => {
     const code = String(codigo ?? codigoBarras ?? "").trim();
     if (!code) {
       mostrarAlerta("Digite um código de barras válido.", "erro");
       return;
     }
-
-
     const produtoEncontrado = produtos.find(p => String(p.codigo_barras) === code);
-
     if (!produtoEncontrado) {
       mostrarAlerta("Produto não encontrado!", "erro");
       return;
     }
-
-
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
-
     if (existeNoCarrinho) {
-
       setListaVenda(prev =>
         prev.map(p =>
           p.id === produtoEncontrado.id
@@ -476,26 +411,34 @@ export default function NovaVendaPage() {
         )
       );
     } else {
-
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
-
     setCodigoBarras("");
     mostrarAlerta("Produto adicionado à venda!", "sucesso");
   };
-
-  const handleFinalizar = () => {
+  const handleFinalizar = async () => {
     setOpen(true);
     setIsLoading(true);
     setPagamentoFeito(false);
-    setTimeout(() => {
+
+    // Simula o processamento do pagamento
+    setTimeout(async () => {
       setIsLoading(false);
       setPagamentoFeito(true);
+
+      // Aqui: pagamento concluído, então salvar a venda
+      try {
+        const vendaCriada = await salvarVenda();
+        console.log("Venda criada no backend:", vendaCriada);
+        mostrarAlerta("Venda registrada com sucesso.", "sucesso");
+      } catch (erro) {
+        console.error("Erro ao registrar venda:", erro);
+        mostrarAlerta("Erro ao salvar a venda.", "erro");
+      }
     }, 5000);
   };
 
-
-
+  console.log(produtosExibidos);
   return (
     <Layout>
       <div className="min-h-screen flex items-center justify-center py-10 relative">
@@ -512,7 +455,6 @@ export default function NovaVendaPage() {
             <span className="font-medium">{alerta.mensagem}</span>
           </div>
         )}
-
         {mensagemFeedback.text && (
           <div
             className={`fixed top-20 right-6 px-5 py-3 rounded-xl shadow-lg text-white ${mensagemFeedback.type === "error" ? "bg-pink-500" : "bg-green-500"
@@ -521,10 +463,8 @@ export default function NovaVendaPage() {
             {mensagemFeedback.text}
           </div>
         )}
-
         <div className="w-full max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6">
           <div className="md:col-span-2">
-
             <div className="relative w-full max-w-lg">
               <div className="flex gap-2">
                 <Input
@@ -569,8 +509,6 @@ export default function NovaVendaPage() {
                   Buscar
                 </Button>
               </div>
-
-
               {nomeProduto && produtos.length > 0 && (
                 <ul className="absolute z-50 mt-2 w-full bg-white border border-pink-200 rounded-xl shadow-md max-h-60 overflow-y-auto">
                   {produtos
@@ -609,7 +547,9 @@ export default function NovaVendaPage() {
                   <tbody>
                     {produtosExibidos.map((produto) => (
                       <tr key={produto.id} className="border-t border-pink-100">
-                        <img src={`http://localhost:3000/produtos/${produto.foto}`} />
+                        <td className="w-12 h-12 object-cover rounded"                        >
+                          <img src={`http://localhost:8080/uploads/produtos/${produto.foto}`} />
+                        </td>
                         <td className="py-3">{produto.nome}</td>
                         <td className="py-3">R$ {produto.preco.toFixed(2)}</td>
                         <td className="py-3 flex justify-center items-center gap-2 text-pink-500">
@@ -656,8 +596,6 @@ export default function NovaVendaPage() {
                     ))}
                   </tbody>
                 </table>
-
-
                 {totalPaginas > 1 && (
                   <div className="flex justify-center items-center gap-4 mt-6">
                     <Button
@@ -682,7 +620,6 @@ export default function NovaVendaPage() {
               </CardContent>
             </Card>
           </div>
-
           <Card className="border-pink-100">
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -710,15 +647,12 @@ export default function NovaVendaPage() {
                   </div>
                   <Separator className="my-1" />
                 </div>
-
-
                 <div>
                   <p className="text-pink-600 font-semibold text-lg mb-1">Total</p>
                   <p className="text-gray-800 font-bold text-xl">R$ {total.toFixed(2)}</p>
                   <Separator className="my-1" />
                 </div>
               </div>
-
               <div className="mt-6">
                 <p className="text-gray-500 mb-3">Forma de pagamento</p>
                 <div className="flex flex-wrap gap-2">
@@ -737,7 +671,6 @@ export default function NovaVendaPage() {
                   ))}
                 </div>
               </div>
-
               <div className="mt-6 text-center">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -745,7 +678,6 @@ export default function NovaVendaPage() {
                       Cadastrar-se como filiado
                     </button>
                   </SheetTrigger>
-
                   <SheetContent
                     side="right"
                     className="w-[420px] sm:w-[480px] bg-gradient-to-br from-pink-50 to-white shadow-2xl border-l-4 border-pink-300"
@@ -760,7 +692,6 @@ export default function NovaVendaPage() {
                           Faça parte do nosso programa de fidelidade e receba descontos exclusivos
                         </p>
                       </SheetHeader>
-
                       <form onSubmit={handleSubmit} className="space-y-2">
                         <Input
                           name="nome"
@@ -813,9 +744,7 @@ export default function NovaVendaPage() {
                             </SelectContent>
                           </Select>
                         </div>
-
                         <Separator className="my-4" />
-
                         <div className="grid grid-cols-2 gap-4">
                           <Input
                             name="cep"
@@ -855,14 +784,12 @@ export default function NovaVendaPage() {
                             onChange={handleChange}
                           />
                         </div>
-
                         <Button
                           type="submit"
                           className="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-full mt-2 py-2 shadow-md transition-all"
                         >
                           Enviar cadastro
                         </Button>
-
                         <p className="text-xs text-gray-500 text-center ">
                           Seus dados são protegidos e utilizados apenas para benefícios do programa.
                         </p>
@@ -871,9 +798,6 @@ export default function NovaVendaPage() {
                   </SheetContent>
                 </Sheet>
               </div>
-
-
-
               <div className="mt-8 flex justify-between">
                 <Button
                   variant="outline"
@@ -887,8 +811,6 @@ export default function NovaVendaPage() {
                 >
                   Finalizar venda
                 </Button>
-
-
               </div>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-sm text-center">
@@ -901,7 +823,6 @@ export default function NovaVendaPage() {
                           : "Processo cancelado"}
                     </DialogTitle>
                   </DialogHeader>
-
                   {isLoading && (
                     <div className="flex flex-col items-center gap-3 py-4">
                       <Loader2 className="animate-spin w-10 h-10 text-pink-600" />
@@ -920,7 +841,6 @@ export default function NovaVendaPage() {
 
                     </div>
                   )}
-
                   {pagamentoFeito && (
                     <div className="flex flex-col items-center gap-3 py-4">
                       <CheckCircle2 className="w-10 h-10 text-green-700" />
@@ -946,7 +866,6 @@ export default function NovaVendaPage() {
                       Confira os detalhes da sua compra antes de imprimir.
                     </DialogDescription>
                   </DialogHeader>
-
                   <div className="mt-4">
                     <table className="w-full text-sm border border-gray-200">
                       <thead className="bg-pink-50">
@@ -970,7 +889,6 @@ export default function NovaVendaPage() {
                         ))}
                       </tbody>
                     </table>
-
                     <div className="mt-4 text-right text-gray-700 space-y-1">
                       <p>Subtotal: R$ {subtotalGeral.toFixed(2)}</p>
                       <p>Desconto: R$ {desconto.toFixed(2)}</p>
@@ -978,7 +896,6 @@ export default function NovaVendaPage() {
                       <p>Forma de pagamento: {formaPagamento}</p>
                     </div>
                   </div>
-
                   <DialogFooter className="flex justify-between mt-6">
                     <Button
                       variant="outline"

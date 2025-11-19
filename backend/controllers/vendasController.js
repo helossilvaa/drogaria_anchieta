@@ -5,18 +5,46 @@ import{
     criarVenda
 } from "../models/vendas.js";
 
+import { criarItemVenda } from "../models/vendasItens.js";
+
+
 const criarVendaController = async (req, res) => {
     try{
-        const {id, cliente_id, usuario_id, unidade_id, tipo_pagamento_id, total, data} = req.body;
-        const VendaData = {id, cliente_id, usuario_id, unidade_id, tipo_pagamento_id, total, data};
+        const {cliente_id, usuario_id, unidade_id, tipo_pagamento_id, total, data, itens} = req.body;
 
-        await criarVenda(VendaData);
-        res.status(201).json({mensagem: 'Venda criada com sucesso!'});
+        const vendaData = {
+            cliente_id,
+            usuario_id,
+            unidade_id,
+            tipo_pagamento_id,
+            total,
+            data
+        };
+
+        // 1️⃣ Cria a venda
+        const novaVenda = await criarVenda(vendaData);
+
+        // 2️⃣ Salva os itens da venda
+        for (const item of itens) {
+            await criarItemVenda({
+                venda_id: novaVenda.insertId, // ID da venda criada
+                produto_id: item.produto_id,
+                quantidade: item.quantidade,
+                preco: item.preco,
+                subtotal: item.subtotal
+            });
+        }
+
+        res.status(201).json({
+            mensagem: 'Venda criada com sucesso!',
+            venda_id: novaVenda.insertId
+        });
+
     }catch (error){
         console.error('Erro ao criar venda: ', error);
         res.status(500).json({mensagem: 'Erro ao criar venda'});
     }
-}
+};
 
 const listarVendaController = async (req, res) => {
     try {
