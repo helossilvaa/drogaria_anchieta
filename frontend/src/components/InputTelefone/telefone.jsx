@@ -56,7 +56,7 @@ export default function InputTelefoneComPais({ value, onChange }) {
                     height={14}
                     className="rounded-sm"
                   />
-                  +{paisSelecionado.ddi}
+                  + {paisSelecionado.ddi}
                 </div>
               ) : (
                 "País"
