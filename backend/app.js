@@ -22,6 +22,7 @@ import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
+import UploadRotas from './middlewares/upload.js';
 
 dotenv.config();
 
@@ -70,8 +71,7 @@ app.use('/departamento', departamentosRotas);
 app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
 app.get("/pdfs/:id", downloadPDF);
-
-
+app.use("/uploads", express.static("uploads"));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

@@ -18,7 +18,7 @@ export default function Layout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUsuarioCompleto = async () => {
+    const fetchUsuario= async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return router.push("/");
@@ -67,7 +67,7 @@ export default function Layout({ children }) {
       }
     };
 
-    fetchUsuarioCompleto();
+    fetchUsuario();
   }, [router]);
 
   if (loading) {
@@ -124,8 +124,8 @@ export default function Layout({ children }) {
           </div>
         </div>
 
-        {/* Conteúdo */}
-        <div className="conteudo bg-gray-50 rounded-2xl p-3 sm:flex justify-center align-center">
+       
+        <div className="conteudo bg-gray-50 rounded-2xl p-3 h-full sm:flex justify-center align-center">
           {children}
         </div>
       </div>
