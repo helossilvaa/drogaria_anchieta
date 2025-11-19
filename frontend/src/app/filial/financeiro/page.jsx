@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Dashboard from '@/components/DashboardFinanceiro/page';
-import Contas from '@/components/Contas/page';
-import Salarios from '@/components/Salarios/page';
+import Contas from '@/components/contas/page';
+import Salarios from '@/components/salarios/page';
 import Transacoes from '@/components/Transacoes/page';
 import Layout from '@/components/layout/layout';
 

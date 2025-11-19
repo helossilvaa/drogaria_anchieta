@@ -162,6 +162,8 @@ export default function Contas() {
         const valorParaAPI = novaConta.valor ? parseFloat(novaConta.valor).toFixed(2) : "0.00";
         let contaParaAPI = { ...novaConta, valor: valorParaAPI };
 
+        contaParaAPI.categoria = novaConta.categoria;
+
         const method = editarContaId ? "PUT" : "POST";
         const url = editarContaId ? `${API_URL}/${editarContaId}` : API_URL;
 
@@ -367,6 +369,23 @@ export default function Contas() {
                                     />
                                 </div>
                             ))}
+                            {/* Categoria */}
+                            <div>
+                                <label className="block">Categoria</label>
+                                <select
+                                    name="categoria"
+                                    value={novaConta.categoria}
+                                    onChange={handleChange}
+                                    className="border rounded-md p-2 w-full"
+                                    required
+                                >
+                                    <option value="">Selecione...</option>
+                                    {categorias.map((cat) => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {/* Status */}
                             <div className="flex flex-col gap-2 mt-2">
                                 <label className="block font-medium text-gray-700">Status</label>
@@ -443,112 +462,112 @@ export default function Contas() {
             )}
             {/* Tabela */}
             <div className="mt-6 overflow-x-auto">
-  <table className="w-full border-collapse min-w-[1000px]">
-    <thead>
-      {/* ✅ Cabeçalho da tabela */}
-      <tr className="bg-[#245757] text-left text-white rounded-t-lg">
-        <th className="p-2">ID</th>
-        <th className="p-2">Categoria</th>
-        <th className="p-2">Nome da Conta</th>
-        <th className="p-2">Data da Postagem</th>
-        <th className="p-2">Data do Vencimento</th>
-        <th className="p-2">Valor</th>
-        <th className="p-2">Status</th>
-        <th className="p-2">PDF</th>
-        <th className="p-2 rounded-tr-lg">Ações</th>
-      </tr>
-    </thead>
+                <table className="w-full border-collapse min-w-[1000px]">
+                    <thead>
+                        {/* ✅ Cabeçalho da tabela */}
+                        <tr className="bg-[#245757] text-left text-white rounded-t-lg">
+                            <th className="p-2">ID</th>
+                            <th className="p-2">Categoria</th>
+                            <th className="p-2">Nome da Conta</th>
+                            <th className="p-2">Data da Postagem</th>
+                            <th className="p-2">Data do Vencimento</th>
+                            <th className="p-2">Valor</th>
+                            <th className="p-2">Status</th>
+                            <th className="p-2">PDF</th>
+                            <th className="p-2 rounded-tr-lg">Ações</th>
+                        </tr>
+                    </thead>
 
-    <tbody>
-      {contaPagina.map((u) => (
-        <tr key={u.id} className="border-t hover:bg-gray-50">
-          <td className="p-2">{u.id}</td>
-          <td className="p-2">{u.categoria || "—"}</td>
-          <td className="p-2">{u.nomeConta}</td>
-          <td className="p-2">{formatarData(u.dataPostada)}</td>
-          <td className="p-2">{formatarData(u.dataVencimento)}</td>
-          <td className="p-2">{formatarValor(u.valor)}</td>
+                    <tbody>
+                        {contaPagina.map((u) => (
+                            <tr key={u.id} className="border-t hover:bg-gray-50">
+                                <td className="p-2">{u.id}</td>
+                                <td className="p-2">{u.categoria || "—"}</td>
+                                <td className="p-2">{u.nomeConta}</td>
+                                <td className="p-2">{formatarData(u.dataPostada)}</td>
+                                <td className="p-2">{formatarData(u.dataVencimento)}</td>
+                                <td className="p-2">{formatarValor(u.valor)}</td>
 
-          <td className="p-2">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                u.status === true || u.status === "PENDENTE"
-                  ? "bg-[#245757]/20 text-[#245757]"
-                  : "bg-gray-300 text-gray-700"
-              }`}
-            >
-              {u.status === true || u.status === "PENDENTE"
-                ? "Pendente"
-                : "Pago"}
-            </span>
-          </td>
+                                <td className="p-2">
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-sm font-medium ${u.status === true || u.status === "PENDENTE"
+                                            ? "bg-[#245757]/20 text-[#245757]"
+                                            : "bg-gray-300 text-gray-700"
+                                            }`}
+                                    >
+                                        {u.status === true || u.status === "PENDENTE"
+                                            ? "Pendente"
+                                            : "Pago"}
+                                    </span>
+                                </td>
 
-          {/* PDF */}
-          <td className="p-2">
-            {u.conta_pdf && typeof u.conta_pdf === "string" && u.conta_pdf.length > 0 ? (
-              <a
-                href={`data:application/pdf;base64,${u.conta_pdf}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline"
-                title="Abrir PDF em nova aba"
-              >
-                Visualizar PDF
-              </a>
-            ) : (
-              <span className="text-gray-500 text-sm">Nenhum PDF</span>
-            )}
-          </td>
+                                {/* PDF */}
+                                <td className="p-2">
+                                    {u.conta_pdf && typeof u.conta_pdf === "string" && u.conta_pdf.length > 0 ? (
+                                        console.log(conta),
 
-          {/* Ações */}
-          <td className="p-2 text-center flex gap-2 justify-center">
-            <button
-              onClick={() => handleEditar(u)}
-              className="text-gray-700 hover:text-[#245757]"
-              title="Editar"
-            >
-              <svg
-                className="w-6 h-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
-                />
-              </svg>
-            </button>
+                                        <a
+                                            href={`http://localhost:8080/pdfs/${u.id}`}
+                                            target="_blank"
+                                            
+                                        >
+                                            Visualizar PDF
+                                        </a>
 
-            <button
-              onClick={() => handleExcluir(u.id)}
-              className="text-red-700 hover:text-red-900"
-              title="Excluir"
-            >
-              <svg
-                className="w-6 h-6 text-red-600 dark:text-white"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+                                    ) : (
+                                        <span className="text-gray-500 text-sm">Nenhum PDF</span>
+                                    )}
+                                </td>
+
+                                {/* Ações */}
+                                <td className="p-2 text-center flex gap-2 justify-center">
+                                    <button
+                                        onClick={() => handleEditar(u)}
+                                        className="text-gray-700 hover:text-[#245757]"
+                                        title="Editar"
+                                    >
+                                        <svg
+                                            className="w-6 h-6"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+                                            />
+                                        </svg>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleExcluir(u.id)}
+                                        className="text-red-700 hover:text-red-900"
+                                        title="Excluir"
+                                    >
+                                        <svg
+                                            className="w-6 h-6 text-red-600 dark:text-white"
+                                            aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="24"
+                                            height="24"
+                                            fill="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                clipRule="evenodd"
+                                            />
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
                 {/* Paginação */}
                 {totalPaginas > 1 && (
                     <div className="flex justify-center items-center gap-2 mt-4 select-none">

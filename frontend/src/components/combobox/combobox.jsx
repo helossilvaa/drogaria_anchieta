@@ -26,6 +26,13 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
     setUserImage(usuario?.funcionario?.foto || usuario?.foto || null);
   }, [usuario]);
 
+ 
+  const getFullImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `http://localhost:8080${path}`;
+  };
+
   const menuItems = [
     { value: "configuracoes", label: "Configurações", icon: Settings },
     { value: "sair", label: "Sair", icon: LogOut },
@@ -34,7 +41,7 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
   const getInitials = (name) => {
     if (!name) return "";
     const parts = name.trim().split(" ");
-    return parts.slice(0, 2).map(p => p[0].toUpperCase()).join("");
+    return parts.slice(0, 2).map((p) => p[0].toUpperCase()).join("");
   };
 
   const userName = usuario?.funcionario?.nome || usuario?.nome || "Usuário";
@@ -43,23 +50,31 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
     <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-[220px] justify-between">
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-[220px] justify-between"
+          >
             <div className="flex items-center gap-2">
-              {(typeof userImage === "string" &&
-                userImage.trim() !== "" &&
-                userImage !== "null" &&
-                userImage !== "undefined") ? (
+
+              {/* FOTO DO USUÁRIO */}
+              {typeof userImage === "string" &&
+              userImage.trim() !== "" &&
+              userImage !== "null" &&
+              userImage !== "undefined" ? (
                 <Image
-                  src={userImage}
+                  src={getFullImageUrl(userImage)} 
                   alt={userName}
                   width={24}
                   height={24}
                   className="rounded-full"
                 />
               ) : (
-                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-medium uppercase">{getInitials(userName)}</div>
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-medium uppercase">
+                  {getInitials(userName)}
+                </div>
               )}
-
 
               <span className="font-medium">{userName}</span>
             </div>
@@ -97,6 +112,7 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
         </PopoverContent>
       </Popover>
 
+      {/* Modal de configurações */}
       <DialogConfig
         open={openDialog}
         usuario={usuario}

@@ -59,6 +59,7 @@ export const listarConta = async (req, res) => {
 };
 
 // ✏️ Editar
+// ✏️ Editar
 export const editarConta = async (req, res) => {
   const { id } = req.params;
   const { nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, status } = req.body;
@@ -67,30 +68,46 @@ export const editarConta = async (req, res) => {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
 
+  // Converter status
   const statusBanco = status === true ? "pendente" : "paga";
 
   try {
-    const updated = await Conta.update(id, {
+    const contasExistentes = await Conta.getAll();
+
+    // Verificar nome duplicado (exceto a própria conta)
+    const nomeDuplicado = contasExistentes.find(
+      (c) =>
+        c.nomeConta.toLowerCase().trim() === nomeConta.toLowerCase().trim() &&
+        c.id !== Number(id)
+    );
+
+    if (nomeDuplicado) {
+      return res.status(409).json({ message: "Já existe uma conta com esse nome." });
+    }
+
+    const dadosParaAtualizar = {
       nomeConta,
       categoria,
       dataPostada,
       dataVencimento,
       valor,
       status: statusBanco,
-      ...(conta_pdf ? { conta_pdf: Buffer.from(conta_pdf, "base64") } : {}),
-    });
+    };
 
-    if (!updated) return res.status(404).json({ message: "Conta não encontrada." });
+    if (conta_pdf) {
+      dadosParaAtualizar.conta_pdf = Buffer.from(conta_pdf, "base64");
+    }
+
+    await Conta.update(id, dadosParaAtualizar);
 
     return res.status(200).json({ message: "Conta atualizada com sucesso!" });
+
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Já existe uma conta com esse nome." });
-    }
-    console.error("Erro ao atualizar conta:", err);
-    return res.status(500).json({ message: "Erro ao atualizar conta." });
+    console.error("Erro ao editar conta:", err);
+    return res.status(500).json({ message: "Erro ao editar conta." });
   }
 };
+
 
 export const excluirConta = async (req, res) => {
   const { id } = req.params;
@@ -108,3 +125,26 @@ export const excluirConta = async (req, res) => {
     return res.status(500).json({ message: "Erro ao excluir conta." });
   }
 };
+export const downloadPDF = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const contas = await Conta.getAll();
+    const conta = contas.find(c => c.id == id);
+
+    if (!conta || !conta.conta_pdf) {
+      return res.status(404).send("PDF não encontrado");
+    }
+
+    const buffer = Buffer.from(conta.conta_pdf);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=conta_${id}.pdf`);
+    res.send(buffer);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao carregar PDF");
+  }
+};
+

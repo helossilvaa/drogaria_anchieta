@@ -8,16 +8,18 @@ import {
 
 const criarCategoriaController = async (req, res) => {
     try {
-        const { id, categoria } = req.body;
-        const categoriaData = { id, categoria };
-
+        const { categoria } = req.body;
+        if (!categoria || categoria.trim() === "") {
+            return res.status(400).json({ mensagem: "O nome da categoria é obrigatório" });
+        }
+        const categoriaData = { categoria };
         await criarCategoria(categoriaData);
         res.status(201).json({ mensagem: 'Categoria criada com sucesso!' });
     } catch (error) {
         console.error('Erro ao criar categoria: ', error);
         res.status(500).json({ mensagem: 'Erro ao criar categoria' });
     }
-}
+};
 
 const listarCategoriaController = async (req, res) => {
     try {

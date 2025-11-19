@@ -19,8 +19,8 @@ CREATE TABLE funcionarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     registro INT NOT NULL,
     cpf VARCHAR(11) NOT NULL,
-    telefone VARCHAR(13) NOT NULL, 
-    data_nascimento DATE NOT NULL, 
+    telefone VARCHAR(13) NOT NULL,
+    data_nascimento DATE NOT NULL,
     genero enum('masculino', 'feminino', 'nao-binario') DEFAULT NULL,
     nome VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -36,7 +36,7 @@ CREATE TABLE funcionarios (
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (departamento_id) REFERENCES departamento(id)
 );
-
+ 
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     senha VARCHAR(255) NOT NULL,
@@ -127,7 +127,7 @@ CREATE TABLE fornecedores (
 );
 
 CREATE TABLE produtos (
-	id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     registro_anvisa INT NOT NULL,
     nome VARCHAR(400) NOT NULL,
     foto VARCHAR(500) NULL,
@@ -136,18 +136,18 @@ CREATE TABLE produtos (
     categoria_id INT NOT NULL,
     marca_id INT NOT NULL,
     codigo_barras INT NOT NULL,
-	descricao VARCHAR(400) NOT NULL,
+    descricao VARCHAR(400) NOT NULL,
     preco_unitario INT NOT NULL,
     validade DATE NOT NULL,
     fornecedor_id INT NOT NULL,
     lote_id INT NOT NULL,
     armazenamento VARCHAR(250) NOT NULL,
-	 FOREIGN KEY (medida_id) REFERENCES unidade_medida(id),
+     FOREIGN KEY (medida_id) REFERENCES unidade_medida(id),
      FOREIGN KEY (tarja_id) REFERENCES tipo_medicamento(id),
      FOREIGN KEY (categoria_id) REFERENCES categorias(id),
      FOREIGN KEY (marca_id) REFERENCES marcas(id),
      FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
-);
+)
 
 CREATE TABLE lotes_matriz (
 	id INT AUTO_INCREMENT PRIMARY KEY,
@@ -243,7 +243,7 @@ CREATE TABLE  salarios (
   unidade_id INT NOT NULL,
   valor DECIMAL(10,2) NOT NULL,
   status_pagamento ENUM('pendente', 'pago') DEFAULT 'pendente',
-  data_atualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  data_atualizado DATE NOT NULL,
   FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id),
   FOREIGN KEY (departamento_id) REFERENCES departamento(id),
   FOREIGN KEY (unidade_id) REFERENCES unidade(id)
@@ -1009,4 +1009,3 @@ INSERT INTO parcerias (parceiro, porcentagem) VALUES
     ("Unimed", 0.05),
     ("Bradesco Saúde", 0.05),
     ("SulAmérica", 0.45);
-
