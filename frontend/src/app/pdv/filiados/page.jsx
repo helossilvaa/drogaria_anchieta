@@ -23,7 +23,7 @@ export default function Filiados() {
     logradouro: "",
     numero: "",
     tipodesconto: "",
-    unidade_id: "", 
+    unidade_id: "",
   });
 
   const API_URL = "http://localhost:8080/api/filiados";
@@ -179,39 +179,54 @@ export default function Filiados() {
   return (
     <>
       <Layout>
-        <div>
+        {/*Título*/}
+        <div className="text-xl font-bold mb-2">
           <h1>FILIADOS</h1>
         </div>
 
+        {/*Botão de novo filiado*/}
         <button
           type="button"
           onClick={() => setAbrirModal(true)}
-          className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white mt-2">
-          <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5"/>
+          className="cursor-pointer border p-2 rounded-md bg-[#d66678]  text-white mt-2">
+          <svg className="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5" />
           </svg>{" "}
           Novo Usuário
         </button>
 
-        <div className="mt-4 flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Buscar usuário por CPF..."
-            value={buscaCPF}
-            onChange={(e) => setBuscaCPF(e.target.value)}
-            className="border rounded-md p-2 w-64"/>
-          <button
-            onClick={() => setPaginaAtual(1)}
-            className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">
-            Pesquisar
-          </button>
+        {/* Barra de pesquisa */}
+        <div className="mt-4 flex items-center">
+          <div className="relative w-64">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={buscaCPF}
+              onChange={(e) => setBuscaCPF(e.target.value)}
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#ffcbd0] focus:border-[#ffcbd0] transition" />
+          </div>
         </div>
 
+        {/*Modal de criar novo filiado*/}
         {abrirModal && (
-          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl mb-3 font-bold">Novo Usuário</h2>
-
+          <div className="fixed inset-0 flex justify-center items-center bg-black/30 shadow-inner z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-7 relative max-h-[90vh] overflow-y-auto animate-fadeIn">
+              <button
+                onClick={() => setAbrirModal(false)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
+                <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-xl font-bold text-[#d66678] tracking-wide">
+                Novo Filiado
+              </h2>
+              <hr className="border-[#d66678]/40 mb-5 mt-3" />
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 {[
                   ["nome", "Nome", "text"],
@@ -227,55 +242,45 @@ export default function Filiados() {
                   ["numero", "Número", "number"],
                 ].map(([name, label, type]) => (
                   <div key={name}>
-                    <label>{label}</label>
                     <input
                       type={type}
                       name={name}
                       value={novoUsuario[name]}
                       onChange={handleChange}
-                      className="border rounded-md p-2 w-full"
+                      className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#ffd1d6] focus:border-[#ffd1d6] transition outline-none"
+                      placeholder={label}
                       required
                     />
                   </div>
                 ))}
                 <div>
-                  <label>Tipo de Desconto</label>
                   <select
                     name="tipodesconto"
                     value={novoUsuario.tipodesconto}
                     onChange={handleChange}
-                    className="border rounded-md p-2 w-full"
-                    required
-                  >
-
+                    className="p-3 mb-4 w-full bg-gray-100 border rounded-lg focus:ring-2 focus:ring-[#ffd1d6] focus:border-[#ffd1d6] transition outline-none"
+                    required>
                     <option value="">Selecione um tipo</option>
-
                     {tiposDescontos.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.tipo}
                       </option>
                     ))}
-
                   </select>
                 </div>
-
-                <div className="flex justify-between mt-4">
+                <div className="flex justify-end mt-6">
                   <button
                     type="submit"
-                    className="bg-green-600 text-white rounded-md p-2">
+                    className="bg-[#d66678] text-white px-5 py-2.5 rounded-lg hover:bg-[#ff5673] transition transform hover:scale-[1.03] active:scale-95 shadow-md">
                     Salvar
                   </button>
                 </div>
               </form>
-              <button
-                onClick={() => setAbrirModal(false)}
-                className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-xl">
-                &times;
-              </button>
             </div>
           </div>
         )}
 
+        {/*Tabela de filiados*/}
         {usuarios.length === 0 ? (
           <p className="text-center text-gray-500 mt-6 text-lg">
             Nenhum usuário encontrado
@@ -284,7 +289,7 @@ export default function Filiados() {
           <>
             <div className="mt-6 overflow-x-auto">
               <table className="w-full border-collapse text-sm">
-                <thead className="bg-red-300">
+                <thead className="bg-[#d66678]">
                   <tr>
                     <th className="p-2">Nome</th>
                     <th className="p-2">E-mail</th>
@@ -324,34 +329,23 @@ export default function Filiados() {
               </table>
             </div>
 
+            {/* Paginação */}
             {usuariosFiltrados.length > itensPorPagina && (
               <div className="flex justify-center items-center gap-2 mt-4 select-none">
                 <button
                   onClick={() => mudarPagina(paginaAtual - 1)}
                   disabled={paginaAtual === 1}
-                  className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer">
-                  &lt; Anterior
+                  className="px-4 py-2 rounded-full border border-[#d66678] text-[#d66678] hover:bg-gray-100 hover:text-[#d66678] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  ← Anterior
                 </button>
-
-                {[...Array(totalPaginas)].map((_, i) => {
-                  const numeroPagina = i + 1;
-                  return (
-                    <button
-                      key={numeroPagina}
-                      onClick={() => mudarPagina(numeroPagina)}
-                      className={`px-3 py-1 border rounded ${paginaAtual === numeroPagina ? "bg-red-300" : ""
-                        }`}
-                    >
-                      {numeroPagina}
-                    </button>
-                  );
-                })}
-
+                <div className="px-4 py-2 rounded-full text-white bg-[#d66678]">
+                  {paginaAtual}
+                </div>
                 <button
                   onClick={() => mudarPagina(paginaAtual + 1)}
                   disabled={paginaAtual === totalPaginas}
-                  className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer">
-                  Próxima &gt;
+                  className="px-4 py-2 rounded-full border border-[#d66678] text-[#d66678] hover:bg-gray-100 hover:text-[#d66678] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  Próxima →
                 </button>
               </div>
             )}
@@ -365,5 +359,4 @@ export default function Filiados() {
       </Layout>
     </>
   );
-
 } 
