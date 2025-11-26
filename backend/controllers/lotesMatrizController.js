@@ -1,82 +1,110 @@
 import {
-    criarLoteMatriz, listarLotesMatriz, obterLoteMatrizPorId, atualizarLoteMatriz, deletarLoteMatriz
-} from "../models/produtos.js";
+    criarLoteMatriz,
+    listarLotesMatriz,
+    obterLoteMatrizPorId,
+    atualizarLoteMatriz,
+    deletarLoteMatriz
+} from "../models/lotesMatriz.js";
 
 const criarLoteMatrizController = async (req, res) => {
     try {
-        const { id, produto_id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id } = req.body;
-        const loteMatrizData = { id, produto_id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id };
-        await criarLoteMatriz(loteMatrizData);
-        res.status(201).json({ mensagem: 'Produto criado com sucesso!' });
+        const { id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id } = req.body;
+
+        const loteData = {
+            id,
+            numero_lote,
+            data_validade,
+            quantidade,
+            data_entrada,
+            fornecedor_id
+        };
+
+        await criarLoteMatriz(loteData);
+        res.status(201).json({ mensagem: "Lote criado com sucesso!" });
 
     } catch (error) {
-        console.error('Erro ao criar produto: ', error);
-        res.status(500).json({ mensagem: 'Erro ao criar produto' });
+        console.error("Erro ao criar lote:", error);
+        res.status(500).json({ mensagem: "Erro ao criar lote" });
     }
 };
 
 const listarLotesMatrizController = async (req, res) => {
     try {
-        const loteMatriz = await listarLotesMatriz();
-        res.status(200).json(loteMatriz);
+        const lotes = await listarLotesMatriz();
+        res.status(200).json(lotes);
     } catch (error) {
-        console.error('Erro ao listar produtos: ', error);
-        res.status(500).json({ mensagem: 'Erro ao listar produtos' });
+        console.error("Erro ao listar lotes:", error);
+        res.status(500).json({ mensagem: "Erro ao listar lotes" });
     }
 };
 
 const obterLoteMatrizPorIdController = async (req, res) => {
     try {
         const { id } = req.params;
-        const loteMatriz = await obterLoteMatrizPorId(id);
+        const lote = await obterLoteMatrizPorId(id);
 
-        if (!loteMatriz) {
-            return res.status(404).json({ mensagem: 'Produto não encontrado' });
+        if (!lote) {
+            return res.status(404).json({ mensagem: "Lote não encontrado" });
         }
-        res.status(200).json(loteMatriz);
+
+        res.status(200).json(lote);
+
     } catch (error) {
-        console.error('Erro ao obter equipamento por patrimônio: ', error);
-        res.status(500).json({ mensagem: 'Erro ao obter produto!!!' });
+        console.error("Erro ao obter lote:", error);
+        res.status(500).json({ mensagem: "Erro ao obter lote" });
     }
 };
 
 const atualizarLoteMatrizController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { produto_id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id } = req.body;
-        const loteMatrizExistente = await obterLoteMatrizPorId(id);
+        const { numero_lote, data_validade, quantidade, data_entrada, fornecedor_id } = req.body;
 
-        if (!loteMatrizExistente) {
-            return res.status(404).json({ mensagem: 'Produto não encontrado!!!' });
+        const loteExistente = await obterLoteMatrizPorId(id);
+
+        if (!loteExistente) {
+            return res.status(404).json({ mensagem: "Lote não encontrado" });
         }
 
-        const loteMatrizData = { produto_id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id };
-        await atualizarProduto(id, loteMatrizData);
-        res.status(200).json({ mensagem: 'Produto atualizado com sucesso!!!' });
+        const loteData = {
+            numero_lote,
+            data_validade,
+            quantidade,
+            data_entrada,
+            fornecedor_id
+        };
+
+        await atualizarLoteMatriz(id, loteData);
+        res.status(200).json({ mensagem: "Lote atualizado com sucesso!" });
 
     } catch (error) {
-        console.error('Erro ao atualizar produto: ', error);
-        res.status(500).json({ mensagem: 'Erro ao atualizar produto!!!' });
+        console.error("Erro ao atualizar lote:", error);
+        res.status(500).json({ mensagem: "Erro ao atualizar lote" });
     }
 };
 
 const deletarLoteMatrizController = async (req, res) => {
     try {
         const { id } = req.params;
-        const loteMatriz = await obterLoteMatrizPorId(id);
 
-        if (!loteMatriz) {
-            return res.status(404).json({ mensagem: 'Produto não encontrado' });
+        const lote = await obterLoteMatrizPorId(id);
+        if (!lote) {
+            return res.status(404).json({ mensagem: "Lote não encontrado" });
         }
+
         await deletarLoteMatriz(id);
-        res.status(200).json({ mensagem: 'Produto deletado com sucesso!' });
+        res.status(200).json({ mensagem: "Lote deletado com sucesso!" });
+
     } catch (error) {
-        console.error('Erro ao deletar produto: ', error);
-        res.status(500).json({ mensagem: 'Erro ao deletar produto' });
+        console.error("Erro ao deletar lote:", error);
+        res.status(500).json({ mensagem: "Erro ao deletar lote" });
     }
 };
 
-
 export {
-  criarLoteMatrizController, listarLotesMatrizController, obterLoteMatrizPorIdController, atualizarLoteMatrizController, deletarLoteMatrizController
-}
+    criarLoteMatrizController,
+    listarLotesMatrizController,
+    obterLoteMatrizPorIdController,
+    atualizarLoteMatrizController,
+    deletarLoteMatrizController
+};

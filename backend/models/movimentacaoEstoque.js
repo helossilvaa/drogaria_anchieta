@@ -1,4 +1,4 @@
-import { create, readAll, read, update, deleteRecord } from "../config/database";
+import { create, readAll, read, update, deleteRecord } from "../config/database.js";
 
 const criarMovimentacao = async (movimentacaoData) => {
     try {

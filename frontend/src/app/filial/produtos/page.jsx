@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 
 const API_URL = 'http://localhost:8080/produtos';
 const API_CATEGORIAS = "http://localhost:8080/categorias";
+const API_LOTESMATRIZ = "http://localhost:8080/lotesmatriz";
+const API_ESTOQUEMATRIZ = "http://localhost:8080/estoquematriz";
+const API_ESTOQUEFRANQUIA = "http://localhost:8080/estoquefranquia";
 
 const ABAS = {
   TODOS: 'todos',
@@ -19,23 +22,30 @@ export default function Produtos() {
   // dados
   const [produtos, setProdutos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState('0'); // '0' = todas
+  const [marcas, setMarcas] = useState([]);
+  const [medidas, setMedidas] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
+  const [lotes, setLotes] = useState([]);
+  const [tarjas, setTarjas] = useState([]);
+  const [estoqueMatriz, setEstoqueMatriz] = useState([]); // === NOVO ===
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('0');
   const [abaAtiva, setAbaAtiva] = useState(ABAS.TODOS);
   const [isLoading, setIsLoading] = useState(true);
   const [mensagemFeedback, setMensagemFeedback] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 8;
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // novo produto
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // editar produto
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false); // visualizar produto (novo modal)
-  const [produtoVisualizado, setProdutoVisualizado] = useState(null); // produto aberto no modal de visualização
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [produtoVisualizado, setProdutoVisualizado] = useState(null);
   const [produtoEditando, setProdutoEditando] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [novoProduto, setNovoProduto] = useState({
     registro_anvisa: "",
     nome: "",
     medida_id: "",
-    tarja: "",
+    tarja_id: "",
     categoria_id: "",
     marca_id: "",
     codigo_barras: "",
@@ -52,6 +62,7 @@ export default function Produtos() {
     if (token) setIsAuthenticated(true);
   }, []);
 
+  // date: backend returns ISO-ish "YYYY-MM-DD" (you said A)
   const formatDate = (iso) => {
     if (!iso) return "N/A";
     try {
@@ -70,13 +81,16 @@ export default function Produtos() {
     return validade < hoje;
   };
 
-  const getCategoriaNome = (categoria_id) => {
-    const cat = categorias.find(c => Number(c.id) === Number(categoria_id));
-    return cat ? cat.categoria : "-";
+
+  // helpers para nomes (usam as listas carregadas)
+  const getCategoriaNome = (categoriaId) => {
+    if (categoriaId == null || categoriaId === "") return "—";
+    const id = Number(categoriaId);
+    const c = categorias.find(cat => Number(cat.id) === id);
+    return c ? (c.nome || c.categoria) : "—";
   };
 
   const getEstoqueStatus = (produto) => {
-    // q para quantidade
     const q = produto?.quantidade;
     if (q == null) return "Desconhecido";
     if (isProdutoVencido(produto)) return "Vencido";
@@ -85,6 +99,54 @@ export default function Produtos() {
     return "Em estoque";
   };
 
+  // fetch listas auxiliares
+
+  const fetchLotes = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(API_LOTESMATRIZ, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Erro ao carregar lotes");
+
+      const data = await response.json();
+      setLotes(data);
+    } catch (err) {
+      console.error("Erro ao carregar lotes:", err);
+    }
+  };
+
+  const fetchEstoqueMatriz = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_ESTOQUEMATRIZ, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Erro ao carregar estoque matriz");
+      const data = await res.json();
+      setEstoqueMatriz(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Erro ao buscar estoque matriz:", err);
+    }
+  };
+
+  const fetchCategorias = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_CATEGORIAS, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Erro ao carregar categorias");
+      const data = await res.json();
+      const unique = Array.from(
+        new Map(
+          (Array.isArray(data) ? data : []).map(c => [String(c.id), { ...c, nome: c.nome || c.categoria }])
+        ).values()
+      );
+      setCategorias(unique);
+    } catch (err) {
+      console.error("Erro ao buscar categorias:", err);
+    }
+  };
 
   const fetchProdutos = async () => {
     const token = localStorage.getItem("token");
@@ -106,47 +168,62 @@ export default function Produtos() {
     }
   };
 
-  const fetchCategorias = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(API_CATEGORIAS, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) throw new Error("Erro ao carregar categorias");
-      const data = await res.json();
-      const unique = Array.from(
-        new Map(
-          (Array.isArray(data) ? data : []).map(c => [String(c.categoria).toLowerCase().trim(), c])
-        ).values()
-      );
-
-      setCategorias(unique);
-    } catch (err) {
-      console.error("Erro ao buscar categorias:", err);
-    }
-  };
-
+  // carregar tudo quando autenticado
   useEffect(() => {
     if (isAuthenticated) {
       fetchCategorias();
+      fetchLotes();
+      fetchEstoqueMatriz(); // === NOVO ===
       fetchProdutos();
     }
   }, [isAuthenticated]);
 
   const produtosFiltrados = produtos.filter((produto) => {
-    if (categoriaSelecionada !== "0" && categoriaSelecionada !== "" &&
-      Number(produto.categoria_id) !== Number(categoriaSelecionada)
+    const produtoCategoriaId = Number(produto?.categoria_id ?? produto?.categoria ?? 0);
+
+    // FILTRO POR CATEGORIA
+    if (
+      categoriaSelecionada !== "0" &&
+      categoriaSelecionada !== "" &&
+      produtoCategoriaId !== Number(categoriaSelecionada)
     ) {
       return false;
     }
 
+    // FILTRO POR ABA
     switch (abaAtiva) {
       case ABAS.VENCIDOS:
-        return isProdutoVencido(produto);
+        if (!isProdutoVencido(produto)) return false;
+        break;
       case ABAS.ESTOQUE:
-        return (produto.quantidade ?? 0) > 0 && !isProdutoVencido(produto);
+        if ((produto.quantidade ?? 0) <= 0 || isProdutoVencido(produto)) return false;
+        break;
       default:
-        return true;
+        break;
     }
+
+    // FILTRO POR BUSCA
+    if (searchTerm.trim() !== "") {
+      const termo = searchTerm.toLowerCase();
+      const nome = String(produto.nome || "").toLowerCase();
+      const descricao = String(produto.descricao || "").toLowerCase();
+      const anvisa = String(produto.registro_anvisa || "").toLowerCase();
+      const barras = String(produto.codigo_barras || "").toLowerCase();
+
+
+      if (
+        !nome.includes(termo) &&
+        !descricao.includes(termo) &&
+        !anvisa.includes(termo) &&
+        !barras.includes(termo)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   });
+
 
   const totalPaginas = Math.max(1, Math.ceil(produtosFiltrados.length / itensPorPagina));
   const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -156,23 +233,89 @@ export default function Produtos() {
     if (novaPagina > 0 && novaPagina <= totalPaginas) setPaginaAtual(novaPagina);
   };
 
+  // normaliza objeto recebendo strings/objects -> form compatível para enviar ao backend (apenas *_id)
+  const normalizarProduto = (p) => ({
+    id: p.id ?? null,
+    nome: p.nome || "",
+    registro_anvisa: p.registro_anvisa || "",
+    foto: p.foto || null,
+    medida_id: p.medida_id ? Number(p.medida_id) : (p.medida?.id ? Number(p.medida.id) : null),
+    tarja_id: p.tarja_id ? Number(p.tarja_id) : (p.tarja?.id ? Number(p.tarja.id) : null),
+    categoria_id: p.categoria_id ? Number(p.categoria_id) : (p.categoria?.id ? Number(p.categoria.id) : null),
+    marca_id: p.marca_id ? Number(p.marca_id) : (p.marca?.id ? Number(p.marca.id) : null),
+    codigo_barras: p.codigo_barras || "",
+    descricao: p.descricao || "",
+    preco_unitario: (p.preco_unitario !== "" && p.preco_unitario != null) ? Number(p.preco_unitario) : null,
+    validade: p.validade || null,
+    fornecedor_id: p.fornecedor_id ? Number(p.fornecedor_id) : (p.fornecedor?.id ? Number(p.fornecedor.id) : null),
+    lote_id: p.lote_id ? Number(p.lote_id) : (p.lote?.id ? Number(p.lote.id) : null),
+    armazenamento: p.armazenamento || "",
+  });
 
+  // criar produto (envia apenas *_id)
   const handleCriarProduto = async () => {
     const token = localStorage.getItem("token");
+    if (!token) {
+      setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    if (!novoProduto.nome || String(novoProduto.nome).trim() === "") {
+      setMensagemFeedback({ type: 'error', text: "O campo 'Nome' é obrigatório." });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    if (!novoProduto.categoria_id) {
+      setMensagemFeedback({ type: 'error', text: "Selecione uma categoria." });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    const payloadObj = normalizarProduto(novoProduto);
+
+    const finalPayload = {
+      registro_anvisa: payloadObj.registro_anvisa || null,
+      nome: payloadObj.nome,
+      foto: payloadObj.foto,
+      medida_id: payloadObj.medida_id ?? null,
+      tarja_id: payloadObj.tarja_id ?? null,
+      categoria_id: payloadObj.categoria_id ?? null,
+      marca_id: payloadObj.marca_id ?? null,
+      codigo_barras: payloadObj.codigo_barras || null,
+      descricao: payloadObj.descricao || null,
+      preco_unitario: payloadObj.preco_unitario ?? null,
+      validade: payloadObj.validade || null,
+      fornecedor_id: payloadObj.fornecedor_id ?? null,
+      lote_id: payloadObj.lote_id ?? null,
+      armazenamento: payloadObj.armazenamento || null,
+    };
+
     try {
+      console.log("Criar payload:", finalPayload);
       const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(novoProduto),
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(finalPayload),
       });
-      if (!res.ok) throw new Error("Erro ao criar produto");
-      setMensagemFeedback({ type: "success", text: "Produto criado com sucesso!" });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.mensagem || data.message || 'Erro ao criar produto');
+
+      setMensagemFeedback({ type: 'success', text: 'Produto criado com sucesso!' });
+      setTimeout(() => setMensagemFeedback(null), 4000);
+
       setIsDialogOpen(false);
+
       setNovoProduto({
         registro_anvisa: "",
         nome: "",
         medida_id: "",
-        tarja: "",
+        tarja_id: "",
         categoria_id: "",
         marca_id: "",
         codigo_barras: "",
@@ -183,80 +326,155 @@ export default function Produtos() {
         lote_id: "",
         armazenamento: "",
       });
+
       await fetchProdutos();
+
     } catch (err) {
-      console.error(err);
-      setMensagemFeedback({ type: "error", text: err.message });
+      console.error('Erro ao criar produto:', err, 'payload:', finalPayload);
+      setMensagemFeedback({ type: 'error', text: err.message || 'Erro ao criar produto' });
+      setTimeout(() => setMensagemFeedback(null), 4000);
     }
   };
 
+  // === ALTERAÇÃO: separar seleção de lote para NOVO e EDIT ===
+  const handleSelectLoteNovo = (id) => {
+    if (!id || Number(id) === 0) {
+      setNovoProduto({ ...novoProduto, lote_id: "", validade: "", quantidade: "" });
+      return;
+    }
+    const lote = lotes.find((l) => Number(l.id) === Number(id));
+    if (!lote) return;
+    setNovoProduto({
+      ...novoProduto,
+      lote_id: lote.id,
+      validade: lote.data_validade,
+      quantidade: lote.quantidade ?? novoProduto.quantidade
+    });
+  };
+
+  const handleSelectLoteEdit = (id) => {
+    if (!produtoEditando) return;
+    if (!id || Number(id) === 0) {
+      setProdutoEditando({ ...produtoEditando, lote_id: "", validade: "" });
+      return;
+    }
+    const lote = lotes.find((l) => Number(l.id) === Number(id));
+    if (!lote) return;
+    setProdutoEditando({
+      ...produtoEditando,
+      lote_id: lote.id,
+      validade: lote.data_validade
+    });
+  };
+  // === FIM ALTERAÇÃO ===
+
   const handleAtualizarProduto = async () => {
     if (!produtoEditando) return;
-    const token = localStorage.getItem("token");
 
-    const produtoCorrigido = {
-      ...produtoEditando,
-      registro_anvisa: produtoEditando.registro_anvisa ?? "",
-      nome: produtoEditando.nome ?? "",
-      foto: produtoEditando.foto ?? "",
-      medida_id: produtoEditando.medida_id ?? null,
-      tarja_id: produtoEditando.tarja_id ?? null,
-      categoria_id: produtoEditando.categoria_id ?? null,
-      marca_id: produtoEditando.marca_id ?? null,
-      codigo_barras: produtoEditando.codigo_barras ?? "",
-      descricao: produtoEditando.descricao ?? "",
-      preco_unitario: produtoEditando.preco_unitario ?? 0,
-      validade: produtoEditando.validade ?? null,
-      fornecedor_id: produtoEditando.fornecedor_id ?? null,
-      lote_id: produtoEditando.lote_id ?? null,
-      armazenamento: produtoEditando.armazenamento ?? "",
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' });
+      setTimeout(() => setMensagemFeedback(null), 4000);
+      return;
+    }
+
+    const produtoCorrigido = normalizarProduto(produtoEditando);
+
+    const finalPayload = {
+      registro_anvisa: produtoCorrigido.registro_anvisa || null,
+      nome: produtoCorrigido.nome,
+      foto: produtoCorrigido.foto,
+      medida_id: produtoCorrigido.medida_id ?? null,
+      tarja_id: produtoCorrigido.tarja_id ?? null,
+      categoria_id: produtoCorrigido.categoria_id ?? null,
+      marca_id: produtoCorrigido.marca_id ?? null,
+      codigo_barras: produtoCorrigido.codigo_barras || null,
+      descricao: produtoCorrigido.descricao || null,
+      preco_unitario: produtoCorrigido.preco_unitario ?? null,
+      validade: produtoCorrigido.validade || null,
+      fornecedor_id: produtoCorrigido.fornecedor_id ?? null,
+      lote_id: produtoCorrigido.lote_id ?? null,
+      armazenamento: produtoCorrigido.armazenamento || null,
     };
 
     try {
+      console.log("Atualizar payload:", finalPayload);
+
       const res = await fetch(`${API_URL}/${produtoEditando.id}`, {
         method: "PUT",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(produtoCorrigido),
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(finalPayload),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.mensagem || "Erro ao atualizar produto");
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.mensagem || data.message || "Erro ao atualizar produto");
       setMensagemFeedback({ type: "success", text: "Produto atualizado com sucesso!" });
+      setTimeout(() => setMensagemFeedback(null), 4000);
+
       setIsEditDialogOpen(false);
       setProdutoEditando(null);
       await fetchProdutos();
+      await fetchEstoqueMatriz(); // atualiza lista de lotes/estoque
     } catch (error) {
       console.error("Erro ao atualizar:", error);
-      setMensagemFeedback({ type: "error", text: error.message });
+
+      setMensagemFeedback({ type: 'error', text: error.message || 'Erro ao atualizar produto' });
+      setTimeout(() => setMensagemFeedback(null), 2500);
     }
   };
 
   const handleExcluirProduto = async (id) => {
     const token = localStorage.getItem("token");
-    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    if (!token) {
+      setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+
     try {
       const res = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.mensagem || "Erro ao excluir produto");
+        throw new Error(data.mensagem || data.message || 'Erro ao excluir produto');
       }
-      setMensagemFeedback({ type: "success", text: "Produto excluído com sucesso!" });
-      // fechar view modal caso esteja aberto para o mesmo produto
-      if (produtoVisualizado?.id === id) {
-        setIsViewDialogOpen(false);
-        setProdutoVisualizado(null);
-      }
+
+      setMensagemFeedback({ type: 'success', text: 'Produto excluído com sucesso!' });
+      setTimeout(() => setMensagemFeedback(null), 4000);
+
       await fetchProdutos();
-    } catch (error) {
-      console.error("Erro ao excluir:", error);
-      setMensagemFeedback({ type: "error", text: error.message });
+
+    } catch (err) {
+      console.error('Erro ao excluir:', err);
+
+      setMensagemFeedback({ type: 'error', text: err.message || 'Erro ao excluir produto' });
+      setTimeout(() => setMensagemFeedback(null), 2500);
     }
   };
 
   const handleEditar = (produto) => {
-    setProdutoEditando(produto);
+    setProdutoEditando({
+      ...produto,
+      categoria_id: produto?.categoria_id ?? produto?.categoria ?? '',
+      marca_id: produto?.marca_id ?? produto?.marca ?? '',
+      medida_id: produto?.medida_id ?? produto?.medida ?? '',
+      fornecedor_id: produto?.fornecedor_id ?? produto?.fornecedor ?? '',
+      lote_id: produto?.lote_id ?? produto?.lote ?? '',
+      tarja_id: produto?.tarja_id ?? produto?.tarja ?? '',
+    });
+    // buscar estoque por produto para popular aba Lotes
+    fetchEstoqueMatriz(); // === NOVO ===
     setIsEditDialogOpen(true);
   };
 
@@ -270,28 +488,32 @@ export default function Produtos() {
       ? "inline-block p-3 text-[#1b5143] border-b-2 border-[#4b9c86] font-semibold cursor-pointer"
       : "inline-block p-3 border-b-2 border-transparent hover:text-gray-800 hover:border-gray-300 cursor-pointer";
 
+
   return (
     <Layout>
-      <div className="p-6">
-        <h2 className="text-2xl font-bold mb-4">Gerenciar Produtos</h2>
+      <div className="p-2">
+        <h2 className=" text-[#d1d0d0] text-4xl font-bold mb-4">Gerenciar Produtos</h2>
 
-        {/* FEEDBACK SIMPLES */}
+        {/* FEEDBACK POP-UP CENTRAL */}
         {mensagemFeedback && (
-          <div className={`mb-4 p-2 rounded ${mensagemFeedback.type === "success" ? "bg-green-100 text-[#3e8473]" : "bg-red-100 text-red-800"}`}>
+          <div
+            className={`fixed -z-50 px-6 py-4 rounded-xl shadow-xl text-lg font-medium animate-pop
+      ${mensagemFeedback.type === "success" ? "bg-green-100 text-[#5ba794] border border-[#4f9382]" : "bg-[#d7aeb7] text-[#9c5d6d] border border-[#c89ba5]"}`}>
             {mensagemFeedback.text}
           </div>
         )}
 
+
         {/* Botão Criar Produto */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#b8677a] text-white hover:bg-[#3e8473] mb-4">
+            <Button className="bg-[#89ccb5] text-white hover:bg-[#3e8473] hover:border-[#91c9bb] mb-4 mt-7 ">
               Criar Produto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-h-[85vh] overflow-y-auto p-7 text-justify">
             <DialogHeader>
-              <DialogTitle>Novo Produto</DialogTitle></DialogHeader>
+              <DialogTitle className="font-bold text-2xl  text-[#b8e5d7]">Novo Produto</DialogTitle></DialogHeader>
             <div className="grid gap-2 mt-2">
               <Input placeholder="Nome" value={novoProduto.nome} onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })} />
               <Input placeholder="Registro ANVISA" value={novoProduto.registro_anvisa} onChange={(e) => setNovoProduto({ ...novoProduto, registro_anvisa: e.target.value })} />
@@ -299,23 +521,29 @@ export default function Produtos() {
               <Input placeholder="Descrição" value={novoProduto.descricao} onChange={(e) => setNovoProduto({ ...novoProduto, descricao: e.target.value })} />
               <Input type="number" placeholder="Preço Unitário" value={novoProduto.preco_unitario} onChange={(e) => setNovoProduto({ ...novoProduto, preco_unitario: e.target.value })} />
               <Input type="date" placeholder="Validade" value={novoProduto.validade} onChange={(e) => setNovoProduto({ ...novoProduto, validade: e.target.value })} />
-              {/* Tarja */}
-              <Select value={novoProduto.tarja} onValueChange={(v) => setNovoProduto({ ...novoProduto, tarja: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tarja" /></SelectTrigger>
+
+              <Select value={String(novoProduto.tarja_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, tarja_id: v ? Number(v) : "" })}>
+                <SelectTrigger><SelectValue placeholder="Tarja" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sem tarja">Sem Tarja</SelectItem>
-                  <SelectItem value="vermelha">Vermelha</SelectItem>
-                  <SelectItem value="amarela">Amarela</SelectItem>
-                  <SelectItem value="preta">Preta</SelectItem>
+                  <SelectItem value="0">Selecione</SelectItem>
+                  {tarjas.length > 0 ? tarjas.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome || t.descricao || t.id}</SelectItem>)
+                    : (
+                      <>
+                        <SelectItem value="1">Sem Tarja</SelectItem>
+                        <SelectItem value="2">Vermelha</SelectItem>
+                        <SelectItem value="3">Amarela</SelectItem>
+                        <SelectItem value="4">Preta</SelectItem>
+                      </>
+                    )}
                 </SelectContent>
               </Select>
-              <Select value={String(novoProduto.categoria_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v })}>
+
+              <Select value={String(novoProduto.categoria_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v ? Number(v) : "" })}>
                 <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={categoriaSelecionada}>Selecione</SelectItem>
+                  <SelectItem value="0">Selecione</SelectItem>
                   {categorias.map((cat) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.categoria}</SelectItem>
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome || cat.categoria}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -323,7 +551,17 @@ export default function Produtos() {
               <Input placeholder="Medida ID" value={novoProduto.medida_id} onChange={(e) => setNovoProduto({ ...novoProduto, medida_id: e.target.value })} />
               <Input placeholder="Marca ID" value={novoProduto.marca_id} onChange={(e) => setNovoProduto({ ...novoProduto, marca_id: e.target.value })} />
               <Input placeholder="Fornecedor ID" value={novoProduto.fornecedor_id} onChange={(e) => setNovoProduto({ ...novoProduto, fornecedor_id: e.target.value })} />
-              <Input placeholder="Lote ID" value={novoProduto.lote_id} onChange={(e) => setNovoProduto({ ...novoProduto, lote_id: e.target.value })} />
+              <Select value={String(novoProduto.lote_id || "")} onValueChange={handleSelectLoteNovo} >
+                <SelectTrigger><SelectValue placeholder="Selecione o lote" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Sem lote</SelectItem>
+                  {lotes.map((lote) => (
+                    <SelectItem key={lote.id} value={String(lote.id)}>
+                      Lote {lote.numero_lote} — Validade {lote.data_validade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input placeholder="Armazenamento" value={novoProduto.armazenamento} onChange={(e) => setNovoProduto({ ...novoProduto, armazenamento: e.target.value })} />
             </div>
 
@@ -336,8 +574,8 @@ export default function Produtos() {
 
         {/* DIALOG EDITAR */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Editar Produto</DialogTitle></DialogHeader>
+          <DialogContent className="max-h-[85vh] overflow-y-auto p-7 text-justify">
+            <DialogHeader><DialogTitle className="font-bold text-2xl  text-[#b8e5d7]">Editar Produto</DialogTitle></DialogHeader>
             {produtoEditando && (
               <div className="grid gap-3 mt-2">
                 <Input placeholder="Nome" value={produtoEditando.nome} onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })} />
@@ -346,12 +584,29 @@ export default function Produtos() {
                 <Input type="number" placeholder="Preço Unitário" value={produtoEditando.preco_unitario ?? ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, preco_unitario: parseFloat(e.target.value) })} />
                 <Input type="date" value={produtoEditando.validade ? produtoEditando.validade.split("T")[0] : ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, validade: e.target.value })} />
                 <Input placeholder="Descrição" value={produtoEditando.descricao || ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, descricao: e.target.value })} />
-                <Select value={String(produtoEditando.categoria_id || "")} onValueChange={(v) => setProdutoEditando({ ...produtoEditando, categoria_id: Number(v) })}>
+
+                <Select value={String(produtoEditando.tarja_id || "")} onValueChange={(v) => setProdutoEditando({ ...produtoEditando, tarja_id: v ? Number(v) : "" })}>
+                  <SelectTrigger><SelectValue placeholder="Tarja" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Selecione</SelectItem>
+                    {tarjas.length > 0 ? tarjas.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome || t.descricao || t.id}</SelectItem>)
+                      : (
+                        <>
+                          <SelectItem value="1">Sem Tarja</SelectItem>
+                          <SelectItem value="2">Vermelha</SelectItem>
+                          <SelectItem value="3">Amarela</SelectItem>
+                          <SelectItem value="4">Preta</SelectItem>
+                        </>
+                      )}
+                  </SelectContent>
+                </Select>
+
+                <Select value={String(produtoEditando.categoria_id || "")} onValueChange={(v) => setProdutoEditando({ ...produtoEditando, categoria_id: v ? Number(v) : "" })}>
                   <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={categoriaSelecionada}>Selecione</SelectItem>
+                    <SelectItem value="0">Selecione</SelectItem>
                     {categorias.map((cat) =>
-                      <SelectItem key={cat.id} value={String(cat.id)}>{cat.categoria}</SelectItem>
+                      <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome || cat.categoria}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -362,7 +617,17 @@ export default function Produtos() {
                 </div>
 
                 <Input placeholder="Fornecedor ID" value={produtoEditando.fornecedor_id || ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, fornecedor_id: Number(e.target.value) })} />
-                <Input placeholder="Lote ID" value={produtoEditando.lote_id || ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, lote_id: Number(e.target.value) })} />
+                <Select value={String(produtoEditando.lote_id || "")} onValueChange={handleSelectLoteEdit}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o lote" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sem lote</SelectItem>
+                    {lotes.map((lote) => (
+                      <SelectItem key={lote.id} value={String(lote.id)}>
+                        Lote {lote.numero_lote} — Validade {formatDate(lote.data_validade)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input placeholder="Armazenamento" value={produtoEditando.armazenamento || ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, armazenamento: e.target.value })} />
               </div>
             )}
@@ -395,7 +660,7 @@ export default function Produtos() {
 
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div><strong>Categoria:</strong><div>{getCategoriaNome(produtoVisualizado.categoria_id)}</div></div>
-                  <div><strong>Marca:</strong><div>{produtoVisualizado.marca_id ?? "N/A"}</div></div>
+                  <div><strong>Marca:</strong><div>{produtoVisualizado.marca_id}</div></div>
                   <div><strong>Código de Barras:</strong><div>{produtoVisualizado.codigo_barras || "-"}</div></div>
                   <div><strong>Registro ANVISA:</strong><div>{produtoVisualizado.registro_anvisa || "-"}</div></div>
                   <div><strong>Validade:</strong><div>{formatDate(produtoVisualizado.validade)}</div></div>
@@ -429,14 +694,22 @@ export default function Produtos() {
           </DialogContent>
         </Dialog>
 
-        {/* ABAS */}
-        <div className="border-b mb-4">
-          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
-            <li><a onClick={() => setAbaAtiva(ABAS.TODOS)} className={getAbaClasses(ABAS.TODOS)}>Todos</a></li>
-            <li><a onClick={() => setAbaAtiva(ABAS.ESTOQUE)} className={getAbaClasses(ABAS.ESTOQUE)}>Em Estoque</a></li>
-            <li><a onClick={() => setAbaAtiva(ABAS.VENCIDOS)} className={getAbaClasses(ABAS.VENCIDOS)}>Vencidos</a></li>
-          </ul>
+        <div className="border-b mb-4 flex items-center justify-between">
+          {/* ABAS */}
+          <div className="flex space-x-4">
+            <span className={getAbaClasses(ABAS.TODOS)} onClick={() => setAbaAtiva(ABAS.TODOS)}>Todos</span>
+            {/* <span className={getAbaClasses(ABAS.ESTOQUE)} onClick={() => setAbaAtiva(ABAS.ESTOQUE)}>Em Estoque</span> */}
+            <span className={getAbaClasses(ABAS.VENCIDOS)} onClick={() => setAbaAtiva(ABAS.VENCIDOS)}>Vencidos</span>
+          </div>
+
+          {/* INPUT DE BUSCA */}
+          <div class="relative">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+              <svg class="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+            </div>
+            <input type="search" id="search" placeholder="Buscar produto..." className="w-64 border rounded-2xl pl-9 pr-15 py-2 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />          </div>
         </div>
+
 
         {/* FILTRO CATEGORIA */}
         <div className="mb-4 w-64">
@@ -444,7 +717,7 @@ export default function Produtos() {
             <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="0">Todas</SelectItem>
-              {categorias.map((cat) => <SelectItem key={cat.id} value={String(cat.id)}>{cat.categoria}</SelectItem>)}
+              {categorias.map((cat) => <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome || cat.categoria}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -454,12 +727,12 @@ export default function Produtos() {
           <table className="w-full text-sm text-gray-500">
             <thead className="uppercase bg-gray-200 text-gray-540">
               <tr>
-                <th className="py-3">Nome</th>
-                <th className="py-3 px-6">Categoria</th>
-                <th className="py-3 px-6">Marca</th>
-                <th className="py-3">Código</th>
-                <th className="py-3">Validade</th>
-                <th className="py-3">Ações</th>
+                <th className="py-3 px-8">Nome</th>
+                <th className="py-3 px-8">Categoria</th>
+                <th className="py-3 px-8">Marca</th>
+                <th className="py-3 px-8">Código</th>
+                <th className="py-3 px-8">Validade</th>
+                <th className="py-3 px-8">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -471,8 +744,8 @@ export default function Produtos() {
                 produtosPaginados.map((produto) => (
                   <tr key={produto.id} className="odd:bg-white even:bg-gray-50 border-b text-center">
                     <td className="px-4 py-6 font-normal text-gray-900">{produto.nome}</td>
-                    <td className="px-10 py-6">{getCategoriaNome(produto.categoria)}</td>
-                    <td className="px-10 py-6">{produto.marca_id || "N/A"}</td>
+                    <td className="px-10 py-6">{getCategoriaNome(produto.categoria_id)}</td>
+                    <td className="px-10 py-6">{produto.marca_id}</td>
                     <td className="px-10 py-6">{produto.codigo_barras || "-"}</td>
                     <td className="px-10 py-6">{produto.validade ? formatDate(produto.validade) : "N/A"}</td>
                     <td className="flex py-4 px-6 justify-center gap-2">
@@ -500,6 +773,6 @@ export default function Produtos() {
           <Button variant="outline" disabled={paginaAtual === totalPaginas} onClick={() => handlePaginaChange(paginaAtual + 1)}>Próximo</Button>
         </div>
       </div>
-    </Layout>
+    </Layout >
   );
 }
