@@ -13,7 +13,6 @@ const listarFuncionariosController = async (req, res) => {
   try {
     const funcionarios = await listarFuncionarios();
 
-   
     const funcionariosFormatados = funcionarios.map((f) => ({
       ...f,
       foto: f.foto ? f.foto : null 
@@ -58,8 +57,10 @@ const criarFuncionarioController = async (req, res) => {
       fotoUrl = `/uploads/${req.file.filename}`;
     }
 
+    const registro = Math.floor(10000000 + Math.random() * 90000000);
+
     const novoFuncionarioData = {
-      registro: req.body.registro,
+      registro, 
       cpf: req.body.cpf,
       telefone: req.body.telefone,
       data_nascimento: req.body.data_nascimento,
@@ -78,13 +79,14 @@ const criarFuncionarioController = async (req, res) => {
 
     const novo = await criarFuncionario(novoFuncionarioData);
 
-    res.status(201).json({ mensagem: "Funcionário criado com sucesso", novo });
+    res.status(201).json({ mensagem: "Funcionário criado com sucesso",registro, novo});
 
   } catch (error) {
     console.error("Erro ao criar funcionário:", error);
     res.status(500).json({ mensagem: "Erro ao criar funcionário", error });
   }
 };
+
 
 
 // atualizar funcionário
@@ -167,6 +169,31 @@ const mudarStatusFuncionarioController = async (req, res) => {
   }
 };
 
+// listar funcionários da unidade do usuário logado
+const listarFuncionariosUnidadeController = async (req, res) => {
+  try {
+    const usuario = req.usuario; 
+    const unidadeId = usuario.unidade_id;
+
+    const funcionarios = await listarFuncionarios(); 
+
+    const funcionariosFiltrados = funcionarios
+      .filter(f => f.unidade_id === unidadeId)
+      .map(f => ({
+        ...f,
+        foto: f.foto ?? null,
+        departamento: f.departamento_nome ?? "-",
+      }));
+
+    res.status(200).json(funcionariosFiltrados);
+
+  } catch (error) {
+    console.error("Erro ao listar funcionários da unidade:", error);
+    res.status(500).json({ mensagem: "Erro ao listar funcionários da unidade", error });
+  }
+};
+
+
 
 export {
   listarFuncionariosController,
@@ -174,5 +201,7 @@ export {
   criarFuncionarioController,
   atualizarFuncionarioController,
   deletarFuncionarioController,
-  mudarStatusFuncionarioController
+  mudarStatusFuncionarioController,
+  listarFuncionariosUnidadeController
 };
+

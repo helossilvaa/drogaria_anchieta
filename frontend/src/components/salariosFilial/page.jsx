@@ -205,7 +205,7 @@ export default function Salarios() {
     setEditarSalarioId(s.id);
 
     setNovoSalario({
-      id_funcionario: s.id_funcionario ?? "",
+      id_funcionario: s.id_funcionario || s.id_funcionario_original || "",
       registro: s.registro || "",
       nome: s.funcionario || "", // Usamos 'funcionario' aqui pois é o nome do funcionário
       departamento_id: s.departamento_id ?? "",
@@ -489,7 +489,7 @@ export default function Salarios() {
               <tr key={u.id} className="border-t hover:bg-gray-50">
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
-                <td className="p-2">{getNomeDepartamento(u.departamento)}</td> {/* NECESSÁRIO: Exibe o nome do departamento */}
+                <td className="p-2">{getNomeDepartamento(u.departamento)}</td> 
                 <td className="p-2">{formatarValor(u.valor)}</td>
 
                 <td className="p-2">

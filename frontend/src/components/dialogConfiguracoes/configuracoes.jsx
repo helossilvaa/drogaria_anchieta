@@ -36,7 +36,6 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
     estado: "",
   });
 
-  // 🔥 Carregar dados quando o modal abre
   useEffect(() => {
     if (!open || !usuario) return;
 
@@ -54,19 +53,18 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
       estado: funcionario?.estado || "",
     });
 
-    // 🔥 MOSTRA A FOTO REAL DO BACKEND
+    
     setPreviewImage(usuario.foto ? `${API_URL}${usuario.foto}` : null);
 
   }, [open, usuario]);
 
-  // 🔥 Atualiza preview da foto localmente
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setFotoArquivo(file);
 
-    // Apenas preview. NÃO enviar blob pro backend.
+   
     setPreviewImage(URL.createObjectURL(file));
   };
 
@@ -82,7 +80,7 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
     const usuarioId = usuario.id;
 
     try {
-      // 🔷 1 — Atualiza dados do funcionário
+   
       await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
         method: "PATCH",
         headers: {
@@ -104,7 +102,7 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
 
       let fotoAtualizadaUrl = null;
 
-      // 🔷 2 — Atualiza foto SE TIVER arquivo novo
+      
       if (fotoArquivo) {
         const formData = new FormData();
         formData.append("foto", fotoArquivo);
@@ -117,7 +115,7 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
 
         const data = await response.json();
 
-        // 🔥 PEGA A URL REAL QUE VEIO DO BACKEND
+        
         if (data?.foto) {
           fotoAtualizadaUrl = `${API_URL}${data.foto}`;
         }
@@ -125,7 +123,7 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
 
       toast.success("Dados atualizados com sucesso!");
 
-      // 🔥 Só envia para o pai a URL REAL do backend
+    
       if (onFotoAtualizada && fotoAtualizadaUrl) {
         onFotoAtualizada(fotoAtualizadaUrl, true);
       }
@@ -147,7 +145,7 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
           <DialogDescription>Altere seus dados e foto.</DialogDescription>
         </DialogHeader>
 
-        {/* FOTO */}
+     
         <div className="grid grid-cols-[80px_1fr] gap-3 items-center mb-4">
           <div className="flex flex-col items-center">
             <Label htmlFor="file-upload">Foto</Label>
@@ -178,7 +176,7 @@ export function DialogConfig({ open, onOpenChange, onFotoAtualizada, usuario }) 
           </div>
         </div>
 
-        {/* Resto do formulário */}
+        
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="grid gap-2">
             <Label>CPF</Label>

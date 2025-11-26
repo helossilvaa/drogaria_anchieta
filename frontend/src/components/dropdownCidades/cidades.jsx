@@ -3,7 +3,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  DropdownMenuItem,
+  DropdownMenuItem
 } from "../ui/dropdown-menu";
 
 export default function DropdownCidades({ estadoSigla, value, onChange }) {
@@ -34,6 +34,7 @@ export default function DropdownCidades({ estadoSigla, value, onChange }) {
 
   return (
     <DropdownMenu>
+      
       <DropdownMenuTrigger asChild>
         <button
           type="button"

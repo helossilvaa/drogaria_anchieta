@@ -58,7 +58,6 @@ export function ComboboxDemo({ usuario, onFotoAtualizada }) {
           >
             <div className="flex items-center gap-2">
 
-              {/* FOTO DO USUÁRIO */}
               {typeof userImage === "string" &&
               userImage.trim() !== "" &&
               userImage !== "null" &&

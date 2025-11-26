@@ -17,7 +17,7 @@ import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
-import salariosRotas from './routes/salariosRotas.js';
+import salariosRotas from './routes/salariosFilialRotas.js';
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
