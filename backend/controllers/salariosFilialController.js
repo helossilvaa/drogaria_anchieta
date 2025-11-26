@@ -1,5 +1,5 @@
 import { query } from "../config/database.js";
-import { Salario } from "../models/salarios.js";
+import { Salario } from "../models/salariosFilial.js";
 
 function calcularProximoDia5() {
   const hoje = new Date();
@@ -9,13 +9,17 @@ function calcularProximoDia5() {
   let dia5 = new Date(ano, mes, 5);
 
   if (hoje.getDate() > 5) {
+    // Se hoje é depois do dia 5, o próximo dia 5 é no próximo mês
     return new Date(ano, mes + 1, 5);
   }
 
+  // Se o dia 5 deste mês está a menos de 2 dias (48 horas) de distância
   if (dia5 - hoje <= 2 * 24 * 60 * 60 * 1000) {
+    // Retorna o dia 5 do próximo mês
     return new Date(ano, mes + 1, 5);
   }
 
+  // Senão, retorna o dia 5 deste mês
   return dia5;
 }
 
@@ -23,26 +27,20 @@ export const criarSalario = async (req, res) => {
   try {
     const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
-       const funcRows = await query(
-  "SELECT unidade_id FROM funcionarios WHERE id = ?",
-  [id_funcionario]
-);
-
-    if (!funcRows || funcRows.length === 0) {
-      return res.status(400).json({ msg: "Funcionário não encontrado" });
-    }
-
-    const unidade_id = funcRows[0].unidade_id;
-
     const proximaData = calcularProximoDia5();
 
     await query(
-      "INSERT INTO salarios (id_funcionario, departamento_id, unidade_id, valor, status_pagamento, data_atualizado) VALUES (?, ?, ?, ?, ?, ?)",
-      [id_funcionario, departamento_id, unidade_id, valor, status_pagamento, proximaData]
+      "INSERT INTO salarios (id_funcionario, departamento_id, valor, status_pagamento, data_atualizado) VALUES (?, ?, ?, ?, ?)",
+      [
+        id_funcionario,
+        departamento_id,
+        valor, 
+        status_pagamento,
+        proximaData,
+      ]
     );
 
     res.status(201).json({ msg: "Salário criado com sucesso" });
-
   } catch (erro) {
     console.log(erro);
     res.status(500).json({ msg: "Erro ao criar salário" });
@@ -58,8 +56,6 @@ export const listarSalarios = async (req, res) => {
     return res.status(500).json({ message: "Erro ao listar salários." });
   }
 };
-
-
 
 export const editarSalario = async (req, res) => {
   const { id } = req.params;
