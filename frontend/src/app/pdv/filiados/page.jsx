@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/layout";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Filiados() {
   const [abrirModal, setAbrirModal] = useState(false);
@@ -105,7 +107,7 @@ export default function Filiados() {
           }));
         }
       } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
+        toast.error("Erro ao buscar CEP:", error);
       }
     }
   };
@@ -114,21 +116,21 @@ export default function Filiados() {
     e.preventDefault();
     // Validação de CPF 
     if (novoUsuario.cpf.length !== 11) {
-      alert("CPF deve conter exatamente 11 dígitos.");
+      toast.error("CPF deve conter exatamente 11 dígitos.");
       return;
     }
 
     // Validação de telefone — deve ter 8 ou 9 dígitos numéricos 
     const telefoneNumerico = novoUsuario.telefone.replace(/\D/g, "");
     if (telefoneNumerico.length !== 8 && telefoneNumerico.length !== 9) {
-      alert("Telefone deve conter exatamente 8 ou 9 dígitos numéricos.");
+      toast.error("Telefone deve conter exatamente 8 ou 9 dígitos numéricos.");
       return;
     }
 
     // Verificar duplicidade de CPF 
     const existe = usuarios.find((u) => u.cpf === novoUsuario.cpf);
     if (existe) {
-      alert("Usuário com este CPF já está cadastrado.");
+      toast.error("Usuário com este CPF já está cadastrado.");
       return;
     }
     try {
@@ -152,7 +154,7 @@ export default function Filiados() {
         }
         throw new Error(erroMsg);
       }
-      alert("Usuário cadastrado com sucesso!");
+      toast.success("Usuário cadastrado com sucesso!");
 
       setAbrirModal(false);
       setNovoUsuario({
@@ -171,24 +173,24 @@ export default function Filiados() {
       });
       fetchUsuarios();
     } catch (err) {
-      console.error("Erro ao cadastrar usuário:", err);
-      alert(err.message || "Erro ao cadastrar usuário.");
+      toast.error("Erro ao cadastrar usuário:", err);
+      toast.error(err.message || "Erro ao cadastrar usuário.");
     }
   };
 
   return (
     <>
       <Layout>
-        {/*Título*/}
+        {/* Título */}
         <div className="text-xl font-bold mb-2">
           <h1>FILIADOS</h1>
         </div>
 
-        {/*Botão de novo filiado*/}
+        {/* Botão de novo filiado */}
         <button
           type="button"
           onClick={() => setAbrirModal(true)}
-          className="cursor-pointer border p-2 rounded-md bg-[#d66678]  text-white mt-2">
+          className="cursor-pointer border p-2 rounded-md bg-[#d66678] text-white mt-2">
           <svg className="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
             <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5" />
           </svg>{" "}
@@ -196,8 +198,8 @@ export default function Filiados() {
         </button>
 
         {/* Barra de pesquisa */}
-        <div className="mt-4 flex items-center">
-          <div className="relative w-64">
+        <div className="mt-4 flex items-center justify-center md:justify-start">
+          <div className="relative w-full max-w-md">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" />
@@ -212,10 +214,10 @@ export default function Filiados() {
           </div>
         </div>
 
-        {/*Modal de criar novo filiado*/}
+        {/* Modal de criar novo filiado */}
         {abrirModal && (
           <div className="fixed inset-0 flex justify-center items-center bg-black/30 shadow-inner z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-7 relative max-h-[90vh] overflow-y-auto animate-fadeIn">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl p-7 relative max-h-[90vh] overflow-y-auto animate-fadeIn">
               <button
                 onClick={() => setAbrirModal(false)}
                 className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition">
@@ -228,19 +230,7 @@ export default function Filiados() {
               </h2>
               <hr className="border-[#d66678]/40 mb-5 mt-3" />
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                {[
-                  ["nome", "Nome", "text"],
-                  ["email", "E-mail", "email"],
-                  ["telefone", "Telefone", "text"],
-                  ["cpf", "CPF", "text"],
-                  ["data_nascimento", "Data de nascimento", "date"],
-                  ["cep", "CEP", "text"],
-                  ["cidade", "Cidade", "text"],
-                  ["estado", "Estado", "text"],
-                  ["bairro", "Bairro", "text"],
-                  ["logradouro", "Logradouro", "text"],
-                  ["numero", "Número", "number"],
-                ].map(([name, label, type]) => (
+                {[["nome", "Nome", "text"], ["email", "E-mail", "email"], ["telefone", "Telefone", "text"], ["cpf", "CPF", "text"], ["data_nascimento", "Data de nascimento", "date"], ["cep", "CEP", "text"], ["cidade", "Cidade", "text"], ["estado", "Estado", "text"], ["bairro", "Bairro", "text"], ["logradouro", "Logradouro", "text"], ["numero", "Número", "number"]].map(([name, label, type]) => (
                   <div key={name}>
                     <input
                       type={type}
@@ -280,7 +270,7 @@ export default function Filiados() {
           </div>
         )}
 
-        {/*Tabela de filiados*/}
+        {/* Tabela de filiados */}
         {usuarios.length === 0 ? (
           <p className="text-center text-gray-500 mt-6 text-lg">
             Nenhum usuário encontrado
@@ -288,41 +278,44 @@ export default function Filiados() {
         ) : usuariosFiltrados.length > 0 ? (
           <>
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead className="bg-[#d66678]">
-                  <tr>
-                    <th className="p-2">Nome</th>
-                    <th className="p-2">E-mail</th>
-                    <th className="p-2">Telefone</th>
-                    <th className="p-2">CPF</th>
-                    <th className="p-2">Data de nascimento</th>
-                    <th className="p-2">CEP</th>
-                    <th className="p-2">Cidade</th>
-                    <th className="p-2">Estado</th>
-                    <th className="p-2">Bairro</th>
-                    <th className="p-2">Logradouro</th>
-                    <th className="p-2">Número</th>
-                    <th className="p-2">Tipo de Desconto</th>
+              <table className="w-full border-collapse text-sm rounded-lg overflow-hidden shadow-sm">
+                <thead>
+                  <tr className="bg-[#d66678] text-white">
+                    <th className="p-3 text-left">Nome</th>
+                    <th className="p-3 text-left">E-mail</th>
+                    <th className="p-3 text-left">Telefone</th>
+                    <th className="p-3 text-left">CPF</th>
+                    <th className="p-3 text-left">Data de nascimento</th>
+                    <th className="p-3 text-left">CEP</th>
+                    <th className="p-3 text-left">Cidade</th>
+                    <th className="p-3 text-left">Estado</th>
+                    <th className="p-3 text-left">Bairro</th>
+                    <th className="p-3 text-left">Logradouro</th>
+                    <th className="p-3 text-left">Número</th>
+                    <th className="p-3 text-left">Tipo de Desconto</th>
                   </tr>
                 </thead>
-                <tbody>
 
+                <tbody>
                   {usuariosPagina.map((u) => (
-                    <tr key={u.id} className="border-t">
-                      <td className="p-2">{u.nome}</td>
-                      <td className="p-2">{u.email}</td>
-                      <td className="p-2">{u.telefone}</td>
-                      <td className="p-2">{u.cpf}</td>
-                      <td className="p-2">
+                    <tr
+                      key={u.id}
+                      className="border-b hover:bg-gray-100 transition"
+                    >
+                      <td className="p-3 font-medium">{u.nome}</td>
+                      <td className="p-3">{u.email}</td>
+                      <td className="p-3">{u.telefone}</td>
+                      <td className="p-3">{u.cpf}</td>
+                      <td className="p-3">
                         {new Date(u.data_nascimento).toLocaleDateString()}
                       </td>
-                      <td className="p-2">{u.cep}</td>
-                      <td className="p-2">{u.cidade}</td>
-                      <td className="p-2">{u.estado}</td>
-                      <td className="p-2">{u.bairro}</td>
-                      <td className="p-2">{u.logradouro}</td>
-                      <td className="p-2">{u.numero}</td>
-                      <td className="p-2">{u.tipodesconto}</td>
+                      <td className="p-3">{u.cep}</td>
+                      <td className="p-3">{u.cidade}</td>
+                      <td className="p-3">{u.estado}</td>
+                      <td className="p-3">{u.bairro}</td>
+                      <td className="p-3">{u.logradouro}</td>
+                      <td className="p-3">{u.numero}</td>
+                      <td className="p-3">{u.tipodesconto}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -351,7 +344,6 @@ export default function Filiados() {
             )}
           </>
         ) : (
-
           <p className="text-center text-gray-500 mt-6 text-lg">
             Nenhum usuário encontrado para o CPF informado.
           </p>
@@ -359,4 +351,4 @@ export default function Filiados() {
       </Layout>
     </>
   );
-} 
+}
