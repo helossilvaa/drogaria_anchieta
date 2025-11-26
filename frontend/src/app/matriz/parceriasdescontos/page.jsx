@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/layout/layout";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ParceriasDescontos() {
   const [abrirModalParceria, setAbrirModalParceria] = useState(false);
@@ -83,7 +85,7 @@ export default function ParceriasDescontos() {
   // Função para criar uma nova parceria
   const criarParceria = async () => {
     if (!parceiro || !porcentagem) {
-      alert("Preencha todos os campos");
+      toast.error("Preencha todos os campos");
       return;
     }
 
@@ -108,11 +110,13 @@ export default function ParceriasDescontos() {
         setParceiro("");
         setPorcentagem("");
         setErro("");
+
+        toast.success("Parceiro criado com sucesso!");
       } else {
-        setErro(data.message || "Erro ao criar parceria");
+        toast.error(data.message || "Erro ao criar parceria");
       }
     } catch (error) {
-      console.error("Erro ao criar parceria:", error);
+      toast.error("Erro ao criar parceria:", error);
       setErro("Erro ao criar parceria.");
     }
   };
@@ -126,7 +130,7 @@ export default function ParceriasDescontos() {
 
   const salvarEdicao = async () => {
     if (!parceiro || !porcentagem) {
-      alert("Preencha todos os campos");
+      toast.error("Preencha todos os campos");
       return;
     }
 
@@ -153,11 +157,13 @@ export default function ParceriasDescontos() {
         setParceiro("");
         setPorcentagem("");
         setErro("");
+
+         toast.success("Parceiro editado com sucesso!");
       } else {
-        setErro(data.message || "Erro ao atualizar parceria.");
+        toast.error(data.message || "Erro ao atualizar parceria.");
       }
     } catch (error) {
-      console.error("Erro ao atualizar parceria:", error);
+      toast.error("Erro ao atualizar parceria:", error);
       setErro("Erro ao atualizar parceria.");
     }
   };
@@ -181,19 +187,21 @@ export default function ParceriasDescontos() {
       if (res.ok) {
         setParcerias(parcerias.filter(p => p.id !== parceriaExcluindo.id));
         setAbrirModalExcluir(false);
+
+        toast.success("Parceiro excluído com sucesso!");
       } else {
-        alert(data.message || "Erro ao excluir parceria.");
+        toast.error(data.message || "Erro ao excluir parceria.");
       }
     } catch (error) {
-      console.error("Erro ao excluir parceria:", error);
-      alert("Erro ao excluir parceria.");
+      toast.error("Erro ao excluir parceria:", error);
+      toast.error("Erro ao excluir parceria.");
     }
   };
 
   // Criar desconto
   const criarDesconto = async () => {
     if (!tipodescontoId || !nomeDesconto || !valorDesconto) {
-      alert("Preencha todos os campos");
+      toast.error("Preencha todos os campos");
       return;
     }
 
@@ -224,11 +232,13 @@ export default function ParceriasDescontos() {
         setNomeDesconto("");
         setValorDesconto("");
         setErro("");
+
+        toast.success("Desconto criado com sucesso!");
       } else {
-        setErro(data.message || "Erro ao criar desconto.");
+        toast.error(data.message || "Erro ao criar desconto.");
       }
     } catch (error) {
-      console.error("Erro ao criar desconto:", error);
+      toast.error("Erro ao criar desconto:", error);
       setErro(error.message || "Erro ao criar desconto.");
     }
   };
@@ -243,7 +253,7 @@ export default function ParceriasDescontos() {
 
   const salvarEdicaoDesconto = async () => {
     if (!tipodescontoId || !nomeDesconto || !valorDesconto) {
-      alert("Preencha todos os campos");
+      toast.error("Preencha todos os campos");
       return;
     }
 
@@ -274,11 +284,13 @@ export default function ParceriasDescontos() {
         setNomeDesconto("");
         setValorDesconto("");
         setErro("");
+
+        toast.success("Desconto editado com sucesso!");
       } else {
-        setErro(data.message || "Erro ao atualizar desconto.");
+        toast.error(data.message || "Erro ao atualizar desconto.");
       }
     } catch (error) {
-      console.error("Erro ao atualizar desconto:", error);
+      toast.error("Erro ao atualizar desconto:", error);
       setErro("Erro ao atualizar desconto.");
     }
   };
@@ -299,11 +311,13 @@ export default function ParceriasDescontos() {
       if (res.ok) {
         setDescontos(descontos.filter(d => d.id !== descontoExcluindo.id));
         setAbrirModalExcluirDesconto(false);
+
+        toast.success("Desconto excluído com sucesso!");
       } else {
-        alert(data.message || "Erro ao excluir desconto.");
+        toast.error(data.message || "Erro ao excluir desconto.");
       }
     } catch (error) {
-      console.error("Erro ao excluir desconto:", error);
+      toast.error("Erro ao excluir desconto:", error);
       alert("Erro ao excluir desconto.");
     }
   };
@@ -394,7 +408,7 @@ export default function ParceriasDescontos() {
                   <input
                     type="text"
                     placeholder="Buscar..."
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-0 focus:outline-none placeholder-gray-400"
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-2 focus:outline-none placeholder-gray-400 focus:ring-[#245757] focus:border-[#245757] transition"
                     value={searchParceria}
                     onChange={(e) => setSearchParceria(e.target.value)}
                   />
@@ -543,7 +557,7 @@ export default function ParceriasDescontos() {
                       {paginatedParcerias.map(p => (
                         <tr key={p.id} className="hover:bg-gray-50">
                           <td className="p-3">{p.id}</td>
-                          <td className="p-3">{p.parceiro}</td>
+                          <td className="p-3 font-medium">{p.parceiro}</td>
                           <td className="p-3">{parseFloat(p.porcentagem * 100).toFixed(0)}%</td>
                           <td className="p-3 flex justify-center items-center gap-3">
                             <button onClick={() => abrirEdicao(p)} title="Editar" className="text-[#245757] hover:text-green-600 transition-colors">
@@ -620,7 +634,7 @@ export default function ParceriasDescontos() {
                   <input
                     type="text"
                     placeholder="Buscar..."
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-0 focus:outline-none placeholder-gray-400"
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-2 focus:outline-none placeholder-gray-400 focus:ring-[#245757] focus:border-[#245757] transition"
                     value={searchDesconto}
                     onChange={(e) => setSearchDesconto(e.target.value)}
                   />

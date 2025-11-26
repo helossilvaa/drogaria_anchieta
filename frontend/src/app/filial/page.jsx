@@ -12,8 +12,8 @@ export default function Page() {
   return (
     <Layout>
 
+      {/*Status principais de vendas e funcionários*/}
       <main className="flex flex-1 flex-col gap-4 p-4">
-        {/* Top stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
@@ -25,7 +25,7 @@ export default function Page() {
 
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
-              <p className="text-sm text-gray-500">Produtos vendidos</p>
+              <p className="text-sm text-gray-500">Total de produtos vendidos</p>
               <p className="text-2xl font-bold">10</p>
               <p className="text-xs text-gray-400">7 vendas realizadas</p>
             </CardContent>
@@ -33,15 +33,15 @@ export default function Page() {
 
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
-              <p className="text-sm text-gray-500">Vendas de hoje</p>
-              <p className="text-2xl font-bold">R$200,00</p>
-              <p className="text-xs text-gray-400">7 vendas realizadas</p>
+              <p className="text-sm text-gray-500">Total de funcionários da unidade</p>
+              <p className="text-2xl font-bold">20</p>
+              <p className="text-xs text-gray-400">1 funcionário novo</p>
             </CardContent>
           </Card>
         </div>
 
+        {/*Funil de Vendas*/}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Sales funnel */}
           <Card className="p-4 rounded-xl shadow-sm col-span-2">
             <CardContent>
               <h2 className="font-semibold mb-2">Funil de vendas</h2>
@@ -49,7 +49,7 @@ export default function Page() {
             </CardContent>
           </Card>
 
-          {/* Top categories */}
+          {/*Seção de gráfico para as categorias de produtos mais vendidos*/}
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <h2 className="font-semibold mb-4">Top categorias</h2>
@@ -63,8 +63,8 @@ export default function Page() {
           </Card>
         </div>
 
+        {/*Cards dos produtos mais vendidos*/}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Best sellers */}
           <Card className="p-4 rounded-xl shadow-sm col-span-2">
             <CardContent>
               <h2 className="font-semibold mb-4">Produtos mais vendidos</h2>
@@ -72,7 +72,7 @@ export default function Page() {
             </CardContent>
           </Card>
 
-          {/* Stock alerts */}
+          {/*Alertas de estoque*/}
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <h2 className="font-semibold mb-4">Alertas de estoque</h2>
@@ -85,7 +85,7 @@ export default function Page() {
           </Card>
         </div>
 
-        {/* Sales peak time */}
+        {/*Parte de quantidades de vendas por dia*/}
         <Card className="p-4 rounded-xl shadow-sm">
           <CardContent>
             <h2 className="font-semibold mb-4">Quantidade de vendas por dia</h2>
