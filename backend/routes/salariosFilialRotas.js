@@ -1,5 +1,5 @@
 import express from "express";
-import { listarSalarios, criarSalario, editarSalario, excluirSalario } from "../controllers/salariosController.js";
+import { listarSalarios, criarSalario, editarSalario, excluirSalario } from "../controllers/salariosFilialController.js";
 
 const router = express.Router();
 
@@ -9,3 +9,4 @@ router.put("/salarios/:id", editarSalario);
 router.delete("/salarios/:id", excluirSalario);
 
 export default router;
+ 
