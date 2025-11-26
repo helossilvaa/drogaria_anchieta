@@ -3,7 +3,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  DropdownMenuItem,
+  DropdownMenuItem
 } from "../ui/dropdown-menu";
 
 export default function DropdownEstados({ value, onChange }) {
@@ -37,7 +37,6 @@ export default function DropdownEstados({ value, onChange }) {
             : "Escolha um estado"}
         </button>
       </DropdownMenuTrigger>
-
       <DropdownMenuContent className="w-full max-h-64 overflow-y-auto">
         {estados.map((estado) => (
           <DropdownMenuItem

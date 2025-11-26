@@ -5,6 +5,7 @@ import { CalendarIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function CalendarioConfig({ value, onChange }) {
+  
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [month, setMonth] = useState(new Date());
@@ -54,8 +55,8 @@ export function CalendarioConfig({ value, onChange }) {
           mode="single"
           selected={selected}
           onSelect={handleSelect}
-          month={month}        // 👈 define o mês exibido
-          onMonthChange={setMonth} // 👈 atualiza quando o usuário muda de mês
+          month={month}        
+          onMonthChange={setMonth} 
         />
       </PopoverContent>
     </Popover>

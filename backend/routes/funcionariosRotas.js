@@ -1,6 +1,6 @@
 import express from 'express';
 import { criarFuncionarioController, listarFuncionariosController, obterFuncionarioIdController,
-    deletarFuncionarioController, atualizarFuncionarioController, mudarStatusFuncionarioController} from '../controllers/funcionariosController.js';
+    deletarFuncionarioController, atualizarFuncionarioController, mudarStatusFuncionarioController, listarFuncionariosUnidadeController} from '../controllers/funcionariosController.js';
 
 import authMiddleware from '../middlewares/authMiddleware.js';
 import upload from "../middlewares/upload.js";
@@ -14,7 +14,13 @@ router.delete('/:id', authMiddleware, deletarFuncionarioController);
 router.patch('/:id', authMiddleware, upload.single("foto"), atualizarFuncionarioController);
 router.put('/:id/status', authMiddleware, mudarStatusFuncionarioController);
 
-router.options(':id/status', (req, res) => {
+router.get('/unidade', authMiddleware, listarFuncionariosUnidadeController);
+
+router.options('/:id/status', (req, res) => {
+    res.setHeader('Allow', 'PUT, OPTIONS');
+    res.status(204).send();
+});
+router.options('/unidade', (req, res) => {
     res.setHeader('Allow', 'PUT, OPTIONS');
     res.status(204).send();
 });

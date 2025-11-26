@@ -76,8 +76,14 @@ const loginController = async (req, res) => {
   try {
 
     const resultado = await read(
-      'usuarios u JOIN funcionarios f ON f.id = u.funcionario_id LEFT JOIN departamento d ON u.departamento_id = d.id', `f.email = '${email}'`,'u.*, f.nome, f.email, d.departamento'
+      `usuarios u 
+       JOIN funcionarios f ON f.id = u.funcionario_id 
+       LEFT JOIN departamento d ON u.departamento_id = d.id
+       LEFT JOIN unidade uni ON f.unidade_id = uni.id`,
+      `f.email = '${email}'`,
+      'u.*, f.nome, f.email, d.departamento, f.unidade_id'
     );
+    
     
     // garante que sempre pegue o primeiro usuário retornado
     const usuario = Array.isArray(resultado) ? resultado[0] : resultado;
@@ -94,7 +100,7 @@ const loginController = async (req, res) => {
 
     // gera token
     const token = jwt.sign(
-      { id: usuario.id, departamento: usuario.departamento, nome: usuario.nome, status: usuario.status },
+      { id: usuario.id, departamento: usuario.departamento, nome: usuario.nome, status: usuario.status, unidade_id: usuario.unidade_id  },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
