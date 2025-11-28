@@ -648,7 +648,7 @@ export default function Produtos() {
                 <div className="flex items-start gap-4">
                   {/* imagem se existir */}
                   {produtoVisualizado.foto ? (
-                    <img src={produtoVisualizado.foto} alt={produtoVisualizado.nome} className="w-28 h-28 object-cover rounded" />
+                    <img src={`http://localhost:8080/uploads/produtos/${produtoVisualizado.foto}`} alt={produtoVisualizado.nome} className="w-28 h-28 object-cover rounded" />
                   ) : (
                     <div className="w-28 h-28 bg-gray-100 flex items-center justify-center rounded text-sm">Sem foto</div>
                   )}
@@ -703,9 +703,9 @@ export default function Produtos() {
           </div>
 
           {/* INPUT DE BUSCA */}
-          <div class="relative">
-            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-              <svg class="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+          <div className="relative">
+            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+              <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
             </div>
             <input type="search" id="search" placeholder="Buscar produto..." className="w-64 border rounded-2xl pl-9 pr-15 py-2 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />          </div>
         </div>
