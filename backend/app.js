@@ -17,10 +17,13 @@ import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
-import salariosRotas from './routes/salariosRotas.js';
+import salariosRotas from './routes/salariosFilialRotas.js';
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
+import lotesMatrizRotas from './routes/lotesMatrizRotas.js';
+import estoqueMatrizRotas from './routes/estoqueMatrizRotas.js';
+import estoqueFranquiaRotas  from './routes/estoqueFranquiaRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
 
@@ -70,8 +73,12 @@ app.use('/api', salariosRotas);
 app.use('/departamento', departamentosRotas);
 app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
+app.use( '/lotesmatriz', lotesMatrizRotas);
+app.use( '/estoquematriz', estoqueMatrizRotas);
+app.use( '/estoquefranquia', estoqueFranquiaRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
+
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

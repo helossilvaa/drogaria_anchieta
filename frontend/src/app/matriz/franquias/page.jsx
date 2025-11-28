@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 const TableComplete = dynamic(
-    () => import("@/components/tableComplete/tableComplete"),
+    () => import("@/components/tableBase/tableBase"),
     { ssr: false } 
   ); 
 

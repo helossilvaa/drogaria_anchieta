@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import DialogNovoUsuario from "@/components/addUsuario/addUsuario";
+import DialogNovoUsuario from "@/components/addFuncionario/addUsuario";
 import Layout  from "@/components/layout/layout";
 
 

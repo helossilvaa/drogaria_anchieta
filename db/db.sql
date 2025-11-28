@@ -236,6 +236,7 @@ CREATE TABLE contas (
   valor DECIMAL(10,2) NOT NULL
 );
 
+
 CREATE TABLE  salarios (
   id INT AUTO_INCREMENT PRIMARY KEY,
   id_funcionario INT NOT NULL,

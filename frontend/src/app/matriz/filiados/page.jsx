@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/layout";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Filiados() {
   //Constantes utilizadas nas funcionalidades do código
@@ -126,7 +128,7 @@ export default function Filiados() {
             logradouro: data.logradouro || "",
           }));
         } else {
-          alert("CEP não encontrado.");
+          toast.error("CEP não encontrado.");
           // Limpa os campos complementares caso o CEP não exista
           setNovoUsuario((prev) => ({
             ...prev,
@@ -137,7 +139,7 @@ export default function Filiados() {
           }));
         }
       } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
+        toast.error("Erro ao buscar CEP:", error);
       }
     }
   };
@@ -149,29 +151,29 @@ export default function Filiados() {
     // Validações no frontend
     //CPF deve ter 11 dígitos numéricos
     if (novoUsuario.cpf.length !== 11) {
-      alert("CPF deve conter exatamente 11 dígitos.");
+      toast.error("CPF deve conter exatamente 11 dígitos.");
       return;
     }
     //Telefone deve ter 9 dígitos numéricos
     if (novoUsuario.telefone.length !== 9) {
-      alert("Telefone deve conter exatamente 9 dígitos.");
+      toast.error("Telefone deve conter exatamente 9 dígitos.");
       return;
     }
     //CEP deve ter 8 dígitos numéricos
     if (novoUsuario.cep.length !== 8) {
-      alert("CEP deve conter exatamente 8 dígitos.");
+      toast.error("CEP deve conter exatamente 8 dígitos.");
       return;
     }
     //Estado deve ter duas letras maiúsculas
     if (novoUsuario.estado.length !== 2) {
-      alert("Estado deve ser uma sigla de 2 caracteres.");
+      toast.error("Estado deve ser uma sigla de 2 caracteres.");
       return;
     }
 
     // Verificar se já existe usuário com mesmo CPF localmente
     const existe = usuarios.find(u => u.cpf === novoUsuario.cpf);
     if (existe) {
-      alert("Usuário com este CPF já está cadastrado.");
+      toast.error("Usuário com este CPF já está cadastrado.");
       return;
     }
 
@@ -194,10 +196,10 @@ export default function Filiados() {
           const texto = await res.text();
           erroMsg = texto || erroMsg;
         }
-        throw new Error(erroMsg);
+        throw new toast.error(erroMsg);
       }
 
-      alert("Usuário cadastrado com sucesso!");
+      toast.success("Usuário cadastrado com sucesso!");
       setAbrirModal(false);
       setNovoUsuario({
         nome: "",
@@ -215,8 +217,8 @@ export default function Filiados() {
       });
       fetchUsuarios();
     } catch (error) {
-      console.error("Erro ao cadastrar usuário:", err);
-      alert(err.message || "Erro ao cadastrar usuário.");
+      toast.error("Erro ao cadastrar usuário:", err);
+      toast.error(err.message || "Erro ao cadastrar usuário.");
     }
   };
 
@@ -259,14 +261,14 @@ export default function Filiados() {
 
       if (!res.ok) {
         const erro = await res.json();
-        throw new Error(erro.message || "Erro ao editar usuário");
+        throw new toast.error(erro.message || "Erro ao editar usuário");
       }
 
-      alert("Usuário atualizado com sucesso!");
+      toast.success("Usuário atualizado com sucesso!");
       setAbrirModalEditar(false);
       fetchUsuarios();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -280,14 +282,14 @@ export default function Filiados() {
 
       if (!res.ok) {
         const erro = await res.json();
-        throw new Error(erro.message || "Erro ao excluir usuário");
+        throw new toast.error(erro.message || "Erro ao excluir usuário");
       }
 
-      alert("Usuário excluído com sucesso!");
+      toast.success("Usuário excluído com sucesso!");
       setAbrirModalExcluir(false);
       fetchUsuarios();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -498,70 +500,88 @@ export default function Filiados() {
           usuariosFiltrados.length > 0 ? (
             <>
               {/* TABELA */}
-              <div className="mt-6 overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
-                  <thead className="bg-red-300">
-                    <tr>
-                      <th className="p-2">Nome</th>
-                      <th className="p-2">E-mail</th>
-                      <th className="p-2">Telefone</th>
-                      <th className="p-2">CPF</th>
-                      <th className="p-2">Data de nascimento</th>
-                      <th className="p-2">CEP</th>
-                      <th className="p-2">Cidade</th>
-                      <th className="p-2">Estado</th>
-                      <th className="p-2">Bairro</th>
-                      <th className="p-2">Logradouro</th>
-                      <th className="p-2">Número</th>
-                      <th className="p-2">Tipo de Desconto</th>
-                      <th className="p-2">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usuariosPagina.map((u) => (
-                      <tr key={u.id} className="border-t">
-                        <td className="p-2">{u.nome}</td>
-                        <td className="p-2">{u.email}</td>
-                        <td className="p-2">{u.telefone}</td>
-                        <td className="p-2">{u.cpf}</td>
-                        <td className="p-2">
-                          {new Date(u.data_nascimento).toLocaleDateString()}
-                        </td>
-                        <td className="p-2">{u.cep}</td>
-                        <td className="p-2">{u.cidade}</td>
-                        <td className="p-2">{u.estado}</td>
-                        <td className="p-2">{u.bairro}</td>
-                        <td className="p-2">{u.logradouro}</td>
-                        <td className="p-2">{u.numero}</td>
-                        <td className="p-2">{u.tipodesconto}</td>
-                        <td className="p-2 flex gap-3">
-                          <button onClick={() => abrirEdicao(u)} title="Editar">
-                            <svg
-                              className="w-6 h-6"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
-                              />
-                            </svg>
-                          </button>
-                          <button onClick={() => abrirExclusao(u)} title="Excluir">
-                            <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                              <path fillRule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {/* TABELA — IGUAL À DA IMAGEM */}
+<div className="mt-6 overflow-x-auto">
+  <table className="w-full border-collapse text-sm rounded-lg overflow-hidden shadow-sm">
+    <thead>
+      <tr className="bg-[#245757] text-white">
+        <th className="p-3 text-left">Nome</th>
+        <th className="p-3 text-left">E-mail</th>
+        <th className="p-3 text-left">Telefone</th>
+        <th className="p-3 text-left">CPF</th>
+        <th className="p-3 text-left">Data de nascimento</th>
+        <th className="p-3 text-left">CEP</th>
+        <th className="p-3 text-left">Cidade</th>
+        <th className="p-3 text-left">Estado</th>
+        <th className="p-3 text-left">Bairro</th>
+        <th className="p-3 text-left">Logradouro</th>
+        <th className="p-3 text-left">Número</th>
+        <th className="p-3 text-left">Tipo de Desconto</th>
+        <th className="p-3 text-center">Ações</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {usuariosPagina.map((u) => (
+        <tr
+          key={u.id}
+          className="border-b hover:bg-gray-100 transition"
+        >
+          <td className="p-3 font-medium">{u.nome}</td>
+          <td className="p-3">{u.email}</td>
+          <td className="p-3">{u.telefone}</td>
+          <td className="p-3">{u.cpf}</td>
+          <td className="p-3">
+            {new Date(u.data_nascimento).toLocaleDateString()}
+          </td>
+          <td className="p-3">{u.cep}</td>
+          <td className="p-3">{u.cidade}</td>
+          <td className="p-3">{u.estado}</td>
+          <td className="p-3">{u.bairro}</td>
+          <td className="p-3">{u.logradouro}</td>
+          <td className="p-3">{u.numero}</td>
+          <td className="p-3">{u.tipodesconto}</td>
+
+          <td className="p-3 flex items-center justify-center gap-4">
+            <button onClick={() => abrirEdicao(u)} title="Editar">
+              <svg
+                className="w-6 h-6 text-[#245757]"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+                />
+              </svg>
+            </button>
+
+            <button onClick={() => abrirExclusao(u)} title="Excluir">
+              <svg
+                className="w-6 h-6 text-[#245757]"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
               {/* Paginação */}
             {usuariosFiltrados.length > itensPorPagina && (
