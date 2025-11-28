@@ -147,7 +147,7 @@ CREATE TABLE produtos (
      FOREIGN KEY (categoria_id) REFERENCES categorias(id),
      FOREIGN KEY (marca_id) REFERENCES marcas(id),
      FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
-)
+);
 
 CREATE TABLE lotes_matriz (
 	id INT AUTO_INCREMENT PRIMARY KEY,
