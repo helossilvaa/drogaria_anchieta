@@ -32,9 +32,8 @@ const authMiddleware = async (req, res, next) => {
       funcionario_id: usuario.funcionario_id,
       departamento_id: usuario.departamento_id,
       status: usuario.status,
-      
       nome: funcionario?.nome ?? null,
-      unidade_id: funcionario?.departamento_id ?? null 
+      unidade_id: funcionario?.unidade_id ?? null 
 
     };
 

@@ -30,7 +30,7 @@ import estoqueMatrizRotas from './routes/estoqueMatrizRotas.js';
 import estoqueFranquiaRotas  from './routes/estoqueFranquiaRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
-import transacoesRotas from './routes/transacoesFilialRotas.js';
+// import transacoesRotas from './routes/transacoesFilialRotas.js';
 
 dotenv.config();
 
@@ -45,7 +45,7 @@ try {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
   }));
-  // app.use(express.json());
+ 
 
   app.use(session({
     secret: 'sJYMmuCB2Z187XneUuaOVYTVUlxEOb2K94tFZy370HjOY7T7aiCKvwhNQpQBYL9e',
@@ -83,7 +83,7 @@ app.use( '/estoquematriz', estoqueMatrizRotas);
 app.use( '/estoquefranquia', estoqueFranquiaRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
-app.use('/api', transacoesRotas);
+// app.use('/api', transacoesRotas);
 
 
 app.get('/health', (req, res) => {
@@ -117,8 +117,6 @@ cron.schedule("0 7 * * *", async () => {
   console.log("Atualizando status dos salários...");
   await atualizarStatusSalarios();
 });
-
-
 
 
 process.on('SIGTERM', () => {

@@ -43,7 +43,7 @@ CREATE TABLE usuarios (
     departamento_id INT NOT NULL,
     foto VARCHAR(500) NULL,
     funcionario_id INT NOT NULL,
-    status ENUM('ativo', 'inativo', 'de férias', 'de licença', 'de atestado') DEFAULT 'ativo',
+    status ENUM('ativo', 'inativo', 'férias', 'licença', 'atestado') DEFAULT 'ativo',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (departamento_id) REFERENCES departamento(id),

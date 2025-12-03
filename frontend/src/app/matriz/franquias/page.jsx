@@ -1,17 +1,26 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import Layout  from "@/components/layout/layout";
+import DialogFranquia from "@/components/addFranquia/adicionarFranquia";
+import TableFranquias from "@/components/tableFranquias/table";
 
-import dynamic from "next/dynamic";
+export default function Franquia () {
 
-const TableComplete = dynamic(
-    () => import("@/components/tableBase/tableBase"),
-    { ssr: false } 
-  ); 
+    const [franquia, setFranquia] = useState([]);
 
-export default function Franquias() {
+    
+
+    const router = useRouter();
+
+
     return (
-        <>
-        <TableComplete/>
-        </>
-    )
-};
-
+        <Layout>
+        <DialogFranquia/>
+        <TableFranquias/>
+        </Layout>
+    );
+}

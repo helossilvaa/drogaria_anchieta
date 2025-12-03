@@ -8,6 +8,7 @@ import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "../../app/loading";
+import React from "react";  
 
 export default function Layout({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -131,7 +132,7 @@ export default function Layout({ children }) {
 
         {/* Conteúdo da página */}
         <div className="conteudo bg-gray-50 rounded-2xl p-3 h-full">
-          {children}
+        {children}
         </div>
       </div>
     </div>
