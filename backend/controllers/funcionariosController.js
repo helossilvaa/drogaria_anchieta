@@ -51,6 +51,14 @@ const obterFuncionarioIdController = async (req, res) => {
 // criar funcionário
 const criarFuncionarioController = async (req, res) => {
   try {
+
+    let dados = {};
+
+    
+    if (req.body.data) {
+      dados = JSON.parse(req.body.data);
+    }
+
     let fotoUrl = null;
 
     if (req.file) {
@@ -60,32 +68,37 @@ const criarFuncionarioController = async (req, res) => {
     const registro = Math.floor(10000000 + Math.random() * 90000000);
 
     const novoFuncionarioData = {
-      registro, 
-      cpf: req.body.cpf,
-      telefone: req.body.telefone,
-      data_nascimento: req.body.data_nascimento,
-      genero: req.body.genero,
-      nome: req.body.nome,
-      email: req.body.email,
-      departamento_id: req.body.departamento_id,
-      logradouro: req.body.logradouro,
-      cidade: req.body.cidade,
-      estado: req.body.estado,
-      cep: req.body.cep,
-      numero: req.body.numero,
-      unidade_id: req.body.unidade_id ?? null,
+      registro,
+      cpf: dados.cpf,
+      telefone: dados.telefone,
+      data_nascimento: dados.data_nascimento,
+      genero: dados.genero,
+      nome: dados.nome,
+      email: dados.email,
+      departamento_id: dados.departamento_id,
+      logradouro: dados.logradouro,
+      cidade: dados.cidade,
+      estado: dados.estado,
+      cep: dados.cep,
+      numero: dados.numero,
+      unidade_id: dados.unidade_id ?? null,
       foto: fotoUrl
     };
 
     const novo = await criarFuncionario(novoFuncionarioData);
 
-    res.status(201).json({ mensagem: "Funcionário criado com sucesso",registro, novo});
+    res.status(201).json({
+      mensagem: "Funcionário criado com sucesso",
+      registro,
+      novo
+    });
 
   } catch (error) {
     console.error("Erro ao criar funcionário:", error);
     res.status(500).json({ mensagem: "Erro ao criar funcionário", error });
   }
 };
+
 
 
 
@@ -172,7 +185,7 @@ const mudarStatusFuncionarioController = async (req, res) => {
 // listar funcionários da unidade do usuário logado
 const listarFuncionariosUnidadeController = async (req, res) => {
   try {
-    const usuario = req.usuario; 
+    const usuario = req.user; 
     const unidadeId = usuario.unidade_id;
 
     const funcionarios = await listarFuncionarios(); 
@@ -192,6 +205,7 @@ const listarFuncionariosUnidadeController = async (req, res) => {
     res.status(500).json({ mensagem: "Erro ao listar funcionários da unidade", error });
   }
 };
+
 
 
 

@@ -18,10 +18,9 @@ export default function Salarios() {
   const [editarSalarioId, setEditarSalarioId] = useState(null);
   const [excluirSalarioId, setExcluirSalarioId] = useState(null);
   const [abrirModalExcluir, setAbrirModalExcluir] = useState(false);
-
+  const [pesquisa, setPesquisa] = useState("");
   const [departamentos, setDepartamentos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
-  const [filtroDepartamento, setFiltroDepartamento] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
@@ -207,7 +206,7 @@ export default function Salarios() {
     setNovoSalario({
       id_funcionario: s.id_funcionario || s.id_funcionario_original || "",
       registro: s.registro || "",
-      nome: s.funcionario || "", // Usamos 'funcionario' aqui pois é o nome do funcionário
+      nome: s.funcionario || "", 
       departamento_id: s.departamento_id ?? "",
       valor: getValorParaInput(s.valor ?? ""),
       status_pagamento: s.status_pagamento ?? "pendente",
@@ -240,12 +239,17 @@ export default function Salarios() {
     }
   };
 
-  const salariosFiltrados = salarios.filter((s) => {
-    const departamentoMatch =
-      !filtroDepartamento || String(s.departamento_id) === String(filtroDepartamento);
+ const salariosFiltrados = salarios.filter((s) => {
+  if (!pesquisa) return true;
 
-    return departamentoMatch;
-  });
+  const termo = pesquisa.toLowerCase();
+
+  return (
+    (s.funcionario && s.funcionario.toLowerCase().includes(termo)) ||
+    (s.registro && String(s.registro).includes(termo))
+  );
+});
+
 
   const indexUltimo = paginaAtual * itensPorPagina;
   const indexPrimeiro = indexUltimo - itensPorPagina;
@@ -260,7 +264,7 @@ export default function Salarios() {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [filtroDepartamento]);
+  }, [pesquisa]);
 
   useEffect(() => {
     fetchSalarios();
@@ -271,23 +275,22 @@ export default function Salarios() {
     <>
       {/* FILTROS */}
       <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-600">Departamento</label>
-            <select
-              value={filtroDepartamento}
-              onChange={(e) => setFiltroDepartamento(e.target.value)}
-              className="border rounded-full px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-            >
-              <option value="">Todos</option>
-              {departamentos.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.departamento}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="flex flex-col w-full max-w-sm">
+          <label className="text-sm font-medium text-gray-600">
+            Pesquisar por Nome ou Registro
+          </label>
+
+          <input
+            type="text"
+            value={pesquisa}
+            onChange={(e) => {
+              setPesquisa(e.target.value);
+              setPaginaAtual(1);
+            }}
+            className="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#245757]"
+          />
         </div>
+
         <button
           type="button"
           onClick={handleNovaSalario}
@@ -307,8 +310,8 @@ export default function Salarios() {
 
               {/* ✅ REGISTRO */}
               <label htmlFor="registro" className="block">
-                  Registro
-                </label>
+                Registro
+              </label>
               <input
                 id="registro"
                 name="registro"
@@ -328,6 +331,7 @@ export default function Salarios() {
                     nome: funcionarioSelecionado?.nome || "",
                     departamento_id: funcionarioSelecionado?.departamento_id || "",
                   }));
+                  
                 }}
                 disabled={!!editarSalarioId}   // 🔥 CONGELA NO EDITAR
                 className="border rounded-md p-2 w-full"
@@ -337,8 +341,8 @@ export default function Salarios() {
 
               {/* ✅ FUNCIONÁRIO */}
               <label htmlFor="nome" className="block">
-                  Funcionário
-                </label>
+                Funcionário
+              </label>
               <input
                 id="nome"
                 name="nome"
@@ -363,29 +367,6 @@ export default function Salarios() {
                 className="border rounded-md p-2 w-full"
                 placeholder="Digite ou selecione o funcionário"
               />
-
-
-              <div>
-                <label htmlFor="departamento_id" className="block">
-                  Departamento
-                </label>
-                <select
-                  id="departamento_id"
-                  name="departamento_id"
-                  value={novoSalario.departamento_id || ""}
-                  onChange={handleChange}
-                  disabled={!!editarSalarioId}  
-                  className="border rounded-md p-2 w-full"
-                  required
-                >
-                  <option value="">Selecione o departamento</option>
-                  {departamentos.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.departamento}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
               <div>
                 <label htmlFor="valor" className="block">
@@ -489,7 +470,7 @@ export default function Salarios() {
               <tr key={u.id} className="border-t hover:bg-gray-50">
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
-                <td className="p-2">{getNomeDepartamento(u.departamento)}</td> 
+                <td className="p-2">{getNomeDepartamento(u.departamento)}</td>
                 <td className="p-2">{formatarValor(u.valor)}</td>
 
                 <td className="p-2">

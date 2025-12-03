@@ -1,7 +1,9 @@
+
 import { Conta } from "../models/contasFilial.js";
 
-// 📤 Criar nova conta
 export const criarConta = async (req, res) => {
+
+
   const { nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, status } = req.body;
 
   if (!nomeConta || !categoria || !dataPostada || !dataVencimento || !valor || !conta_pdf) {
@@ -11,8 +13,12 @@ export const criarConta = async (req, res) => {
   const statusBanco = status === true ? "pendente" : "paga";
 
   try {
+
     const contasExistentes = await Conta.getAll();
-    const nomeDuplicado = contasExistentes.find(
+    const lista = Array.isArray(contasExistentes) ? contasExistentes : [contasExistentes];
+
+
+    const nomeDuplicado = lista.find(
       (c) => c.nomeConta.toLowerCase().trim() === nomeConta.toLowerCase().trim()
     );
 
@@ -26,12 +32,14 @@ export const criarConta = async (req, res) => {
       dataPostada,
       dataVencimento,
       valor,
-      conta_pdf: Buffer.from(conta_pdf, "base64"),
-      status: statusBanco,
+      conta_pdf: Buffer.from(conta_pdf, "base64"), status: statusBanco,
+      unidade_id: req.usuarioUnidadeId,
     });
 
     return res.status(201).json({ message: "Conta cadastrada com sucesso!", id: insertId });
+
   } catch (err) {
+
     if (err.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ message: "Já existe uma conta com esse nome." });
     }
@@ -40,10 +48,18 @@ export const criarConta = async (req, res) => {
   }
 };
 
-// 📋 Listar
 export const listarConta = async (req, res) => {
+
   try {
-    const contas = await Conta.getAll();
+    const unidadeId = req.usuarioUnidadeId;
+
+    let contas = await Conta.getAllByUnidade(unidadeId);
+
+    console.log("getAll() → listarConta:", contas);
+
+    if (!Array.isArray(contas)) {
+      contas = [contas];
+    }
 
     const contasConvertidas = contas.map((f) => ({
       ...f,
@@ -58,8 +74,7 @@ export const listarConta = async (req, res) => {
   }
 };
 
-// ✏️ Editar
-// ✏️ Editar
+
 export const editarConta = async (req, res) => {
   const { id } = req.params;
   const { nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, status } = req.body;
@@ -68,13 +83,12 @@ export const editarConta = async (req, res) => {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
 
-  // Converter status
   const statusBanco = status === true ? "pendente" : "paga";
 
   try {
+
     const contasExistentes = await Conta.getAll();
 
-    // Verificar nome duplicado (exceto a própria conta)
     const nomeDuplicado = contasExistentes.find(
       (c) =>
         c.nomeConta.toLowerCase().trim() === nomeConta.toLowerCase().trim() &&
@@ -108,7 +122,6 @@ export const editarConta = async (req, res) => {
   }
 };
 
-
 export const excluirConta = async (req, res) => {
   const { id } = req.params;
 
@@ -125,6 +138,8 @@ export const excluirConta = async (req, res) => {
     return res.status(500).json({ message: "Erro ao excluir conta." });
   }
 };
+
+
 export const downloadPDF = async (req, res) => {
   const { id } = req.params;
 
@@ -146,5 +161,4 @@ export const downloadPDF = async (req, res) => {
     console.error(err);
     res.status(500).send("Erro ao carregar PDF");
   }
-};
-
+}; 

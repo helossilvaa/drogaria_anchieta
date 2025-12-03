@@ -13,7 +13,6 @@ export default function Contas() {
     };
 
     const categorias = [
-        "Fornecedores",
         "Despesas Fixas",
         "Tributos e Taxas",
         "Materiais e Suprimentos",
@@ -107,13 +106,21 @@ export default function Contas() {
 
     const fetchConta = async () => {
         try {
-            const res = await fetch(API_URL);
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(API_URL, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
             const data = await res.json();
             setConta(data);
         } catch (error) {
             console.error("Erro ao carregar contas:", error);
         }
     };
+
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -149,6 +156,8 @@ export default function Contas() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const token = localStorage.getItem("token");
+
         const nomeJaExiste = conta.some(
             (c) =>
                 c.nomeConta.toLowerCase().trim() === novaConta.nomeConta.toLowerCase().trim() &&
@@ -174,7 +183,10 @@ export default function Contas() {
         try {
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
                 body: JSON.stringify(contaParaAPI),
             });
 
@@ -230,7 +242,11 @@ export default function Contas() {
         try {
             const res = await fetch(`${API_URL}/${excluirContaId}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
+
             if (!res.ok) throw new Error("Erro ao excluir conta");
             alert("Conta excluída com sucesso!");
             setAbrirModalExcluir(false);
@@ -509,7 +525,7 @@ export default function Contas() {
                                         <a
                                             href={`http://localhost:8080/pdfs/${u.id}`}
                                             target="_blank"
-                                            
+
                                         >
                                             Visualizar PDF
                                         </a>

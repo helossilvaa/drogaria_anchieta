@@ -33,15 +33,10 @@ export function LoginForm() {
       if (res.ok && data.token) {
         // ✔️ SALVA TOKEN
         localStorage.setItem("token", data.token);
-
-        // ✔️ SALVA USUÁRIO (CORREÇÃO PRINCIPAL)
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
-
         toast.success("Login realizado com sucesso!");
-
-        // ✔️ Identifica o departamento para redirecionar
-        const departamento = data.usuario?.departamento;
-
+        const departamento = data.usuario?.departamento.toLowerCase(); 
+    
         setTimeout(() => {
           if (departamento === "diretor geral") router.push("/matriz");
           else if (departamento === "diretor administrativo") router.push("/filial");

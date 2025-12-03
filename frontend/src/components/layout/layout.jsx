@@ -18,7 +18,7 @@ export default function Layout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUsuario= async () => {
+    const fetchUsuario = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return router.push("/");
@@ -31,33 +31,38 @@ export default function Layout({ children }) {
           return router.push("/");
         }
 
-        // Verifica departamento permitido
-        const allowed = ["diretor geral", "diretor administrativo", "gerente", "caixa"];
-        if (!allowed.includes(decoded.departamento.toLowerCase())) {
-          localStorage.removeItem("token");
-          return router.push("/");
-        }
-
-        // Fetch do usuário
+        // Buscar o usuário pelo ID do token
         const usuarioRes = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!usuarioRes.ok) throw new Error("Usuário não encontrado");
         const usuarioData = await usuarioRes.json();
 
-        // Fetch do funcionário relacionado
+        // Buscar o funcionário vinculado
         const funcionarioId = usuarioData.funcionario_id;
+
         const funcionarioRes = await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!funcionarioRes.ok) throw new Error("Funcionário não encontrado");
         const funcionarioData = await funcionarioRes.json();
 
-        // Combina os dados
+        // verificar departamento vindo do funcionario
+        const departamentoFuncionario = funcionarioData.departamento?.toLowerCase();
+
+        const allowed = ["diretor geral", "diretor administrativo", "gerente", "caixa"];
+
+        if (!allowed.includes(departamentoFuncionario)) {
+          console.log("não permitido:", departamentoFuncionario);
+          localStorage.removeItem("token");
+          return router.push("/");
+        }
+
         setUsuario({
           ...usuarioData,
           funcionario: funcionarioData,
         });
+
 
       } catch (err) {
         console.error("Erro ao carregar usuário:", err);
@@ -73,7 +78,7 @@ export default function Layout({ children }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="loading"><Loading/></div>
+        <Loading />
       </div>
     );
   }
@@ -111,12 +116,12 @@ export default function Layout({ children }) {
                 usuario={usuario}
                 onFotoAtualizada={(novaFoto, isFuncionario = false) => {
                   if (isFuncionario && usuario.funcionario) {
-                    setUsuario(prev => ({
+                    setUsuario((prev) => ({
                       ...prev,
-                      funcionario: { ...prev.funcionario, foto: novaFoto }
+                      funcionario: { ...prev.funcionario, foto: novaFoto },
                     }));
                   } else {
-                    setUsuario(prev => ({ ...prev, foto: novaFoto }));
+                    setUsuario((prev) => ({ ...prev, foto: novaFoto }));
                   }
                 }}
               />
