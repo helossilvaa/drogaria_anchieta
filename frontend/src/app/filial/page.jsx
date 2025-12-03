@@ -19,7 +19,6 @@ export default function Page() {
             <CardContent>
               <p className="text-sm text-gray-500">Vendas de hoje</p>
               <p className="text-2xl font-bold">R$200,00</p>
-              <p className="text-xs text-gray-400">7 vendas realizadas</p>
             </CardContent>
           </Card>
 
@@ -27,7 +26,6 @@ export default function Page() {
             <CardContent>
               <p className="text-sm text-gray-500">Total de produtos vendidos</p>
               <p className="text-2xl font-bold">10</p>
-              <p className="text-xs text-gray-400">7 vendas realizadas</p>
             </CardContent>
           </Card>
 
@@ -35,7 +33,6 @@ export default function Page() {
             <CardContent>
               <p className="text-sm text-gray-500">Total de funcionários da unidade</p>
               <p className="text-2xl font-bold">20</p>
-              <p className="text-xs text-gray-400">1 funcionário novo</p>
             </CardContent>
           </Card>
         </div>

@@ -21,7 +21,7 @@ import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
-import salariosRotas from './routes/salariosRotas.js';
+import salariosRotas from './routes/salariosFilialRotas.js';
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
@@ -77,12 +77,8 @@ app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
-<<<<<<< HEAD
-app.use('/api', transacoesRotas);
-=======
 // app.use('/api', transacoesRotas);
 
->>>>>>> 7b63a70568d60722b369b2861fa501e6d6e9ad1a
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });
 });
