@@ -442,8 +442,8 @@ INSERT INTO unidade (tipo, nome, cnpj, logradouro, cidade, estado, cep, numero, 
 
 
 INSERT INTO produtos (registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento) values
-('102340125', 'Paracetamol', 'paracetamol.webp', 5, 2, 5, 31, '2147483641', 'Analgésico e antipirético para dores leves e febre: 500mg - 20 Comprimidos', '13', '2026-04-15', 18, 101, 'Ambiente natural'),
-('457891234', 'Dipirona Sódica', 'dipironaSodica.webp', 5, 1, 3, 14, '2147483642', 'Analgésico e antitérmico: 1g - 10 Comprimidos', '9', '2025-11-20', 1, 102, 'Local fresco e seco'),
+('102340125', 'Paracetamol', 'paracetamol.webp', 5, 2, 1, 31, '2147483641', 'Analgésico e antipirético para dores leves e febre: 500mg - 20 Comprimidos', '13', '2026-04-15', 18, 101, 'Ambiente natural'),
+('457891234', 'Dipirona Sódica', 'dipironaSodica.webp', 5, 1, 1, 14, '2147483642', 'Analgésico e antitérmico: 1g - 10 Comprimidos', '9', '2025-11-20', 1, 102, 'Local fresco e seco'),
 ('203567891', 'Amoxicilina', 'amoxicilina.webp', 5, 3, 1, 51, '2147483643', 'Antibiótico de uso oral: 500mg - 21 Cápsulas', '69', '2027-02-01', 13, 103, 'Temperatura ambiente'),
 ('897654321', 'Losartana Potássica', 'losartanaPotassica.webp', 5, 2, 2, 2, '2147483644', 'Medicamento para hipertensão: 50mg - 30 Comprimidos', '35', '2028-08-10', 5, 104, 'Ambiente natural'),
 ('108765432', 'Clonazepam', 'clonazepam.webp', 5, 4, 1, 44, '2147483645', 'Medicamento de uso controlado (Tarja Preta): 2mg - 20 Comprimidos', '29', '2026-09-30', 2, 105, 'Local seguro e controlado'),
