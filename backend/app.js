@@ -77,8 +77,12 @@ app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
+<<<<<<< HEAD
+app.use('/api', transacoesRotas);
+=======
 // app.use('/api', transacoesRotas);
 
+>>>>>>> 7b63a70568d60722b369b2861fa501e6d6e9ad1a
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });
 });
