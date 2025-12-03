@@ -30,7 +30,7 @@ import estoqueMatrizRotas from './routes/estoqueMatrizRotas.js';
 import estoqueFranquiaRotas  from './routes/estoqueFranquiaRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
-import transacoesRotas from './routes/transacoesFilialRotas.js';
+// import transacoesRotas from './routes/transacoesFilialRotas.js';
 
 dotenv.config();
 
@@ -83,7 +83,7 @@ app.use( '/estoquematriz', estoqueMatrizRotas);
 app.use( '/estoquefranquia', estoqueFranquiaRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
-app.use('/api', transacoesRotas);
+// app.use('/api', transacoesRotas);
 
 
 app.get('/health', (req, res) => {
