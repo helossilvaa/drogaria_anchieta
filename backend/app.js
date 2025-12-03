@@ -27,7 +27,7 @@ import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
-import transacoesRotas from './routes/transacoesFilialRotas.js';
+// import transacoesRotas from './routes/transacoesFilialRotas.js';
 
 dotenv.config();
 
@@ -77,7 +77,12 @@ app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
+<<<<<<< HEAD
 app.use('/api', transacoesRotas);
+=======
+// app.use('/api', transacoesRotas);
+
+>>>>>>> 7b63a70568d60722b369b2861fa501e6d6e9ad1a
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });
 });
@@ -109,8 +114,6 @@ cron.schedule("0 7 * * *", async () => {
   console.log("Atualizando status dos salários...");
   await atualizarStatusSalarios();
 });
-
-
 
 
 process.on('SIGTERM', () => {
