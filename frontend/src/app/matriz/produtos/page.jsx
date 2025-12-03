@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 const API_URL = 'http://localhost:8080/produtos';
 const API_CATEGORIAS = "http://localhost:8080/categorias";
 const API_LOTESMATRIZ = "http://localhost:8080/lotesmatriz";
-const API_ESTOQUEFILIAL = "http://localhost:8080/estoqueFilial";
+const API_ESTOQUEMATRIZ = "http://localhost:8080/estoquematriz";
+const API_ESTOQUEFILIAL = "http://localhost:8080/estoquefilial";
 
 const ABAS = {
   TODOS: 'todos',
@@ -27,8 +28,7 @@ export default function Produtos() {
   const [fornecedores, setFornecedores] = useState([]);
   const [lotes, setLotes] = useState([]);
   const [tarjas, setTarjas] = useState([]);
-  const [estoqueFilial, setEstoqueFilial] = useState([]);
-  const [estoqueMinimo] = useState(30); // valor que você quiser
+  const [estoqueMatriz, setEstoqueMatriz] = useState([]); // === NOVO ===
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('0');
   const [abaAtiva, setAbaAtiva] = useState(ABAS.TODOS);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,13 +94,13 @@ export default function Produtos() {
 
   const getEstoqueStatus = (produto) => {
     const q = produto?.quantidade;
-
+  
     if (q === undefined || q === null) return "Desconhecido";
     if (q === 0) return "Sem estoque";
     if (q <= 5) return "Baixo estoque";
     return "OK";
   };
-
+  
 
   // fetch listas auxiliares
 
@@ -120,20 +120,20 @@ export default function Produtos() {
     }
   };
 
-  const fetchEstoqueFilial = async () => {
+  const fetchEstoqueMatriz = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(API_ESTOQUEFILIAL, {
+      const res = await fetch(API_ESTOQUEMATRIZ, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Erro ao carregar estoque da filial");
+      if (!res.ok) throw new Error("Erro ao carregar estoque matriz");
       const data = await res.json();
-      setEstoqueFilial(Array.isArray(data) ? data : []);
+      setEstoqueMatriz(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Erro ao buscar estoque da filial:", err);
+      console.error("Erro ao buscar estoque matriz:", err);
     }
   };
-  
+
   const fetchCategorias = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -176,37 +176,37 @@ export default function Produtos() {
     if (isAuthenticated) {
       fetchCategorias();
       fetchLotes();
-      fetchEstoqueFilial();
+      fetchEstoqueMatriz();
       fetchProdutos();
     }
   }, [isAuthenticated]);
 
   useEffect(() => {
     if (!produtos || produtos.length === 0) return;
-    if (!estoqueFilial || estoqueFilial.length === 0) return;
-
+    if (!estoqueMatriz || estoqueMatriz.length === 0) return;
+  
     const resultado = produtosCompletos.map(prod => {
       // Filtra todos os lotes desse produto
-      const lotesDoProduto = estoqueFilial.filter(
+      const lotesDoProduto = estoqueMatriz.filter(
         es => Number(es.produto_id) === Number(prod.id)
       );
-
+  
       // Soma a quantidade total
       const quantidadeTotal = lotesDoProduto.reduce(
         (total, lote) => total + Number(lote.quantidade || 0),
         0
       );
-
+  
       return {
         ...prod,
         quantidade: quantidadeTotal,
         lotes: lotesDoProduto,
       };
     });
-
+  
     setProdutosCompletos(resultado);
-  }, [produtos, estoqueFilial]);
-
+  }, [produtos, estoqueMatriz]);
+  
 
   const produtosFiltrados = produtos.filter((produto) => {
     const produtoCategoriaId = Number(produto?.categoria_id ?? produto?.categoria ?? 0);
@@ -280,6 +280,89 @@ export default function Produtos() {
     armazenamento: p.armazenamento || "",
   });
 
+
+  const handleCriarProduto = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    if (!novoProduto.nome || String(novoProduto.nome).trim() === "") {
+      setMensagemFeedback({ type: 'error', text: "O campo 'Nome' é obrigatório." });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    if (!novoProduto.categoria_id) {
+      setMensagemFeedback({ type: 'error', text: "Selecione uma categoria." });
+      setTimeout(() => setMensagemFeedback(null), 2500);
+      return;
+    }
+
+    const payloadObj = normalizarProduto(novoProduto);
+
+    const finalPayload = {
+      registro_anvisa: payloadObj.registro_anvisa || null,
+      nome: payloadObj.nome,
+      foto: payloadObj.foto,
+      medida_id: payloadObj.medida_id ?? null,
+      tarja_id: payloadObj.tarja_id ?? null,
+      categoria_id: payloadObj.categoria_id ?? null,
+      marca_id: payloadObj.marca_id ?? null,
+      codigo_barras: payloadObj.codigo_barras || null,
+      descricao: payloadObj.descricao || null,
+      preco_unitario: payloadObj.preco_unitario ?? null,
+      validade: payloadObj.validade || null,
+      fornecedor_id: payloadObj.fornecedor_id ?? null,
+      lote_id: payloadObj.lote_id ?? null,
+      armazenamento: payloadObj.armazenamento || null,
+    };
+
+    try {
+      console.log("Criar payload:", finalPayload);
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(finalPayload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.mensagem || data.message || 'Erro ao criar produto');
+
+      setMensagemFeedback({ type: 'success', text: 'Produto criado com sucesso!' });
+      setTimeout(() => setMensagemFeedback(null), 4000);
+
+      setIsDialogOpen(false);
+
+      setNovoProduto({
+        registro_anvisa: "",
+        nome: "",
+        medida_id: "",
+        tarja_id: "",
+        categoria_id: "",
+        marca_id: "",
+        codigo_barras: "",
+        descricao: "",
+        preco_unitario: "",
+        validade: "",
+        fornecedor_id: "",
+        lote_id: "",
+        armazenamento: "",
+      });
+
+      await fetchProdutos();
+
+    } catch (err) {
+      console.error('Erro ao criar produto:', err, 'payload:', finalPayload);
+      setMensagemFeedback({ type: 'error', text: err.message || 'Erro ao criar produto' });
+      setTimeout(() => setMensagemFeedback(null), 4000);
+    }
+  };
 
   const handleSelectLoteNovo = (id) => {
     if (!id || Number(id) === 0) {
@@ -360,7 +443,7 @@ export default function Produtos() {
       setIsEditDialogOpen(false);
       setProdutoEditando(null);
       await fetchProdutos();
-      await fetchEstoqueMatriz();
+      await fetchEstoqueMatriz(); // atualiza lista de lotes/estoque
     } catch (error) {
       console.error("Erro ao atualizar:", error);
 
@@ -417,7 +500,7 @@ export default function Produtos() {
       tarja_id: produto?.tarja_id ?? produto?.tarja ?? '',
     });
     // buscar estoque por produto para popular aba Lotes
-    fetchEstoqueFilial();
+    fetchEstoqueMatriz(); 
     setIsEditDialogOpen(true);
   };
 
@@ -425,25 +508,6 @@ export default function Produtos() {
     setProdutoVisualizado(produto);
     setIsViewDialogOpen(true);
   };
-
-  function calcularEstoqueTotal(produto) {
-    if (!estoqueFilial || !Array.isArray(estoqueFilial)) return 0;
-  
-    const total = estoqueFilial
-      .filter(es => Number(es.produto_id) === Number(produto.id))
-      .reduce((sum, es) => sum + Number(es.quantidade || 30), 0);
-  
-    return total;
-  }
-  
-  function obterStatusEstoque(quantidade) {
-    if (quantidade <= estoqueMinimo) {
-      return { texto: "Baixo", cor: "text-red-600 font-semibold" };
-    }
-    return { texto: "Normal", cor: "text-green-600 font-semibold" };
-  }
-  
-
 
   const getAbaClasses = (aba) =>
     abaAtiva === aba
@@ -454,7 +518,7 @@ export default function Produtos() {
   return (
     <Layout>
       <div className="p-2">
-        <h2 className=" text-[#d1d0d0] text-4xl font-bold mb-4">Gerenciar Produtos</h2>
+        <h2 className=" text-[#979797] text-4xl font-bold mb-4">Gerenciar Produtos</h2>
 
         {/* FEEDBACK POP-UP CENTRAL */}
         {mensagemFeedback && (
@@ -466,12 +530,78 @@ export default function Produtos() {
         )}
 
 
+        {/* Botão Criar Produto */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#1c5f53] text-white hover:bg-[#35574f] hover:border-[#91c9bb] mb-4 mt-7 ">
+              Criar Produto
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[85vh] overflow-y-auto p-7 text-justify">
+            <DialogHeader>
+              <DialogTitle className="font-bold text-2xl  text-[#178970]">Novo Produto</DialogTitle></DialogHeader>
+            <div className="grid gap-2 mt-2">
+              <Input placeholder="Nome" value={novoProduto.nome} onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })} />
+              <Input placeholder="Registro ANVISA" value={novoProduto.registro_anvisa} onChange={(e) => setNovoProduto({ ...novoProduto, registro_anvisa: e.target.value })} />
+              <Input placeholder="Código de Barras" value={novoProduto.codigo_barras} onChange={(e) => setNovoProduto({ ...novoProduto, codigo_barras: e.target.value })} />
+              <Input placeholder="Descrição" value={novoProduto.descricao} onChange={(e) => setNovoProduto({ ...novoProduto, descricao: e.target.value })} />
+              <Input type="number" placeholder="Preço Unitário" value={novoProduto.preco_unitario} onChange={(e) => setNovoProduto({ ...novoProduto, preco_unitario: e.target.value })} />
+              <Input type="date" placeholder="Validade" value={novoProduto.validade} onChange={(e) => setNovoProduto({ ...novoProduto, validade: e.target.value })} />
 
+              <Select value={String(novoProduto.tarja_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, tarja_id: v ? Number(v) : "" })}>
+                <SelectTrigger><SelectValue placeholder="Tarja" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Selecione</SelectItem>
+                  {tarjas.length > 0 ? tarjas.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome || t.descricao || t.id}</SelectItem>)
+                    : (
+                      <>
+                        <SelectItem value="1">Sem Tarja</SelectItem>
+                        <SelectItem value="2">Vermelha</SelectItem>
+                        <SelectItem value="3">Amarela</SelectItem>
+                        <SelectItem value="4">Preta</SelectItem>
+                      </>
+                    )}
+                </SelectContent>
+              </Select>
+
+              <Select value={String(novoProduto.categoria_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v ? Number(v) : "" })}>
+                <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Selecione</SelectItem>
+                  {categorias.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome || cat.categoria}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input placeholder="Medida ID" value={novoProduto.medida_id} onChange={(e) => setNovoProduto({ ...novoProduto, medida_id: e.target.value })} />
+              <Input placeholder="Marca ID" value={novoProduto.marca_id} onChange={(e) => setNovoProduto({ ...novoProduto, marca_id: e.target.value })} />
+              <Input placeholder="Fornecedor ID" value={novoProduto.fornecedor_id} onChange={(e) => setNovoProduto({ ...novoProduto, fornecedor_id: e.target.value })} />
+              <Select value={String(novoProduto.lote_id || "")} onValueChange={handleSelectLoteNovo} >
+                <SelectTrigger><SelectValue placeholder="Selecione o lote" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Sem lote</SelectItem>
+                  {lotes.map((lote) => (
+                    <SelectItem key={lote.id} value={String(lote.id)}>
+                      Lote {lote.numero_lote} — Validade {lote.data_validade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input placeholder="Armazenamento" value={novoProduto.armazenamento} onChange={(e) => setNovoProduto({ ...novoProduto, armazenamento: e.target.value })} />
+            </div>
+
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+              <Button className="bg-[#4b9c86] text-white hover:bg-[#3e8473]" onClick={handleCriarProduto}>Salvar Produto</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* DIALOG EDITAR */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-h-[85vh] overflow-y-auto p-7 text-justify">
-            <DialogHeader><DialogTitle className="font-bold text-2xl  text-[#a7e3d0]">Editar Produto</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="font-bold text-2xl  text-[#055148]">Editar Produto</DialogTitle></DialogHeader>
             {produtoEditando && (
               <div className="grid gap-3 mt-2">
                 <Input placeholder="Nome" value={produtoEditando.nome} onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })} />
@@ -529,7 +659,7 @@ export default function Produtos() {
             )}
             <DialogFooter className="mt-4">
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#4b9c86] text-white hover:bg-[#3e8473]" onClick={handleAtualizarProduto}>Salvar Alterações</Button>
+              <Button className="bg-[#0d5249] text-white hover:bg-[#3e8473]" onClick={handleAtualizarProduto}>Salvar Alterações</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -620,16 +750,14 @@ export default function Produtos() {
         {/* TABELA */}
         <div className="relative overflow-x-auto rounded-lg">
           <Table className="w-full text-sm text-gray-500">
-            <TableHeader className="relative overflow-x-auto bg-[#a9d6cd] rounded-xl">
+            <TableHeader className="relative overflow-x-auto bg-[#0f594a] rounded-xl">
               <TableRow>
-                <TableHead className="py-3 px-6">Nome</TableHead>
-                <TableHead className="py-3 px-6">Categoria</TableHead>
-                <TableHead className="py-3 px-6">Código</TableHead>
-                <TableHead className="py-3 px-6">Estoque</TableHead>
-                <TableHead className="py-3 px-6">Status</TableHead>
-                <TableHead className="py-3 px-6">Marca</TableHead>
-                <TableHead className="py-3 px-6">Validade</TableHead>
-                <TableHead className="py-3 px-6">Ações</TableHead>
+                <TableHead className="py-3 px-8">Nome</TableHead>
+                <TableHead className="py-3 px-8">Categoria</TableHead>
+                <TableHead className="py-3 px-8">Marca</TableHead>
+                <TableHead className="py-3 px-8">Código</TableHead>
+                <TableHead className="py-3 px-8">Validade</TableHead>
+                <TableHead className="py-3 px-8">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -642,18 +770,8 @@ export default function Produtos() {
                   <TableRow key={produto.id} className="border-b-1 text-center">
                     <TableCell className="px-4 py-6 font-normal text-gray-900">{produto.nome}</TableCell>
                     <TableCell className="px-10 py-6">{getCategoriaNome(produto.categoria_id)}</TableCell>
-                    <TableCell className="px-10 py-6">{produto.codigo_barras || "-"}</TableCell>
-                    <TableCell>{calcularEstoqueTotal(produto)}</TableCell>
-                    <TableCell>
-                      {(() => {
-                        const qnt = calcularEstoqueTotal(produto);
-                        const status = obterStatusEstoque(qnt);
-                        return <span className={status.cor}>{status.texto}</span>;
-                      })()}
-                    </TableCell>
-
-
                     <TableCell className="px-10 py-6">{produto.marca_id}</TableCell>
+                    <TableCell className="px-10 py-6">{produto.codigo_barras || "-"}</TableCell>
                     <TableCell className="px-10 py-6">{produto.validade ? (produto.validade) : "N/A"}</TableCell>
                     <TableCell className="flex py-4 px-6 justify-center gap-2">
 
