@@ -27,7 +27,7 @@ import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
-// import transacoesRotas from './routes/transacoesFilialRotas.js';
+
 
 dotenv.config();
 
