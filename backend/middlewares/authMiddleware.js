@@ -24,6 +24,7 @@ const authMiddleware = async (req, res, next) => {
     req.usuarioId = decoded.id;
     req.usuarioNome = decoded.nome;
     req.usuarioSetor = decoded.setor;
+    req.usuarioUnidadeId = decoded.unidade_id;
 
     next();
     
