@@ -6,14 +6,15 @@ export const Salario = {
     return await create("salarios", data);
   },
 
-  getAll: async (cargoFiltro) => {
-    let sql = `
+  getAll: async (unidadeFiltro) => {
+  let sql = `
     SELECT 
       s.id,
       u.id AS id_funcionario,
       u.registro,
       u.nome AS funcionario,
-      s.departamento_id,         
+      u.unidade_id,
+      s.departamento_id,
       d.departamento AS departamento,
       s.valor,
       s.status_pagamento,
@@ -24,19 +25,19 @@ export const Salario = {
     WHERE d.departamento IN ('Gerente', 'Caixa')
   `;
 
-    if (cargoFiltro === "restrito") {
-      sql += " WHERE d.departamento IN ('Gerente', 'Caixa')";
-    }
+  if (unidadeFiltro) {
+    sql += ` AND u.unidade_id = ${unidadeFiltro}`;
+  }
 
-    sql += " ORDER BY s.id DESC";
+  sql += " ORDER BY s.id DESC";
 
-    try {
-      return await query(sql);
-    } catch (err) {
-      console.error("Erro ao buscar salários:", err);
-      throw err;
-    }
-  },
+  try {
+    return await query(sql);
+  } catch (err) {
+    console.error("Erro ao buscar salários:", err);
+    throw err;
+  }
+},
 
   // 🔹 Atualizar salário
   update: async (id, data) => {

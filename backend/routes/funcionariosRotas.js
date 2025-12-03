@@ -7,14 +7,15 @@ import upload from "../middlewares/upload.js";
  
 const router = express.Router();
  
-router.post('/', authMiddleware, criarFuncionarioController);
+router.post('/', authMiddleware, upload.single("foto"), criarFuncionarioController);
 router.get('/', authMiddleware, listarFuncionariosController);
+router.get('/unidade', authMiddleware, listarFuncionariosUnidadeController);
 router.get('/:id', authMiddleware, obterFuncionarioIdController);
 router.delete('/:id', authMiddleware, deletarFuncionarioController);
 router.patch('/:id', authMiddleware, upload.single("foto"), atualizarFuncionarioController);
 router.put('/:id/status', authMiddleware, mudarStatusFuncionarioController);
 
-router.get('/unidade', authMiddleware, listarFuncionariosUnidadeController);
+
 
 router.options('/:id/status', (req, res) => {
     res.setHeader('Allow', 'PUT, OPTIONS');

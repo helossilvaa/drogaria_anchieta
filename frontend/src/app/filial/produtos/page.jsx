@@ -203,7 +203,6 @@ export default function Produtos() {
         break;
     }
 
-    // FILTRO POR BUSCA
     if (searchTerm.trim() !== "") {
       const termo = searchTerm.toLowerCase();
       const nome = String(produto.nome || "").toLowerCase();
@@ -234,7 +233,6 @@ export default function Produtos() {
     if (novaPagina > 0 && novaPagina <= totalPaginas) setPaginaAtual(novaPagina);
   };
 
-  // normaliza objeto recebendo strings/objects -> form compatível para enviar ao backend (apenas *_id)
   const normalizarProduto = (p) => ({
     id: p.id ?? null,
     nome: p.nome || "",
@@ -253,7 +251,7 @@ export default function Produtos() {
     armazenamento: p.armazenamento || "",
   });
 
-  // criar produto (envia apenas *_id)
+
   const handleCriarProduto = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -337,7 +335,6 @@ export default function Produtos() {
     }
   };
 
-  // === ALTERAÇÃO: separar seleção de lote para NOVO e EDIT ===
   const handleSelectLoteNovo = (id) => {
     if (!id || Number(id) === 0) {
       setNovoProduto({ ...novoProduto, lote_id: "", validade: "", quantidade: "" });
@@ -367,7 +364,6 @@ export default function Produtos() {
       validade: lote.data_validade
     });
   };
-  // === FIM ALTERAÇÃO ===
 
   const handleAtualizarProduto = async () => {
     if (!produtoEditando) return;
@@ -475,7 +471,7 @@ export default function Produtos() {
       tarja_id: produto?.tarja_id ?? produto?.tarja ?? '',
     });
     // buscar estoque por produto para popular aba Lotes
-    fetchEstoqueMatriz(); // === NOVO ===
+    fetchEstoqueMatriz(); 
     setIsEditDialogOpen(true);
   };
 

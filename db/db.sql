@@ -147,7 +147,7 @@ CREATE TABLE produtos (
      FOREIGN KEY (categoria_id) REFERENCES categorias(id),
      FOREIGN KEY (marca_id) REFERENCES marcas(id),
      FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
-)
+);
 
 CREATE TABLE lotes_matriz (
 	id INT AUTO_INCREMENT PRIMARY KEY,
@@ -233,7 +233,9 @@ CREATE TABLE contas (
   status ENUM('paga', 'pendente') DEFAULT 'pendente',
   dataVencimento DATE NOT NULL,
   dataPostada DATE NOT NULL,
-  valor DECIMAL(10,2) NOT NULL
+  valor DECIMAL(10,2) NOT NULL,
+  unidade_id INT NOT NULL,
+  FOREIGN KEY (unidade_id) REFERENCES unidade (id)
 );
 
 
@@ -249,6 +251,23 @@ CREATE TABLE  salarios (
   FOREIGN KEY (departamento_id) REFERENCES departamento(id),
   FOREIGN KEY (unidade_id) REFERENCES unidade(id)
 );
+
+CREATE TABLE pagamentos_salarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_salario INT NOT NULL,
+  id_funcionario INT NOT NULL,
+  unidade_id INT NOT NULL,
+  departamento_id INT NOT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  status_pagamento ENUM('pago', 'pendente'),
+  data_pagamento DATE NOT NULL,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_salario) REFERENCES salarios(id),
+  FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id),
+  FOREIGN KEY (departamento_id) REFERENCES departamento(id),
+  FOREIGN KEY (unidade_id) REFERENCES unidade(id)
+);
+
 
 CREATE TABLE tiporelatorio (
 	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -307,6 +326,25 @@ CREATE TABLE movimentacoes_estoque (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
+CREATE TABLE categoria_transacoes (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    categoria_transacao VARCHAR(100) NOT NULL,
+    tipo ENUM('Receita', 'Despesa', 'Transferencia') NOT NULL,
+    descricao VARCHAR(255),
+);
+
+CREATE TABLE Transacoes (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    data_lancamento DATETIME NOT NULL,
+    tipo_movimento ENUM('ENTRADA', 'SAIDA') NOT NULL,
+    valor DECIMAL(10, 2) NOT NULL, 
+    descricao VARCHAR(255) NOT NULL,
+    unidade_id INT NOT NULL,
+    categoria_transacao_id INT NOT NULL,
+    origem VARCHAR(50) NOT NULL, 
+    FOREIGN KEY (unidade_id) REFERENCES unidade(id),
+    FOREIGN KEY (categoria_transacao_id) REFERENCES categoria_transacao(id)
+);
 
 INSERT INTO tipos_pagamento (tipo) VALUES 
 ('debito'), ('credito'), ('pix');
@@ -354,21 +392,36 @@ insert into marcas (marca) values
 ('Band-Aid'), ('Neosaldina'), ('Engov'), ('Dorfax'), ('Novalgina'), ('Coristina'), ('Caladryl'), ('Maalox');
 
 insert into departamento (departamento, tipoUnidade_id) VALUES
-('caixa', 2 ), 
-('gerente', 2 ),
-('diretor administrativo', 2 ),  
-('diretor geral', 1 );
+('Caixa', 2 ), 
+('Gerente', 2 ),
+('Diretor Administrativo', 2 ),  
+('Diretor Geral', 1 );
 
 INSERT INTO funcionarios (registro, cpf, telefone, data_nascimento, genero, 
 nome, email, departamento_id, logradouro, cidade, estado, cep, numero) VALUES 
 ('123456', '54470306843', '5511967855691', '2007-09-12', 'feminino', 'Heloise Soares', 
 'heloise@gmail.com', 1, 'Rua luís barbalho', 'São Bernardo do Campo', 'SP', '09820030', '22'),
 ('123456', '47803671829', '5511934902005', '2008-05-20', 'feminino', 'Mariana Oliveira', 
-'mariana@gmail.com', 1, 'Rua Ivaí', 'São Caetano do Sul', 'SP', '09560570', '19'),
+'mariana@gmail.com', 2, 'Rua Ivaí', 'São Caetano do Sul', 'SP', '09560570', '19'),
 ('123456', '47028350843', '5511971537650', '2008-03-30', 'feminino', 'Isabella Nunes', 
 'isabella@gmail.com', 3, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37'),
 ('123456', '15544650870', '5511996108022', '2008-09-11', 'masculino', 'Gerson Rodrigues', 
-'gerson@gmail.com', 4, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37');
+'gerson@gmail.com', 4, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37'),
+
+INSERT INTO funcionarios (registro, cpf, telefone, data_nascimento, genero, 
+nome, email, departamento_id, logradouro, cidade, estado, cep, numero, unidade_id) VALUES 
+('654321', '33344455566', '5521987654321', '1995-10-25', 'masculino', 'Carlos Silva', 
+'carlos.silva@empresa.com', 1, 'Avenida Principal', 'Rio de Janeiro', 'RJ', '20000000', '101', 2),
+('789012', '11122233344', '5531998761234', '1988-03-15', 'feminino', 'Ana Paula Costa', 
+'ana.costa@empresa.com', 2, 'Rua das Flores', 'Belo Horizonte', 'MG', '30100000', '55', 2),
+('345678', '99988877766', '5511955554444', '2001-07-07', 'masculino', 'Roberto Lima', 
+'roberto.lima@empresa.com', , 'Rua Ipiranga', 'São Paulo', 'SP', '01000000', '300', 2),
+('901234', '55566677788', '5541912345678', '1990-12-01', 'feminino', 'Juliana Santos', 
+'juliana.santos@empresa.com', 1, 'Travessa Alegria', 'Curitiba', 'PR', '80000000', '15', 3),
+('210987', '00011122233', '5551988887777', '1985-04-19', 'masculino', 'Fernando Souza', 
+'fernando.souza@empresa.com', 2, 'Avenida Beira Mar', 'Porto Alegre', 'RS', '90000000', '1205', 3),
+('876543', '66677788899', '5581977776666', '1998-01-30', 'feminino', 'Patrícia Oliveira', 
+'patricia.o@empresa.com', 3, 'Rua do Sol', 'Recife', 'PE', '50000000', '45', 3);
 
 INSERT INTO usuarios (
  senha, departamento_id, funcionario_id) VALUES 
@@ -385,28 +438,6 @@ insert into tiposdescontos (tipo) values
 
 INSERT INTO categorias (categoria) VALUES
 ('medicamento'), ('cosmetico'), ('higiene'), ('alimentacao'), ('conveniencia');
-
-INSERT INTO contas (nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf) VALUES
-('Compra de medicamentos Genéricos SA', 'Fornecedores', '2025-10-01', '2025-10-15', 12480.00, ''),
-('Compra de cosméticos Dermavida', 'Fornecedores', '2025-10-02', '2025-10-20', 8600.00, ''),
-('Reabastecimento de vitaminas NutriMais', 'Fornecedores', '2025-10-05', '2025-10-19', 5320.00, ''),
-('Conta de energia elétrica outubro', 'Despesas Fixas', '2025-10-03', '2025-10-18', 980.75, ''),
-('Conta de água e esgoto outubro', 'Despesas Fixas', '2025-10-04', '2025-10-19', 410.20, ''),
-('Serviço de internet e telefonia', 'Despesas Fixas', '2025-10-06', '2025-10-21', 299.90, ''),
-('Aluguel da loja matriz', 'Despesas Fixas', '2025-10-01', '2025-10-10', 4500.00, ''),
-('IPTU loja matriz parcela 9', 'Tributos e Taxas', '2025-10-02', '2025-10-30', 830.00, ''),
-('Taxa de licença sanitária anual', 'Tributos e Taxas', '2025-10-10', '2025-10-31', 950.00, ''),
-('INSS - contribuição outubro', 'Tributos e Taxas', '2025-10-08', '2025-10-25', 1320.00, ''),
-('Compra de papel A4 e etiquetas', 'Materiais e Suprimentos', '2025-10-07', '2025-10-22', 220.00, ''),
-('Compra de sacolas personalizadas', 'Materiais e Suprimentos', '2025-10-09', '2025-10-24', 780.00, ''),
-('Compra de produtos de limpeza', 'Materiais e Suprimentos', '2025-10-11', '2025-10-26', 340.00, ''),
-('Serviço de dedetização', 'Manutenção', '2025-10-05', '2025-10-15', 600.00, ''),
-('Troca de lâmpadas e reparos elétricos', 'Manutenção', '2025-10-12', '2025-10-27', 480.00, ''),
-('Manutenção do ar-condicionado', 'Manutenção', '2025-10-14', '2025-10-30', 890.00, ''),
-('Tarifa bancária mensal', 'Financeiras / Bancárias', '2025-10-01', '2025-10-05', 45.90, ''),
-('Mensalidade do sistema de gestão', 'Financeiras / Bancárias', '2025-10-09', '2025-10-20', 250.00, ''),
-('Juros de antecipação de recebíveis', 'Financeiras / Bancárias', '2025-10-15', '2025-10-29', 370.00, ''),
-('Pagamento de boletos via banco', 'Financeiras / Bancárias', '2025-10-18', '2025-10-31', 100.00, '');
 
 INSERT INTO fornecedores 
 (fornecedor, cnpj, logradouro, cidade, estado, cep, telefone, email, status, bairro, numero) VALUES
@@ -439,11 +470,38 @@ INSERT INTO unidade (tipo, nome, cnpj, logradouro, cidade, estado, cep, numero, 
 ('franquia', 'Drogaria Anchieta Curitiba', '42345678000122', 'Rua XV de Novembro', 'Curitiba', 'PR', '80020310', 45, '987123456', 'curitiba@techstore.com.br', '2020-02-10'),
 ('franquia', 'Drogaria Anchieta Porto Alegre', '52345678000111', 'Av. Ipiranga', 'Porto Alegre', 'RS', '90160092', 500, '912345678', 'poa@techstore.com.br', '2021-09-15');
 
+INSERT INTO salarios (id_funcionario, departamento_id, unidade_id, valor, data_atualizado) VALUES 
+(1, 1, 2, 5200.00, '2025-11-29'), 
+(2, 2, 2, 6500.00, '2025-11-29'), 
+(3, 3, 2, 4100.00, '2025-11-29'), 
+(4, 1, 3, 5800.00, '2025-11-29'), 
+(5, 2, 3, 7200.00, '2025-11-29'), 
+(6, 3, 3, 4500.00, '2025-11-29'), 
+(7, 1, 1, 3100.00, '2025-11-29'); 
+
+INSERT INTO contas (nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, unidade_id) VALUES
+('Conta de energia elétrica outubro', 'Despesas Fixas', '2025-10-03', '2025-10-18', 980.75, '', 1),
+('Conta de água e esgoto outubro', 'Despesas Fixas', '2025-10-04', '2025-10-19', 410.20, '', 2),
+('Serviço de internet e telefonia', 'Despesas Fixas', '2025-10-06', '2025-10-21', 299.90, '', 3),
+('Aluguel da loja matriz', 'Despesas Fixas', '2025-10-01', '2025-10-10', 4500.00, '', 1),
+('IPTU loja matriz parcela 9', 'Tributos e Taxas', '2025-10-02', '2025-10-30', 830.00, '', 1),
+('Taxa de licença sanitária anual', 'Tributos e Taxas', '2025-10-10', '2025-10-31', 950.00, '', 2),
+('INSS - contribuição outubro', 'Tributos e Taxas', '2025-10-08', '2025-10-25', 1320.00, '', 3),
+('Compra de papel A4 e etiquetas', 'Materiais e Suprimentos', '2025-10-07', '2025-10-22', 220.00, '', 1),
+('Compra de sacolas personalizadas', 'Materiais e Suprimentos', '2025-10-09', '2025-10-24', 780.00, '', 2),
+('Compra de produtos de limpeza', 'Materiais e Suprimentos', '2025-10-11', '2025-10-26', 340.00, '', 3),
+('Serviço de dedetização', 'Manutenção', '2025-10-05', '2025-10-15', 600.00, '', 1),
+('Troca de lâmpadas e reparos elétricos', 'Manutenção', '2025-10-12', '2025-10-27', 480.00, '', 2),
+('Manutenção do ar-condicionado', 'Manutenção', '2025-10-14', '2025-10-30', 890.00, '', 3),
+('Tarifa bancária mensal', 'Financeiras / Bancárias', '2025-10-01', '2025-10-05', 45.90, '', 1),
+('Mensalidade do sistema de gestão', 'Financeiras / Bancárias', '2025-10-09', '2025-10-20', 250.00, '', 2),
+('Juros de antecipação de recebíveis', 'Financeiras / Bancárias', '2025-10-15', '2025-10-29', 370.00, '', 3),
+('Pagamento de boletos via banco', 'Financeiras / Bancárias', '2025-10-18', '2025-10-31', 100.00, '', 1);
 
 
 INSERT INTO produtos (registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento) values
-('102340125', 'Paracetamol', 'paracetamol.webp', 5, 2, 5, 31, '2147483641', 'Analgésico e antipirético para dores leves e febre: 500mg - 20 Comprimidos', '13', '2026-04-15', 18, 101, 'Ambiente natural'),
-('457891234', 'Dipirona Sódica', 'dipironaSodica.webp', 5, 1, 3, 14, '2147483642', 'Analgésico e antitérmico: 1g - 10 Comprimidos', '9', '2025-11-20', 1, 102, 'Local fresco e seco'),
+('102340125', 'Paracetamol', 'paracetamol.webp', 5, 2, 1, 31, '2147483641', 'Analgésico e antipirético para dores leves e febre: 500mg - 20 Comprimidos', '13', '2026-04-15', 18, 101, 'Ambiente natural'),
+('457891234', 'Dipirona Sódica', 'dipironaSodica.webp', 5, 1, 1, 14, '2147483642', 'Analgésico e antitérmico: 1g - 10 Comprimidos', '9', '2025-11-20', 1, 102, 'Local fresco e seco'),
 ('203567891', 'Amoxicilina', 'amoxicilina.webp', 5, 3, 1, 51, '2147483643', 'Antibiótico de uso oral: 500mg - 21 Cápsulas', '69', '2027-02-01', 13, 103, 'Temperatura ambiente'),
 ('897654321', 'Losartana Potássica', 'losartanaPotassica.webp', 5, 2, 2, 2, '2147483644', 'Medicamento para hipertensão: 50mg - 30 Comprimidos', '35', '2028-08-10', 5, 104, 'Ambiente natural'),
 ('108765432', 'Clonazepam', 'clonazepam.webp', 5, 4, 1, 44, '2147483645', 'Medicamento de uso controlado (Tarja Preta): 2mg - 20 Comprimidos', '29', '2026-09-30', 2, 105, 'Local seguro e controlado'),
@@ -1010,3 +1068,10 @@ INSERT INTO parcerias (parceiro, porcentagem) VALUES
     ("Unimed", 0.05),
     ("Bradesco Saúde", 0.05),
     ("SulAmérica", 0.45);
+
+INSERT INTO categoria_transacoes (categoria_transacao, tipo, descricao)
+VALUES 
+  ('Salários', 'Despesa', 'Pagamento de salários'),
+  ('Vendas', 'Receita', 'Receita de vendas'),
+  ('Contas', 'Despesa', 'Pagamentos de contas da unidade');
+

@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import Dashboard from '@/components/DashboardFinanceiro/page';
 import Contas from '@/components/contasFilial/page';
 import Salarios from '@/components/salariosFilial/page';
-import Transacoes from '@/components/Transacoes/page';
+import Vendas from '@/components/vendasFilial/page';
+import Transacoes from '@/components/transacoesFilial/page';
 import Layout from '@/components/layout/layout';
 
 export default function Financeiro() {
@@ -12,7 +13,7 @@ export default function Financeiro() {
   const containerRef = useRef(null);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
-  const items = ['Dashboard', 'Salários', 'Contas', 'Transações'];
+  const items = ['Dashboard', 'Salários', 'Contas', 'Vendas', 'Transações'];
 
   useEffect(() => {
     const container = containerRef.current;
@@ -31,7 +32,8 @@ export default function Financeiro() {
   0: <Dashboard/>,
   1: <Salarios/>,
   2: <Contas/>,
-  3: <Transacoes/>
+  3: <Vendas/>,
+  4: <Transacoes/>
 }
 
   return (

@@ -4,8 +4,6 @@ import path from "path";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-
-    // Se quiser decidir com base na rota:
     let folder = "uploads";
 
     if (req.originalUrl.includes("/funcionarios")) {
@@ -14,7 +12,6 @@ const storage = multer.diskStorage({
       folder = "uploads/usuarios";
     }
 
-    // Cria a pasta automaticamente se não existir
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true });
     }
@@ -23,7 +20,9 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}${file}`);
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext);
+    cb(null, `${Date.now()}-${base}${ext}`);
   },
 });
 

@@ -2,10 +2,10 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
-    host: '10.189.80.99',
-    user: 'vitoria',
+    host: 'localhost',
+    user: 'root',
     database: 'drogaria',
-    password: 'Anchieta@123',
+    password: '',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -137,5 +137,32 @@ async function query(sql, params = []) {
         connection.release();
     }
 }
+
+async function readJoin({ 
+  baseTable, 
+  columns = '*', 
+  joins = [], 
+  where = null 
+}) {
+  const connection = await getConnection();
+  
+  try {
+    let sql = `SELECT ${columns} FROM ${baseTable}`;
+
+    // Monta todos os JOINs automaticamente
+    joins.forEach(j => {
+      sql += ` ${j.type || 'LEFT JOIN'} ${j.table} ON ${j.on}`;
+    });
+
+    if (where) {
+      sql += ` WHERE ${where}`;
+    }
+
+    const [rows] = await connection.execute(sql);
+    return rows;
+  } finally {
+    connection.release();
+  }
+}
  
-export { create, readAll, read, update, deleteRecord, compare, query};
+export { create, readAll, read, update, deleteRecord, compare, query, readJoin};
