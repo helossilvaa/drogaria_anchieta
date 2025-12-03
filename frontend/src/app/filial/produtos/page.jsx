@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Layout from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -173,7 +174,7 @@ export default function Produtos() {
     if (isAuthenticated) {
       fetchCategorias();
       fetchLotes();
-      fetchEstoqueMatriz(); // === NOVO ===
+      fetchEstoqueMatriz();
       fetchProdutos();
     }
   }, [isAuthenticated]);
@@ -638,7 +639,7 @@ export default function Produtos() {
           </DialogContent>
         </Dialog>
 
-        {/* DIALOG VISUALIZAR (NOVO) */}
+        {/* DIALOG VISUALIZARR */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Visualizar Produto</DialogTitle></DialogHeader>
@@ -698,14 +699,13 @@ export default function Produtos() {
           {/* ABAS */}
           <div className="flex space-x-4">
             <span className={getAbaClasses(ABAS.TODOS)} onClick={() => setAbaAtiva(ABAS.TODOS)}>Todos</span>
-            {/* <span className={getAbaClasses(ABAS.ESTOQUE)} onClick={() => setAbaAtiva(ABAS.ESTOQUE)}>Em Estoque</span> */}
             <span className={getAbaClasses(ABAS.VENCIDOS)} onClick={() => setAbaAtiva(ABAS.VENCIDOS)}>Vencidos</span>
           </div>
 
           {/* INPUT DE BUSCA */}
           <div className="relative">
             <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-              <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+              <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
             </div>
             <input type="search" id="search" placeholder="Buscar produto..." className="w-64 border rounded-2xl pl-9 pr-15 py-2 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />          </div>
         </div>
@@ -723,32 +723,32 @@ export default function Produtos() {
         </div>
 
         {/* TABELA */}
-        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <table className="w-full text-sm text-gray-500">
-            <thead className="uppercase bg-gray-200 text-gray-540">
-              <tr>
-                <th className="py-3 px-8">Nome</th>
-                <th className="py-3 px-8">Categoria</th>
-                <th className="py-3 px-8">Marca</th>
-                <th className="py-3 px-8">Código</th>
-                <th className="py-3 px-8">Validade</th>
-                <th className="py-3 px-8">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="relative overflow-x-auto rounded-lg">
+          <Table className="w-full text-sm text-gray-500">
+            <TableHeader className="relative overflow-x-auto bg-[#a9d6cd] rounded-xl">
+              <TableRow>
+                <TableHead className="py-3 px-8">Nome</TableHead>
+                <TableHead className="py-3 px-8">Categoria</TableHead>
+                <TableHead className="py-3 px-8">Marca</TableHead>
+                <TableHead className="py-3 px-8">Código</TableHead>
+                <TableHead className="py-3 px-8">Validade</TableHead>
+                <TableHead className="py-3 px-8">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {isLoading ? (
-                <tr><td colSpan="6" className="py-4">Carregando produtos...</td></tr>
+                <TableRow className="border-b-1"><TableCell colSpan="6" className="py-4">Carregando produtos...</TableCell></TableRow>
               ) : produtosPaginados.length === 0 ? (
-                <tr><td colSpan="6" className="py-4 text-gray-900">Nenhum produto encontrado.</td></tr>
+                <TableRow><TableCell colSpan="6" className="py-4 text-gray-900">Nenhum produto encontrado.</TableCell></TableRow>
               ) : (
                 produtosPaginados.map((produto) => (
-                  <tr key={produto.id} className="odd:bg-white even:bg-gray-50 border-b text-center">
-                    <td className="px-4 py-6 font-normal text-gray-900">{produto.nome}</td>
-                    <td className="px-10 py-6">{getCategoriaNome(produto.categoria_id)}</td>
-                    <td className="px-10 py-6">{produto.marca_id}</td>
-                    <td className="px-10 py-6">{produto.codigo_barras || "-"}</td>
-                    <td className="px-10 py-6">{produto.validade ? formatDate(produto.validade) : "N/A"}</td>
-                    <td className="flex py-4 px-6 justify-center gap-2">
+                  <TableRow key={produto.id} className="border-b-1 text-center">
+                    <TableCell className="px-4 py-6 font-normal text-gray-900">{produto.nome}</TableCell>
+                    <TableCell className="px-10 py-6">{getCategoriaNome(produto.categoria_id)}</TableCell>
+                    <TableCell className="px-10 py-6">{produto.marca_id}</TableCell>
+                    <TableCell className="px-10 py-6">{produto.codigo_barras || "-"}</TableCell>
+                    <TableCell className="px-10 py-6">{produto.validade ? (produto.validade) : "N/A"}</TableCell>
+                    <TableCell className="flex py-4 px-6 justify-center gap-2">
 
                       <button onClick={() => handleEditar(produto)} className="rounded-full p-2 hover:bg-[#4b9c861f]" > <svg className="w-6 h-6 text-[#659b8d] dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"> <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28" /> </svg> </button>
                       <button onClick={() => handleVisualizar(produto)} className="rounded-full p-2 hover:bg-[#4b9c861f]" >
@@ -758,12 +758,12 @@ export default function Produtos() {
                         </svg>
 
                       </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* PAGINAÇÃO */}
