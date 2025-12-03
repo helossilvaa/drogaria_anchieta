@@ -20,7 +20,16 @@ import DropdownCidades from "../dropdownCidades/cidades";
 import { PatternFormat } from "react-number-format";
 import { CalendarioConfig } from "../calendarioConfig/calendario";
 
-export default function DialogNovoFuncionario() {
+export default function DialogNovoFuncionario({ usuario }) {
+
+    useEffect(() => {
+        if (!usuario) return;
+
+        if (usuario.departamento.toLowerCase() === "diretor administrativo") {
+            setUnidadeId(usuario.funcionario.unidade_id);
+        }
+    }, [usuario]);
+
 
     const API_URL = "http://localhost:8080";
 
@@ -79,27 +88,39 @@ export default function DialogNovoFuncionario() {
         try {
             const token = localStorage.getItem('token');
 
+            // --- FORM DATA PARA ENVIAR FOTO + JSON ---
+            const formData = new FormData();
+
+            const dados = {
+                nome,
+                email,
+                telefone,
+                cpf,
+                cep,
+                logradouro: rua,
+                numero,
+                estado,
+                cidade,
+                genero,
+                unidade_id: unidadeId,
+                departamento_id: departamentoId,
+                data_nascimento
+            };
+
+            // JSON dos dados
+            formData.append("data", JSON.stringify(dados));
+
+            // foto se existir
+            if (foto) {
+                formData.append("foto", foto);
+            }
+
             const res = await fetch(`${API_URL}/funcionarios`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    nome,
-                    email,
-                    telefone,
-                    cpf,
-                    cep,
-                    logradouro: rua,
-                    numero,
-                    estado,
-                    cidade,
-                    genero,
-                    unidade_id: unidadeId,
-                    departamento_id: departamentoId,
-                    data_nascimento
-                })
+                body: formData
             });
 
             if (!res.ok) throw new Error("Erro ao criar usuário");
@@ -119,6 +140,7 @@ export default function DialogNovoFuncionario() {
             setUnidadeId("");
             setDepartamentoId("");
             setData_nascimento("");
+            setFoto(null);
 
         } finally {
             setIsSubmitting(false);
@@ -140,6 +162,35 @@ export default function DialogNovoFuncionario() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4">
+
+                        {/* FOTO */}
+                        <div className="grid gap-2">
+                            <Label>Foto do funcionário</Label>
+
+                            <label
+                                htmlFor="foto-input"
+                                className="w-24 h-24 rounded-full border border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden"
+                            >
+                                {foto ? (
+                                    <img
+                                        src={URL.createObjectURL(foto)}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-sm text-gray-500">Escolher</span>
+                                )}
+                            </label>
+
+                            <input
+                                id="foto-input"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => setFoto(e.target.files[0])}
+                            />
+                        </div>
+
 
 
                         <div className="grid grid-cols-2 gap-4">
@@ -169,6 +220,7 @@ export default function DialogNovoFuncionario() {
 
                         </div>
 
+                        {/* resto idêntico ao seu código original */}
 
                         <div className="grid grid-cols-3 gap-4">
                             <div className="grid gap-2">
@@ -202,7 +254,6 @@ export default function DialogNovoFuncionario() {
                             </div>
                         </div>
 
-
                         <div className="grid grid-cols-3 gap-4">
 
                             <div className="grid gap-2">
@@ -219,36 +270,48 @@ export default function DialogNovoFuncionario() {
                                 </Select>
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label>Unidade</Label>
-                                <Select onValueChange={setUnidadeId} value={unidadeId}>
-                                    <SelectTrigger className="w-[275px]" >
-                                        <SelectValue placeholder="Selecione" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {unidades.map((u) => (
-                                            <SelectItem className="text-black" key={u.id} value={u.id}>{u.nome}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
 
-                            <div className="grid gap-2">
-                                <Label>Departamento</Label>
-                                <Select onValueChange={setDepartamentoId} value={departamentoId}>
-                                    <SelectTrigger className="w-[275px]" >
-                                        <SelectValue placeholder="Selecione" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {departamentos.map((d) => (
-                                            <SelectItem key={d.id} value={d.id}>{d.departamento}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+
+                            {usuario?.departamento.toLowerCase() === "diretor geral" && (
+                                <div className="grid gap-2">
+                                    <Label>Unidade</Label>
+
+                                    <Select value={unidadeId} onValueChange={setUnidadeId}>
+                                        <SelectTrigger className="w-[275px]">
+                                            <SelectValue placeholder="Selecione a unidade" />
+                                        </SelectTrigger>
+
+                                        <SelectContent>
+                                            {unidades.map((u) => (
+                                                <SelectItem key={u.id} value={String(u.id)}>
+                                                    {u.nome}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
+
+                            {usuario?.departamento.toLowerCase() === "diretor geral" && (
+                                <div className="grid gap-2">
+                                    <Label>Unidade</Label>
+                                    <Select onValueChange={setUnidadeId} value={unidadeId}>
+                                        <SelectTrigger className="w-[275px]">
+                                            <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {unidades.map((u) => (
+                                                <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
                         </div>
 
-                        {/* ✅ Endereço */}
+                        {/* Endereço */}
                         <div className="grid grid-cols-3 gap-4">
                             <div className="grid gap-2">
                                 <Label>CEP</Label>
@@ -280,11 +343,11 @@ export default function DialogNovoFuncionario() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <label>Estado</label>
-                                <DropdownEstados value={estado} onChange={setEstado} required/>
+                                <DropdownEstados value={estado} onChange={setEstado} required />
                             </div>
                             <div className="grid gap-2">
                                 <label>Cidade</label>
-                                <DropdownCidades estadoSigla={estado} value={cidade} onChange={setCidade} required/>
+                                <DropdownCidades estadoSigla={estado} value={cidade} onChange={setCidade} required />
                             </div>
                         </div>
                     </div>

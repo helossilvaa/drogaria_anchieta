@@ -34,12 +34,12 @@ export function LoginForm() {
       if (res.ok && data.token) {
         localStorage.setItem("token", data.token);
         toast.success("Login realizado com sucesso!");
-        const departamento = data.usuario?.departamento; 
+        const departamento = data.usuario?.departamento.toLowerCase(); 
     
         setTimeout(() => {
-          if (departamento === "Diretor Geral") router.push("/matriz");
-          else if (departamento === "Diretor Administrativo") router.push("/filial");
-          else if (departamento === "Gerente") router.push("/filial");
+          if (departamento === "diretor geral") router.push("/matriz");
+          else if (departamento === "diretor administrativo") router.push("/filial");
+          else if (departamento === "gerente") router.push("/filial");
           else router.push("/pdv");
         }, 1000);
       } else {

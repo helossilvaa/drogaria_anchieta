@@ -137,5 +137,32 @@ async function query(sql, params = []) {
         connection.release();
     }
 }
+
+async function readJoin({ 
+  baseTable, 
+  columns = '*', 
+  joins = [], 
+  where = null 
+}) {
+  const connection = await getConnection();
+  
+  try {
+    let sql = `SELECT ${columns} FROM ${baseTable}`;
+
+    // Monta todos os JOINs automaticamente
+    joins.forEach(j => {
+      sql += ` ${j.type || 'LEFT JOIN'} ${j.table} ON ${j.on}`;
+    });
+
+    if (where) {
+      sql += ` WHERE ${where}`;
+    }
+
+    const [rows] = await connection.execute(sql);
+    return rows;
+  } finally {
+    connection.release();
+  }
+}
  
-export { create, readAll, read, update, deleteRecord, compare, query};
+export { create, readAll, read, update, deleteRecord, compare, query, readJoin};

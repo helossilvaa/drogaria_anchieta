@@ -8,7 +8,7 @@ import Layout  from "@/components/layout/layout";
 import DialogNovoFuncionario from "@/components/addFuncionario/addFuncionario";
 import TableFuncionarios from '@/components/tableFuncionarios/table'
 
-export default function Funcionarios () {
+export default function Funcionarios ({ usuario }) {
 
     const [funcionario, setFuncionario] = useState([]);
     
@@ -17,9 +17,10 @@ export default function Funcionarios () {
 
    const API_URL = 'http://localhost:8080';
     return (
+       
         <Layout>
-           <DialogNovoFuncionario/>
-           <TableFuncionarios/>
+           <DialogNovoFuncionario usuario={usuario}/>
+           <TableFuncionarios usuario={usuario}/>
         </Layout>
     );
 }
