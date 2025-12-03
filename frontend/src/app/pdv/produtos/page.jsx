@@ -90,37 +90,26 @@ export default function ProdutosPage() {
 
   function adicionarAoCarrinho(produto) {
     const quantidade = quantidades[produto.nome] || 1;
-    const precoTotal = Number(produto.preco_unitario) * quantidade; // CALCULA O VALOR TOTAL
   
     setCarrinho((prev) => {
+      let newCarrinho;
       const index = prev.findIndex((p) => p.id === produto.id);
       if (index >= 0) {
-        const newCarrinho = [...prev];
+        newCarrinho = [...prev];
         newCarrinho[index].quantidade += quantidade;
-        return newCarrinho;
       } else {
-        return [...prev, { ...produto, quantidade }];
+        newCarrinho = [...prev, { ...produto, quantidade }];
       }
+  
+      // Salva no localStorage imediatamente
+      localStorage.setItem("carrinho", JSON.stringify(newCarrinho));
+  
+      return newCarrinho;
     });
   
-    toast.success(`Produto adicionado ao carrinho!`, {
-      description: (
-        <div className="flex items-center gap-3 mt-2">
-          <img
-            src={`http://localhost:8080/uploads/produtos/${produto.foto}`}
-            className="w-12 h-12 rounded-full object-cover border"
-          />
-          <div>
-            <p className="font-semibold">{produto.nome}</p>
-            <p className="text-sm text-gray-500">
-              R$ {precoTotal.toFixed(2)} ({quantidade} x R$ {Number(produto.preco_unitario).toFixed(2)})
-            </p>
-          </div>
-        </div>
-      ),
-      duration: 2500,
-    });
+    toast.success(`Produto adicionado ao carrinho!`);
   }
+  
   
 
   const produtosFiltrados = produtos.filter((p) => {

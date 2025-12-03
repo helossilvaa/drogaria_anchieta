@@ -26,6 +26,24 @@ export default function NovaVendaPage() {
   const [filiados, setFiliados] = useState([])
   const [open, setOpen] = useState(false);
   const [pagamentoFeito, setPagamentoFeito] = useState(false);
+  const [cliente_id, setClienteId] = useState("");
+  const [unidade_id, setUnidadeId] = useState("");
+  const [tipo_pagamento_id, setTipoPagamentoId] = useState("");
+  const [data, setData] = useState(
+    new Date().toISOString().slice(0, 19).replace("T", " ")
+  );
+  const [cpfCliente, setCpfCliente] = useState("");
+  const [cliente, setCliente] = useState(null);
+  const [erroCliente, setErroCliente] = useState("");
+  const [loadingCliente, setLoadingCliente] = useState(false);
+  const [itensCarrinho, setItensCarrinho] = useState ([])
+  const [carrinho, setCarrinho] = useState([]); // <-- isso estava faltando
+  useEffect(() => {
+    const carrinhoSalvo = localStorage.getItem("carrinho");
+    if (carrinhoSalvo) setCarrinho(JSON.parse(carrinhoSalvo));
+  }, []);
+  
+
 
   const removerProduto = (id) => {
     setListaVenda(prev => prev.filter(p => p.id !== id));
@@ -41,48 +59,87 @@ export default function NovaVendaPage() {
   const API_PRODUTOS = "http://localhost:8080/produtos";
   const API_URL = "http://localhost:8080/api/filiados";
 
+
+
+  // Buscar cliente
+  async function buscarCliente() {
+    setErroCliente("");
+    setCliente(null);
+    setLoadingCliente(true);
+  
+    try {
+      const res = await fetch(`http://localhost:8080/api/filiados/cpf/${cpfCliente}`);
+  
+      if (!res.ok) {
+        setErroCliente("Usuário não encontrado.");
+        return;
+      }
+  
+      const data = await res.json();
+      setCliente(data);          // guarda o objeto
+      setClienteId(data.id);     // <<< AQUI resolve o problema
+    } catch (error) {
+      setErroCliente("Erro ao buscar cliente.");
+    } finally {
+      setLoadingCliente(false);
+    }
+  }
+  
+
+
   async function salvarVenda() {
     try {
+      const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8080/vendas", {
+
+      if (!usuarioLogado?.id) {
+        console.error("Usuário não encontrado no localStorage");
+        alert("Usuário não encontrado!");
+        return;
+      }
+
+      if (!cliente_id || !unidade_id || !tipo_pagamento_id) {
+        console.error("Campos obrigatórios não preenchidos");
+        alert("Preencha cliente, unidade e forma de pagamento!");
+        return;
+      }
+
+      const venda = {
+        cliente_id: Number(cliente_id),
+        usuario_id: usuarioLogado.id,
+        unidade_id: Number(unidade_id),
+        tipo_pagamento_id: Number(tipo_pagamento_id),
+        total,
+        data,
+        itens: itensCarrinho // <--- ADICIONE ISSO
+      };
+      
+
+      console.log("Venda enviada:", venda);
+
+      const resposta = await fetch("http://localhost:8080/vendas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          total: total,
-          data: new Date().toISOString().split("T")[0],
-        }),
+        body: JSON.stringify(venda),
       });
 
-      const texto = await response.text(); 
-      if (!response.ok) {
-        console.log("Erro ao salvar venda:", texto);
-        let mensagemErro = texto;
-        try {
-          const jsonErro = JSON.parse(texto);
-          mensagemErro = jsonErro.mensagem || texto; 
-        } catch {
-
-        }
-        mostrarAlerta(mensagemErro, "erro");
-        
+      if (!resposta.ok) {
+        throw new Error("Erro ao salvar venda: " + resposta.status);
       }
-      const dados = JSON.parse(texto);
-      console.log("Venda salva com sucesso:", dados);
-      mostrarAlerta("Venda salva com sucesso!", "sucesso");
-      return dados;
 
-    } catch (erro) {
-      console.error("Erro ao salvar venda (catch):", erro);
-      mostrarAlerta(erro.message || "Erro ao salvar venda.", "erro");
-      throw erro;
+      const resultado = await resposta.json();
+      console.log("Venda criada no backend:", resultado);
+
+      alert("Venda registrada com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao registrar venda:", error);
+      alert("Erro ao registrar venda. Veja o console.");
     }
   }
-
-
-
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -622,15 +679,56 @@ export default function NovaVendaPage() {
           </div>
           <Card className="border-pink-100">
             <CardContent className="p-6">
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* IDENTIFICAÇÃO DO CLIENTE */}
+                <div className="bg-white p-4 rounded-xl shadow border border-pink-200 space-y-3">
+                  <h2 className="text-lg font-semibold text-pink-600">Identificação do Cliente</h2>
+
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder="Digite o CPF"
+                      value={cpfCliente}
+                      onChange={(e) => setCpfCliente(e.target.value)}
+                      className="rounded-full border-pink-300"
+                    />
+
+                    <Button
+                      onClick={buscarCliente}
+                      className="bg-pink-500 hover:bg-pink-600 text-white rounded-full"
+                    >
+                      {loadingCliente ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : (
+                        "Buscar"
+                      )}
+                    </Button>
+                  </div>
+
+                  {cliente && (
+                    <p className="text-green-600 font-medium">
+                      Cliente encontrado:{" "}
+                      <span className="font-semibold">{cliente.nome}</span>
+                    </p>
+                  )}
+
+                  {erroCliente && (
+                    <p className="text-red-600 font-medium">{erroCliente}</p>
+                  )}
+                </div>
+
+                {/* SUBTOTAL */}
                 <div>
                   <p className="text-gray-500 mb-1">Subtotal</p>
-                  <p className="font-medium text-gray-700">R$ {subtotalGeral.toFixed(2)}</p>
+                  <p className="font-medium text-gray-700">
+                    R$ {subtotalGeral.toFixed(2)}
+                  </p>
                   <Separator className="my-1" />
                 </div>
 
+                {/* DESCONTO */}
                 <div>
                   <p className="text-gray-500 mb-1">Desconto</p>
+
                   <div className="flex items-center gap-2">
                     <Input
                       placeholder="CPF, Cupom ou Convênio"
@@ -638,39 +736,123 @@ export default function NovaVendaPage() {
                       onChange={(e) => setCodigoDesconto(e.target.value)}
                       className="border-pink-200 rounded-full w-full text-center"
                     />
+
                     <Button
                       onClick={aplicarDesconto}
-                      className="bg-pink-500 hover:bg-pink-600 text-white rounded-full px-4"
+                      className="bg-pink-500 hover:bg-ppink-600 text-white rounded-full px-4"
                     >
                       Adicionar
                     </Button>
                   </div>
+
                   <Separator className="my-1" />
                 </div>
+
+                {/* TOTAL */}
                 <div>
                   <p className="text-pink-600 font-semibold text-lg mb-1">Total</p>
-                  <p className="text-gray-800 font-bold text-xl">R$ {total.toFixed(2)}</p>
+                  <p className="text-gray-800 font-bold text-xl">
+                    R$ {total.toFixed(2)}
+                  </p>
                   <Separator className="my-1" />
                 </div>
-              </div>
-              <div className="mt-6">
-                <p className="text-gray-500 mb-3">Forma de pagamento</p>
-                <div className="flex flex-wrap gap-2">
-                  {["PIX", "Crédito", "Débito"].map((forma) => (
-                    <Button
-                      key={forma}
-                      variant="secondary"
-                      onClick={() => setFormaPagamento(forma)}
-                      className={`rounded-full ${formaPagamento === forma
-                        ? "bg-pink-500 text-white"
-                        : "bg-pink-100 text-pink-700 hover:bg-pink-200"
-                        }`}
-                    >
-                      {forma}
-                    </Button>
-                  ))}
+
+                <div className="flex flex-col md:flex-row gap-4 mt-4">
+
+                  {/* Bloco completo: Unidade + Pagamento */}
+                  <div className="flex flex-col md:flex-row gap-6 mt-4">
+
+                    {/* Seleção de Unidade */}
+                    <div className="space-y-2 w-full">
+                      <label className="text-gray-600 font-medium text-sm">Unidade</label>
+
+                      <Select
+                        value={unidade_id}
+                        onValueChange={(value) => setUnidadeId(value)}
+                      >
+                        <SelectTrigger
+                          className={`w-full rounded-full border px-4 py-2 transition
+        ${unidade_id
+                              ? "  text-pink-700"
+                              : "  text-pink-600"
+                            }`}
+                        >
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Unidades</SelectLabel>
+                            <SelectItem value="1">Matriz</SelectItem>
+                            <SelectItem value="2">Filial</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Forma de Pagamento */}
+                    <div className="space-y-2 w-full">
+                      <label className="text-gray-600 font-medium text-sm">Pagamento</label>
+
+                      <Select
+                        value={tipo_pagamento_id}
+                        onValueChange={(value) => setTipoPagamentoId(value)}
+                      >
+                        <SelectTrigger
+                          className={`w-full rounded-full border px-4 py-2 transition
+        ${tipo_pagamento_id
+                              ? " text-pink-700"
+                              : " text-pink-600"
+                            }`}
+                        >
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Tipo de Pagamento</SelectLabel>
+
+                            <SelectItem value="1">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={`h-2 w-2 rounded-full ${tipo_pagamento_id === "1" ? "bg-pink-500" : "bg-pink-300"
+                                    }`} />
+                                PIX
+                              </span>
+                            </SelectItem>
+
+                            <SelectItem value="2">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={`h-2 w-2 rounded-full ${tipo_pagamento_id === "2" ? "bg-pink-500" : "bg-pink-300"
+                                    }`} />
+                                Crédito
+                              </span>
+                            </SelectItem>
+
+                            <SelectItem value="3">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={`h-2 w-2 rounded-full ${tipo_pagamento_id === "3" ? "bg-pink-500" : "bg-pink-300"
+                                    }`} />
+                                Débito
+                              </span>
+                            </SelectItem>
+
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                  </div>
+
                 </div>
+
+
+
               </div>
+
+
               <div className="mt-6 text-center">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -806,11 +988,12 @@ export default function NovaVendaPage() {
                   Cancelar
                 </Button>
                 <Button
-                  onClick={handleFinalizar}
+                  onClick={salvarVenda}
                   className="bg-pink-500 hover:bg-pink-600 text-white rounded-full px-6"
                 >
                   Finalizar venda
                 </Button>
+
               </div>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-sm text-center">

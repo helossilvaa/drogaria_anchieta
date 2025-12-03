@@ -1,10 +1,11 @@
-
 import { Conta } from "../models/contasFilial.js";
 
 export const criarConta = async (req, res) => {
-
-
   const { nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, status } = req.body;
+
+  if (!req.user?.unidade_id) {
+    return res.status(400).json({ message: "unidade_id não encontrado no token" });
+  }
 
   if (!nomeConta || !categoria || !dataPostada || !dataVencimento || !valor || !conta_pdf) {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
@@ -13,17 +14,15 @@ export const criarConta = async (req, res) => {
   const statusBanco = status === true ? "pendente" : "paga";
 
   try {
-
-    const contasExistentes = await Conta.getAll();
-    const lista = Array.isArray(contasExistentes) ? contasExistentes : [contasExistentes];
-
+    const contasExistentes = await Conta.getAllByUnidade(req.user.unidade_id);
+    const lista = Array.isArray(contasExistentes) ? contasExistentes : [];
 
     const nomeDuplicado = lista.find(
-      (c) => c.nomeConta.toLowerCase().trim() === nomeConta.toLowerCase().trim()
+      (c) => c.nomeConta?.toLowerCase().trim() === nomeConta.toLowerCase().trim()
     );
 
     if (nomeDuplicado) {
-      return res.status(409).json({ message: "Já existe uma conta com esse nome." });
+      return res.status(409).json({ message: "Já existe uma conta com esse nome nesta unidade." });
     }
 
     const insertId = await Conta.create({
@@ -32,33 +31,32 @@ export const criarConta = async (req, res) => {
       dataPostada,
       dataVencimento,
       valor,
-      conta_pdf: Buffer.from(conta_pdf, "base64"), status: statusBanco,
-      unidade_id: req.usuarioUnidadeId,
+      conta_pdf: Buffer.from(conta_pdf, "base64"),
+      status: statusBanco,
+      unidade_id: req.user.unidade_id,
     });
 
     return res.status(201).json({ message: "Conta cadastrada com sucesso!", id: insertId });
 
   } catch (err) {
-
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Já existe uma conta com esse nome." });
-    }
     console.error("Erro ao cadastrar conta:", err);
     return res.status(500).json({ message: "Erro ao cadastrar conta." });
   }
 };
 
-export const listarConta = async (req, res) => {
 
+export const listarConta = async (req, res) => {
   try {
-    const unidadeId = req.usuarioUnidadeId;
+    const unidadeId = req.user?.unidade_id;
+
+    if (!unidadeId) {
+      return res.status(400).json({ message: "unidade_id não encontrado no token" });
+    }
 
     let contas = await Conta.getAllByUnidade(unidadeId);
 
-    console.log("getAll() → listarConta:", contas);
-
     if (!Array.isArray(contas)) {
-      contas = [contas];
+      contas = contas ? [contas] : [];
     }
 
     const contasConvertidas = contas.map((f) => ({
@@ -68,6 +66,7 @@ export const listarConta = async (req, res) => {
     }));
 
     return res.status(200).json(contasConvertidas);
+
   } catch (err) {
     console.error("Erro ao listar contas:", err);
     return res.status(500).json({ message: "Erro ao listar contas." });
@@ -86,8 +85,8 @@ export const editarConta = async (req, res) => {
   const statusBanco = status === true ? "pendente" : "paga";
 
   try {
-
-    const contasExistentes = await Conta.getAll();
+    const unidadeId = req.user?.unidade_id;
+    const contasExistentes = await Conta.getAllByUnidade(unidadeId);
 
     const nomeDuplicado = contasExistentes.find(
       (c) =>
@@ -96,7 +95,7 @@ export const editarConta = async (req, res) => {
     );
 
     if (nomeDuplicado) {
-      return res.status(409).json({ message: "Já existe uma conta com esse nome." });
+      return res.status(409).json({ message: "Já existe uma conta com esse nome nesta unidade." });
     }
 
     const dadosParaAtualizar = {
@@ -122,6 +121,7 @@ export const editarConta = async (req, res) => {
   }
 };
 
+
 export const excluirConta = async (req, res) => {
   const { id } = req.params;
 
@@ -133,6 +133,7 @@ export const excluirConta = async (req, res) => {
     }
 
     return res.status(200).json({ message: "Conta excluída com sucesso!" });
+
   } catch (err) {
     console.error("Erro ao excluir conta:", err);
     return res.status(500).json({ message: "Erro ao excluir conta." });
@@ -144,7 +145,8 @@ export const downloadPDF = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const contas = await Conta.getAll();
+    const unidadeId = req.user?.unidade_id;
+    const contas = await Conta.getAllByUnidade(unidadeId);
     const conta = contas.find(c => c.id == id);
 
     if (!conta || !conta.conta_pdf) {
@@ -161,4 +163,4 @@ export const downloadPDF = async (req, res) => {
     console.error(err);
     res.status(500).send("Erro ao carregar PDF");
   }
-}; 
+};
