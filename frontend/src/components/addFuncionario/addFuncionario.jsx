@@ -79,7 +79,6 @@ export default function DialogNovoFuncionario({ usuario }) {
         }
     };
 
-
     const handleSubmit = async (e) => {
 
         e.preventDefault();
@@ -88,7 +87,7 @@ export default function DialogNovoFuncionario({ usuario }) {
         try {
             const token = localStorage.getItem('token');
 
-            // --- FORM DATA PARA ENVIAR FOTO + JSON ---
+         
             const formData = new FormData();
 
             const dados = {
@@ -146,6 +145,8 @@ export default function DialogNovoFuncionario({ usuario }) {
             setIsSubmitting(false);
         }
     };
+
+    
 
     return (
         <Dialog>
@@ -271,26 +272,19 @@ export default function DialogNovoFuncionario({ usuario }) {
                             </div>
 
 
-
-                            {usuario?.departamento.toLowerCase() === "diretor geral" && (
-                                <div className="grid gap-2">
-                                    <Label>Unidade</Label>
-
-                                    <Select value={unidadeId} onValueChange={setUnidadeId}>
-                                        <SelectTrigger className="w-[275px]">
-                                            <SelectValue placeholder="Selecione a unidade" />
-                                        </SelectTrigger>
-
-                                        <SelectContent>
-                                            {unidades.map((u) => (
-                                                <SelectItem key={u.id} value={String(u.id)}>
-                                                    {u.nome}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
+                            <div className="grid gap-2">
+                                <Label>Departamento</Label>
+                                <Select onValueChange={setDepartamentoId} value={departamentoId}>
+                                    <SelectTrigger className="w-[275px]">
+                                        <SelectValue placeholder="Selecione" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {departamentos.map((d) => (
+                                            <SelectItem key={d.id} value={d.id}>{d.departamento}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
 
                             {usuario?.departamento.toLowerCase() === "diretor geral" && (

@@ -22,8 +22,11 @@ import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
 import salariosRotas from './routes/salariosFilialRotas.js';
+<<<<<<< HEAD
 import salariosMatrizRotas from './routes/salariosMatrizRotas.js';
 import transacoesRotas from './routes/transacoesFilialRotas.js';
+=======
+>>>>>>> fd030a65b579d86d4422905d53f43493e7d24e3f
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
@@ -34,7 +37,6 @@ import movimentacaoEstoqueRotas from './routes/movimentacaoEstoqueRotas.js';
 import notificacoesRotas from './routes/notificacoesRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
-// import transacoesRotas from './routes/transacoesFilialRotas.js';
 
 dotenv.config();
 
@@ -49,7 +51,7 @@ try {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
   }));
-  // app.use(express.json());
+ 
 
   app.use(session({
     secret: 'sJYMmuCB2Z187XneUuaOVYTVUlxEOb2K94tFZy370HjOY7T7aiCKvwhNQpQBYL9e',
