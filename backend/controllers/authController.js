@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { readJoin, compare } from '../config/database.js';
+import { read, compare } from '../config/database.js';
 import { JWT_SECRET } from '../config/jwt.js';
 import { criarUsuario } from '../models/usuario.js';
 import generateHashedPassword from '../utils/hashPassword.js';
@@ -70,32 +70,22 @@ const cadastroUsuarioController = async (req, res) => {
 
 
 const loginController = async (req, res) => {
+
   const { email, senha } = req.body;
 
   try {
-    const resultado = await readJoin({
-      baseTable: 'usuarios u',
-      columns: `
-        u.*,
-        f.nome,
-        f.email,
-        d.departamento,
-        f.unidade_id
-      `,
-      joins: [
-        { table: 'funcionarios f', on: 'f.id = u.funcionario_id' },
-        { table: 'departamento d', on: 'u.departamento_id = d.id', type: 'LEFT JOIN' },
-        { table: 'unidade uni', on: 'f.unidade_id = uni.id', type: 'LEFT JOIN' }
-      ],
-      where: `f.email = '${email}'`
-    });
 
-    const usuario = resultado[0];
-
+    const resultado = await read(
+      'usuarios u JOIN funcionarios f ON f.id = u.funcionario_id LEFT JOIN departamento d ON u.departamento_id = d.id', `f.email = '${email}'`,'u.*, f.nome, f.email, d.departamento'
+    );
+    
+    // garante que sempre pegue o primeiro usuário retornado
+    const usuario = Array.isArray(resultado) ? resultado[0] : resultado;
+    
     if (!usuario) {
       return res.status(404).json({ mensagem: 'Usuário não encontrado' });
     }
-
+    
     // compara senha
     const senhaCorreta = await compare(senha, usuario.senha);
     if (!senhaCorreta) {
@@ -104,19 +94,12 @@ const loginController = async (req, res) => {
 
     // gera token
     const token = jwt.sign(
-      { 
-        id: usuario.id, 
-        departamento: usuario.departamento, 
-        nome: usuario.nome, 
-        status: usuario.status, 
-        unidade_id: usuario.unidade_id  
-      },
+      { id: usuario.id, departamento: usuario.departamento, nome: usuario.nome, status: usuario.status },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     res.json({ mensagem: 'Login realizado com sucesso', token, usuario });
-
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ mensagem: 'Erro ao fazer login' });

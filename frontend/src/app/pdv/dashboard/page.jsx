@@ -159,11 +159,7 @@ export default function Dashboard() {
 
   const vendasArray = agruparVendas();
 
-  const pages = [
-    { label: "Nova venda", path: "novaVenda" },
-    { label: "Produtos", path: "produtos" },
-    { label: "Programa de Fidelidade", path: "fidelidade" },
-  ];
+  
 
   const periods = ["hoje", "semana", "mes"];
 
@@ -199,27 +195,6 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="min-h-screen p-6 bg-gray-50">
-        {/* Navegação */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          {pages.map((page) => {
-            const isActive = activePage === page.path;
-            return (
-              <button
-                key={page.label}
-                onClick={() => { setActivePage(page.path); router.push(`/pdv/${page.path}`); }}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold transition-all ${
-                  isActive ? "bg-pink-600 text-white shadow-lg" : "bg-pink-100 text-pink-600 hover:bg-pink-200"
-                }`}
-              >
-                {page.path === "produtos" && <Package size={20} />}
-                {page.path === "caixa" && <CircleDollarSign size={20} />}
-                {page.path === "usuarios" && <Users size={20} />}
-                {page.label}
-              </button>
-            );
-          })}
-        </div>
-
         {/* Selector de período */}
         <div className="flex gap-6 border-b border-gray-300 mb-6">
           {periods.map((period) => (

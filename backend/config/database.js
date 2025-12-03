@@ -2,13 +2,13 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    database: 'drogaria',
-    password: '',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+  host: '10.189.80.99',
+  user: 'vitoria',
+  database: 'drogaria',
+  password: 'Anchieta@123',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
     
 // Função assíncrona que obtém uma conexão do pool.
@@ -33,6 +33,19 @@ async function readAll(table, where = null) {
     }
 }
  
+export async function readJoin(query, params = []) {
+  return new Promise((resolve, reject) => {
+    connection.query(query, params, (error, results) => {
+      if (error) {
+        console.error("Erro no readJoin:", error);
+        return reject(error);
+      }
+      resolve(results);
+    });
+  });
+}
+
+
 // Função para ler um registro específico
 async function read(table, where, columns = '*') {
     const connection = await getConnection();
@@ -137,32 +150,5 @@ async function query(sql, params = []) {
         connection.release();
     }
 }
-
-async function readJoin({ 
-  baseTable, 
-  columns = '*', 
-  joins = [], 
-  where = null 
-}) {
-  const connection = await getConnection();
-  
-  try {
-    let sql = `SELECT ${columns} FROM ${baseTable}`;
-
-    // Monta todos os JOINs automaticamente
-    joins.forEach(j => {
-      sql += ` ${j.type || 'LEFT JOIN'} ${j.table} ON ${j.on}`;
-    });
-
-    if (where) {
-      sql += ` WHERE ${where}`;
-    }
-
-    const [rows] = await connection.execute(sql);
-    return rows;
-  } finally {
-    connection.release();
-  }
-}
  
-export { create, readAll, read, update, deleteRecord, compare, query, readJoin};
+export { create, readAll, read, update, deleteRecord, compare, query};

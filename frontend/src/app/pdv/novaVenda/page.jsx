@@ -40,7 +40,9 @@ export default function NovaVendaPage() {
   const [carrinho, setCarrinho] = useState([]); // <-- isso estava faltando
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");
-    if (carrinhoSalvo) setCarrinho(JSON.parse(carrinhoSalvo));
+    if (carrinhoSalvo) {
+      setCarrinho(JSON.parse(carrinhoSalvo));
+    }
   }, []);
   
 
@@ -1097,6 +1099,35 @@ export default function NovaVendaPage() {
           </Card>
         </div>
       </div>
+      <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Carrinho</h1>
+
+      {carrinho.length === 0 ? (
+        <p className="text-gray-500">Seu carrinho está vazio.</p>
+      ) : (
+        <div className="space-y-4">
+          {carrinho.map((item) => (
+            <div
+              key={item.id}
+              className="border p-4 rounded-lg shadow-sm flex justify-between"
+            >
+              <div>
+                <h2 className="font-semibold">{item.nome}</h2>
+                <p>Qtd: {item.quantidade}</p>
+                <p>Preço: R${item.preco_unitario.toFixed(2)}</p>
+              </div>
+
+              {item.foto && (
+                <img
+                  src={`http://localhost:8080/uploads/produtos/${item.foto}`}
+                  className="w-20 h-20 object-cover rounded"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
     </Layout>
   );
 }

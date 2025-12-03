@@ -25,7 +25,7 @@ export default function ProdutosPage() {
 
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const itensPorPagina = 6;
+  const itensPorPagina = 8;
 
   async function carregarCategorias() {
     try {
@@ -41,6 +41,7 @@ export default function ProdutosPage() {
       setCategorias([{ id: "0", categoria: "Todos" }, ...data]);
     } catch (error) {
       console.log("Erro ao carregar categorias:", error);
+      toast.error("Erro ao carregar categorias!");
     }
   }
 
@@ -48,7 +49,7 @@ export default function ProdutosPage() {
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) setCarrinho(JSON.parse(carrinhoSalvo));
   }, []);
-  
+
   async function carregarProdutos() {
     setLoading(true);
     setErro(null);
@@ -57,25 +58,30 @@ export default function ProdutosPage() {
       const res = await fetch(API_PRODUTOS, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-  
-      if (!res.ok) throw new Error("Erro ao buscar produtos.");
+
+      if (!res.ok) {
+        toast.error("Erro ao buscar produtos.");
+        throw new Error("Erro ao buscar produtos.");
+      }
+
       const data = await res.json();
       let lista = [];
+
       if (Array.isArray(data.produtos)) lista = data.produtos;
       else if (Array.isArray(data)) lista = data;
       else lista = [data];
-  
-      // Ordenar alfabeticamente pelo nome
+
       lista.sort((a, b) => a.nome.localeCompare(b.nome));
-  
+
       setProdutos(lista);
     } catch (error) {
       setErro(error.message);
+      toast.error("Falha ao carregar produtos.");
     } finally {
       setLoading(false);
     }
   }
-  
+
   useEffect(() => {
     carregarCategorias();
     carregarProdutos();
@@ -91,29 +97,45 @@ export default function ProdutosPage() {
   function adicionarAoCarrinho(produto) {
     const quantidade = quantidades[produto.nome] || 1;
   
+    const novoItem = { 
+      id: produto.id,
+      nome: produto.nome,
+      preco_unitario: produto.preco_unitario,
+      quantidade,
+      foto: produto.foto
+    };
+  
     setCarrinho((prev) => {
-      let newCarrinho;
-      const index = prev.findIndex((p) => p.id === produto.id);
-      if (index >= 0) {
-        newCarrinho = [...prev];
-        newCarrinho[index].quantidade += quantidade;
+      const existente = prev.find((p) => p.id === produto.id);
+  
+      let novoCarrinho;
+  
+      if (existente) {
+        novoCarrinho = prev.map((p) =>
+          p.id === produto.id
+            ? { ...p, quantidade: p.quantidade + quantidade }
+            : p
+        );
       } else {
-        newCarrinho = [...prev, { ...produto, quantidade }];
+        novoCarrinho = [...prev, novoItem];
       }
   
-      // Salva no localStorage imediatamente
-      localStorage.setItem("carrinho", JSON.stringify(newCarrinho));
-  
-      return newCarrinho;
+      localStorage.setItem("carrinho", JSON.stringify(novoCarrinho));
+      return novoCarrinho;
     });
   
-    toast.success(`Produto adicionado ao carrinho!`);
+    setQuantidades((prev) => ({ ...prev, [produto.nome]: 1 }));
+  
+    toast.success("Produto adicionado ao carrinho!");
   }
   
-  
+
 
   const produtosFiltrados = produtos.filter((p) => {
-    if (categoriaSelecionada !== "0" && String(p.categoria_id) !== categoriaSelecionada) {
+    if (
+      categoriaSelecionada !== "0" &&
+      String(p.categoria_id) !== categoriaSelecionada
+    ) {
       return false;
     }
     if (busca.trim() !== "" && !p.nome.toLowerCase().includes(busca.toLowerCase())) {
@@ -122,13 +144,17 @@ export default function ProdutosPage() {
     return true;
   });
 
-  const totalPaginas = Math.max(1, Math.ceil(produtosFiltrados.length / itensPorPagina));
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(produtosFiltrados.length / itensPorPagina)
+  );
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const fim = inicio + itensPorPagina;
   const produtosExibidos = produtosFiltrados.slice(inicio, fim);
 
   const paginaAnterior = () => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1);
-  const proximaPagina = () => paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
+  const proximaPagina = () =>
+    paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
 
   return (
     <Layout>
@@ -145,7 +171,10 @@ export default function ProdutosPage() {
           />
 
           <Link href="/pdv/novaVenda" className="relative">
-            <ShoppingCart className="text-pink-600 hover:text-pink-500 cursor-pointer" size={28} />
+            <ShoppingCart
+              className="text-pink-600 hover:text-pink-500 cursor-pointer"
+              size={28}
+            />
             {carrinho.length > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                 {carrinho.reduce((total, p) => total + p.quantidade, 0)}
@@ -161,8 +190,13 @@ export default function ProdutosPage() {
             return (
               <button
                 key={c.id}
-                onClick={() => setCategoriaSelecionada(isSelected ? "0" : c.id.toString())}
-                className={`transition-colors ${isSelected ? "text-pink-600 font-semibold" : "hover:text-pink-600"}`}
+                onClick={() =>
+                  setCategoriaSelecionada(isSelected ? "0" : c.id.toString())
+                }
+                className={`transition-colors ${isSelected
+                    ? "text-pink-600 font-semibold"
+                    : "hover:text-pink-600"
+                  }`}
               >
                 {c.categoria}
               </button>
@@ -171,7 +205,9 @@ export default function ProdutosPage() {
         </div>
 
         {/* Erro */}
-        {erro && <p className="text-red-600 text-center mt-4 font-medium">{erro}</p>}
+        {erro && (
+          <p className="text-red-600 text-center mt-4 font-medium">{erro}</p>
+        )}
 
         {/* Loader */}
         {loading && (
@@ -181,11 +217,15 @@ export default function ProdutosPage() {
         )}
 
         {/* Produtos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           {!loading &&
             produtosExibidos.map((p) => (
-              <Card key={p.id} className="shadow-md rounded-2xl border border-pink-200">
-                <CardContent className="p-4 space-y-3">
+              <Card
+                key={p.id}
+                className="shadow-md rounded-xl border border-pink-200"
+              >
+                <CardContent className="p-3 space-y-2">
                   {p.foto ? (
                     <img
                       src={`http://localhost:8080/uploads/produtos/${p.foto}`}
@@ -198,8 +238,12 @@ export default function ProdutosPage() {
                   )}
 
                   <h2 className="text-lg font-semibold">{p.nome}</h2>
-                  <p className="text-sm text-gray-500 leading-tight">{p.descricao}</p>
-                  <Badge className="bg-pink-100 text-pink-600 capitalize">{p.tag}</Badge>
+                  <p className="text-sm text-gray-500 leading-tight">
+                    {p.descricao}
+                  </p>
+                  <Badge className="bg-pink-100 text-pink-600 capitalize">
+                    {p.tag}
+                  </Badge>
                   <p className="text-xl font-bold text-gray-800">
                     R${Number(p.preco_unitario).toFixed(2)}
                   </p>
@@ -208,14 +252,20 @@ export default function ProdutosPage() {
                   <div className="flex items-center gap-2 mt-3">
                     <div className="flex items-center gap-2 border rounded-xl p-1">
                       <button
-                        onClick={() => alterarQuantidade(p.nome, "menos")}
+                        onClick={() =>
+                          alterarQuantidade(p.nome, "menos")
+                        }
                         className="p-1 rounded-full hover:bg-pink-100"
                       >
                         <Minus size={16} />
                       </button>
-                      <span className="w-6 text-center">{quantidades[p.nome] || 1}</span>
+                      <span className="w-6 text-center">
+                        {quantidades[p.nome] || 1}
+                      </span>
                       <button
-                        onClick={() => alterarQuantidade(p.nome, "mais")}
+                        onClick={() =>
+                          alterarQuantidade(p.nome, "mais")
+                        }
                         className="p-1 rounded-full hover:bg-pink-100"
                       >
                         <Plus size={16} />
@@ -228,6 +278,7 @@ export default function ProdutosPage() {
                     >
                       COMPRAR
                     </Button>
+
                   </div>
                 </CardContent>
               </Card>
@@ -235,7 +286,9 @@ export default function ProdutosPage() {
         </div>
 
         {!loading && produtosFiltrados.length === 0 && (
-          <p className="text-center text-gray-500 mt-8 text-lg">Nenhum produto encontrado.</p>
+          <p className="text-center text-gray-500 mt-8 text-lg">
+            Nenhum produto encontrado.
+          </p>
         )}
 
         {/* Paginação */}

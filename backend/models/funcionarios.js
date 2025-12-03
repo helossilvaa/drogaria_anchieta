@@ -1,4 +1,4 @@
-import { create, readAll, readJoin, update, deleteRecord } from '../config/database.js';
+import { create, readAll, read, update, deleteRecord } from '../config/database.js';
 
 // criar funcionário
 const criarFuncionario = async (funcionarioData) => {
@@ -23,21 +23,9 @@ const listarFuncionarios = async () => {
 // obter por ID
 const obterFuncionarioId = async (id) => {
   try {
-    const rows = await readJoin({
-      baseTable: 'funcionarios f',
-      columns: 'f.*, d.departamento AS departamento',
-      joins: [
-        {
-          table: 'departamento d',
-          on: 'd.id = f.departamento_id'
-        }
-      ],
-      where: `f.id = ${id}`
-    });
-
-    return rows[0] || null;
+    return await read('funcionarios', `id = ${id}`);
   } catch (error) {
-    console.error("Erro ao obter funcionário:", error);
+    console.error('Erro ao obter funcionário:', error);
     throw error;
   }
 };
