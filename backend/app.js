@@ -2,7 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
+import cron from "node-cron";
 
+import {atualizarStatusSalarios} from './services/atualizarStatusSalarios.js'
+import { registrarPagamentoMensal } from './services/registrarPagamento.js';
+import { transacaoPagamento } from './controllers/transaçãoPagamentoController.js';
 import authRotas from './routes/authRotas.js';
 import usuarioRotas from './routes/usuarioRotas.js';
 import vendasRotas from './routes/vendasRotas.js';
@@ -26,6 +30,7 @@ import estoqueMatrizRotas from './routes/estoqueMatrizRotas.js';
 import estoqueFranquiaRotas  from './routes/estoqueFranquiaRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
+import transacoesRotas from './routes/transacoesFilialRotas.js';
 
 dotenv.config();
 
@@ -78,6 +83,7 @@ app.use( '/estoquematriz', estoqueMatrizRotas);
 app.use( '/estoquefranquia', estoqueFranquiaRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
+app.use('/api', transacoesRotas);
 
 
 app.get('/health', (req, res) => {
@@ -99,6 +105,20 @@ const server = app.listen(porta, () => {
 }).on('error', (err) => {
   console.error('Erro ao iniciar:', err);
 });
+
+
+cron.schedule("0 5 * * *", async () => {
+  console.log("Verificando pagamentos do dia 5...");
+  await registrarPagamentoMensal();
+  await transacaoPagamento();
+});
+
+cron.schedule("0 7 * * *", async () => {
+  console.log("Atualizando status dos salários...");
+  await atualizarStatusSalarios();
+});
+
+
 
 
 process.on('SIGTERM', () => {

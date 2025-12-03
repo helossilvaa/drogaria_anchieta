@@ -33,6 +33,7 @@ export function LoginForm() {
 
       if (res.ok && data.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
         toast.success("Login realizado com sucesso!");
         const departamento = data.usuario?.departamento.toLowerCase(); 
     

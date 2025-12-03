@@ -5,21 +5,17 @@ function calcularProximoDia5() {
   const hoje = new Date();
   let ano = hoje.getFullYear();
   let mes = hoje.getMonth();
-
+ 
   let dia5 = new Date(ano, mes, 5);
 
   if (hoje.getDate() > 5) {
-    // Se hoje é depois do dia 5, o próximo dia 5 é no próximo mês
     return new Date(ano, mes + 1, 5);
   }
 
-  // Se o dia 5 deste mês está a menos de 2 dias (48 horas) de distância
-  if (dia5 - hoje <= 2 * 24 * 60 * 60 * 1000) {
-    // Retorna o dia 5 do próximo mês
+  if (dia5 - hoje <= 4 * 24 * 60 * 60 * 1000) {
     return new Date(ano, mes + 1, 5);
   }
 
-  // Senão, retorna o dia 5 deste mês
   return dia5;
 }
 
@@ -27,14 +23,27 @@ export const criarSalario = async (req, res) => {
   try {
     const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
+    // 🔥 BUSCAR UNIDADE AUTOMÁTICA DO FUNCIONÁRIO
+    const funcionarios = await query(
+      "SELECT unidade_id FROM funcionarios WHERE id = ?",
+      [id_funcionario]
+    );
+
+    if (!funcionarios || funcionarios.length === 0) {
+      return res.status(400).json({ msg: "Funcionário não encontrado." });
+    }
+
+    const unidade_id = funcionarios[0].unidade_id;
+
     const proximaData = calcularProximoDia5();
 
     await query(
-      "INSERT INTO salarios (id_funcionario, departamento_id, valor, status_pagamento, data_atualizado) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO salarios (id_funcionario, unidade_id, departamento_id, valor, status_pagamento, data_atualizado) VALUES (?, ?, ?, ?, ?, ?)",
       [
         id_funcionario,
+        unidade_id,
         departamento_id,
-        valor, 
+        valor,
         status_pagamento,
         proximaData,
       ]
@@ -47,15 +56,20 @@ export const criarSalario = async (req, res) => {
   }
 };
 
+
 export const listarSalarios = async (req, res) => {
   try {
-    const salarios = await Salario.getAll();
+    const unidade_id = req.usuarioUnidadeId;
+
+    const salarios = await Salario.getAll(unidade_id);
     return res.status(200).json(salarios);
+
   } catch (err) {
     console.error("Erro ao listar salários:", err);
     return res.status(500).json({ message: "Erro ao listar salários." });
   }
 };
+
 
 export const editarSalario = async (req, res) => {
   const { id } = req.params;
@@ -66,8 +80,22 @@ export const editarSalario = async (req, res) => {
   }
 
   try {
+const funcionarios = await query(
+  "SELECT unidade_id FROM funcionarios WHERE id = ?",
+  [id_funcionario]
+);
+
+if (!funcionarios || funcionarios.length === 0) {
+  return res.status(400).json({ msg: "Funcionário não encontrado." });
+}
+
+const unidade_id = funcionarios[0].unidade_id;
+
+
+
     const updated = await Salario.update(id, {
       id_funcionario,
+      unidade_id,           // <-- unidade automática também no editar
       departamento_id,
       valor,
       status_pagamento,

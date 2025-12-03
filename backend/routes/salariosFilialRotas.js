@@ -1,12 +1,12 @@
 import express from "express";
+import authMiddleware from "../middlewares/authMiddleware.js";
 import { listarSalarios, criarSalario, editarSalario, excluirSalario } from "../controllers/salariosFilialController.js";
 
 const router = express.Router();
 
-router.get("/salarios", listarSalarios);
-router.post("/salarios", criarSalario);
-router.put("/salarios/:id", editarSalario);
-router.delete("/salarios/:id", excluirSalario);
+router.get("/salarios", authMiddleware, listarSalarios);
+router.post("/salarios", authMiddleware, criarSalario);
+router.put("/salarios/:id", authMiddleware, editarSalario);
+router.delete("/salarios/:id", authMiddleware, excluirSalario);
 
-export default router;
- 
+export default router; 

@@ -1,17 +1,12 @@
-import express from 'express';
-import { 
-  criarConta, 
-  listarConta,
-  editarConta,
-  excluirConta
-} from "../controllers/contasFilialController.js";
+import express from 'express'; 
+import authMiddleware from '../middlewares/authMiddleware.js';
+import { criarConta, listarConta, editarConta, excluirConta } from "../controllers/contasFilialController.js"; 
 
-const router = express.Router();
+const router = express.Router(); 
 
-router.get('/conta', listarConta);
-router.post('/conta', criarConta);
-router.put('/conta/:id', editarConta);     
-router.delete('/conta/:id', excluirConta); 
-
+router.get('/conta', authMiddleware, listarConta); 
+router.post('/conta', authMiddleware, criarConta); 
+router.put('/conta/:id', authMiddleware, editarConta); 
+router.delete('/conta/:id', authMiddleware, excluirConta); 
 
 export default router;
