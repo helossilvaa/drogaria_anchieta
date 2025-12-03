@@ -3,15 +3,17 @@ import {
     listarLotesMatriz,
     obterLoteMatrizPorId,
     atualizarLoteMatriz,
-    deletarLoteMatriz
+    deletarLoteMatriz,
+    listarLotesPorProduto
 } from "../models/lotesMatriz.js";
 
 const criarLoteMatrizController = async (req, res) => {
     try {
-        const { id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id } = req.body;
+        const { id, produto_id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id } = req.body;
 
         const loteData = {
             id,
+            produto_id,
             numero_lote,
             data_validade,
             quantidade,
@@ -37,6 +39,21 @@ const listarLotesMatrizController = async (req, res) => {
         res.status(500).json({ mensagem: "Erro ao listar lotes" });
     }
 };
+
+const listarLotesPorProdutoController = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const lotes = await listarLotesPorProduto(id);
+
+        res.status(200).json(lotes);
+    } catch (error) {
+        console.error("Erro ao listar lotes por produto:", error);
+        res.status(500).json({ mensagem: "Erro ao listar lotes por produto" });
+    }
+};
+
+
 
 const obterLoteMatrizPorIdController = async (req, res) => {
     try {
@@ -104,6 +121,7 @@ const deletarLoteMatrizController = async (req, res) => {
 export {
     criarLoteMatrizController,
     listarLotesMatrizController,
+    listarLotesPorProdutoController,
     obterLoteMatrizPorIdController,
     atualizarLoteMatrizController,
     deletarLoteMatrizController

@@ -2,13 +2,13 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
-  host: '10.189.80.99',
-  user: 'vitoria',
-  database: 'drogaria',
-  password: 'Anchieta@123',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+    host: '10.189.80.99',
+    user: 'beatriz',
+    database: 'drogaria',
+    password: 'Anchieta@123',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
     
 // Função assíncrona que obtém uma conexão do pool.

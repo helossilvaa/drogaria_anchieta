@@ -1,4 +1,4 @@
-import { criarMovimentacao, listarMovimentacoes, obterMovimentacaoPorId, atualizarMovimentacao, deletarMovimentacao } from "../models/produtos.js";
+import { criarMovimentacao, listarMovimentacoes,listarMovimentacoesPorProduto, obterMovimentacaoPorId, atualizarMovimentacao, deletarMovimentacao } from "../models/movimentacaoEstoque.js";
 
 const criarMovimentacaoController = async (req, res) => {
     try {
@@ -22,6 +22,17 @@ const listarMovimentacoesController = async (req, res) => {
         res.status(500).json({ mensagem: 'Erro ao listar movimentacoes do estoque' });
     }
 };
+
+const listarMovimentacoesPorProdutoController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const movs = await listarMovimentacoesPorProduto(id);
+        res.status(200).json(movs);
+    } catch {
+        res.status(500).json({ mensagem: "Erro ao listar movimentações por produto" });
+    }
+};
+
 
 const obterMovimentacaoPorIdController = async (req, res) => {
     try {
@@ -49,7 +60,7 @@ const atualizarMovimentacaoController = async (req, res) => {
         }
 
         const movimentacaoData = { produto_id, lote_id, unidade_id, tipo_movimento, quantidade, data_movimentacao, usuario_id };
-        await atualizarProduto(id, movimentacaoData);
+        await atualizarMovimentacao(id, movimentacaoData);
         res.status(200).json({ mensagem: 'Esta movimentacao de estoque foi atualizada com sucesso!!!' });
 
     } catch (error) {
@@ -75,4 +86,4 @@ const deletarMovimentacaoController = async (req, res) => {
 };
 
 
-export { criarMovimentacaoController, listarMovimentacoesController, obterMovimentacaoPorIdController, atualizarMovimentacaoController, deletarMovimentacaoController }
+export { criarMovimentacaoController, listarMovimentacoesController, listarMovimentacoesPorProdutoController, obterMovimentacaoPorIdController, atualizarMovimentacaoController, deletarMovimentacaoController }

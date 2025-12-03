@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import DialogNovoUsuario from "@/components/addFuncionario/addUsuario";
+import DialogNovoFuncionario from "@/components/addFuncionario/addFuncionario";
+import TableFuncionarios from '@/components/tableFuncionarios/table'
 import Layout  from "@/components/layout/layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 
 export default function Funcionarios () {
@@ -14,11 +16,16 @@ export default function Funcionarios () {
     
 
     const router = useRouter();
+    const API_URL = 'http://localhost:8080';
 
-   const API_URL = 'http://localhost:8080';
+   
+
     return (
         <Layout>
-           <DialogNovoUsuario/>
+
+            
+        <DialogNovoFuncionario/>
+        <TableFuncionarios/>
         </Layout>
     );
 }

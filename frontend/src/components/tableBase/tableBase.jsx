@@ -3,6 +3,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { ChevronDown, Search, MoreVertical } from "lucide-react";
 
 export default function TableBase({ columns, data, defaultSortColumn }) {
+
   const [filterValue, setFilterValue] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -60,7 +61,7 @@ export default function TableBase({ columns, data, defaultSortColumn }) {
       {/* Top Controls */}
       <div className="flex justify-between items-center mb-4">
         <div className="relative w-64">
-          <div className="flex items-center h-10 px-3 rounded-lg border border-gray-300 focus-within:border-blue-500 transition-colors bg-white shadow-sm">
+          <div className="flex items-center h-10 px-3 rounded-lg border border-gray-300 focus-within:border-green-900 transition-colors bg-white shadow-sm">
             <Search size={16} className="text-gray-400" />
             <input
               placeholder="Search..."

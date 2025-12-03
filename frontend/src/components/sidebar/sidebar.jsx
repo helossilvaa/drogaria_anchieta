@@ -15,29 +15,34 @@ import {
   BadgeDollarSign,
   Menu,
   X,
+  UserStar,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ComboboxDemo } from "../combobox/combobox";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
-export default function Sidebar({ usuario }) {
+export default function Sidebar() {
+  const usuario = useAuthUser();
   const [menuItems, setMenuItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!usuario) return;
 
-    const departamento = usuario.funcionario?.departamento?.toLowerCase();
+    const departamento = usuario?.departamento?.toLowerCase();
 
     if (departamento === "diretor geral") {
       setMenuItems([
         { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/matriz" },
-        { label: "Filiais", icon: <Building2 />, href: "/matriz/filiais" },
+        { label: "Filiais", icon: <Building2 />, href: "/matriz/franquias" },
         { label: "Relatórios", icon: <FileChartPie />, href: "/matriz/relatorios" },
         { label: "Funcionários", icon: <Users />, href: "/matriz/funcionarios" },
         { label: "Financeiro", icon: <BadgeDollarSign />, href: "/matriz/financeiro" },
         { label: "Estoque", icon: <PackageOpen />, href: "/matriz/estoque" },
         { label: "Produtos", icon: <PackageSearch />, href: "/matriz/produtos" },
+        { label: "Filiados", icon: <UserStar />, href: "/matriz/filiados" },
+        { label: "Parcerias e Descontos", icon: <Handshake />, href: "/matriz/parceriasdescontos" },
       ]);
     } else if (departamento === "diretor administrativo") {
       setMenuItems([
@@ -46,13 +51,14 @@ export default function Sidebar({ usuario }) {
         { label: "Financeiro", icon: <CircleDollarSign />, href: "/filial/financeiro" },
         { label: "Estoque", icon: <PackageOpen />, href: "/filial/estoque" },
         { label: "Funcionários", icon: <Users />, href: "/filial/funcionarios" },
+        { label: "Filiados", icon: <UserStar />, href: "/filial/filiados" },
       ]);
-    } else {
+    } else if (departamento === "caixa" || departamento === "gerente") {
       setMenuItems([
         { label: "Dashboard", icon: <ChartNoAxesCombined />, href: "/pdv" },
-        { label: "Nova venda", icon: <ShoppingBag />, href: "/pdv/venda" },
+        { label: "Nova venda", icon: <ShoppingBag />, href: "/pdv/novaVenda" },
         { label: "Produtos", icon: <PackageSearch />, href: "/pdv/produtos" },
-        { label: "Programa de fidelidade", icon: <Handshake />, href: "/pdv/fidelidade" },
+        { label: "Programa de fidelidade", icon: <Handshake />, href: "/pdv/filiados" },
       ]);
     }
   }, [usuario]);
@@ -106,14 +112,12 @@ export default function Sidebar({ usuario }) {
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
             />
-
             <motion.aside
               className="fixed z-50 bg-white w-65 h-full p-4 flex flex-col lg:hidden rounded"
               initial={{ x: -250 }}
               animate={{ x: 0 }}
               exit={{ x: -250 }}
-              transition={{ type: "spring", stiffness: 260, damping: 30 }}
-            >
+              transition={{ type: "spring", stiffness: 260, damping: 30 }}>
               <div className="flex items-center justify-between mb-10">
                 <Link href="/matriz" onClick={() => setIsOpen(false)}>
                   <div className="flex items-center gap-1">

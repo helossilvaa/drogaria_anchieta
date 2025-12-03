@@ -1,0 +1,138 @@
+import { Notificacao } from "../models/notificacoes.js";
+
+// Criar notificação
+export const criarNotificacao = async (req, res) => {
+  console.log("Dados recebidos do frontend:", req.body);
+
+  try {
+    const { usuario_id, unidade_id, titulo, mensagem } = req.body;
+
+    // Campos obrigatórios
+    const camposObrigatorios = { usuario_id, unidade_id, titulo, mensagem };
+
+    const camposVazios = Object.entries(camposObrigatorios)
+      .filter(([_, valor]) => !valor || valor === "")
+      .map(([campo]) => campo);
+
+    if (camposVazios.length > 0) {
+      return res.status(400).json({
+        message: `Preencha todos os campos obrigatórios. Campos vazios: ${camposVazios.join(", ")}`
+      });
+    }
+
+    // Criar registro
+    const id = await Notificacao.create({
+      usuario_id,
+      unidade_id,
+      titulo,
+      mensagem,
+      lida: 0
+    });
+
+    return res.status(201).json({
+      message: "Notificação criada com sucesso!",
+      id
+    });
+
+  } catch (err) {
+    console.error("Erro ao criar notificação:", err);
+    return res.status(500).json({
+      message: "Erro ao criar notificação.",
+      erro: err.message
+    });
+  }
+};
+
+// Listar todas as notificações
+export const listarNotificacoes = async (req, res) => {
+  try {
+    const notificacoes = await Notificacao.getAll();
+    return res.status(200).json(notificacoes);
+  } catch (err) {
+    console.error("Erro ao listar notificações:", err);
+    return res.status(500).json({ message: "Erro ao listar notificações." });
+  }
+};
+
+// Listar notificações por usuário
+export const listarNotificacoesPorUsuario = async (req, res) => {
+  try {
+    const { usuario_id } = req.params;
+
+    const notificacoes = await Notificacao.getByUsuario(usuario_id);
+
+    return res.status(200).json(notificacoes);
+  } catch (err) {
+    console.error("Erro ao listar notificações por usuário:", err);
+    return res.status(500).json({ message: "Erro ao listar notificações." });
+  }
+};
+
+// Listar notificações por unidade
+export const listarNotificacoesPorUnidade = async (req, res) => {
+  try {
+    const { unidade_id } = req.params;
+
+    const notificacoes = await Notificacao.getByUnidade(unidade_id);
+
+    return res.status(200).json(notificacoes);
+  } catch (err) {
+    console.error("Erro ao listar notificações por unidade:", err);
+    return res.status(500).json({ message: "Erro ao listar notificações." });
+  }
+};
+
+// Obter notificação por ID
+export const obterNotificacaoPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notificacao = await Notificacao.getById(id);
+
+    if (!notificacao) {
+      return res.status(404).json({ message: "Notificação não encontrada." });
+    }
+
+    return res.status(200).json(notificacao);
+  } catch (err) {
+    console.error("Erro ao buscar notificação:", err);
+    return res.status(500).json({ message: "Erro ao buscar notificação." });
+  }
+};
+
+// Marcar como lida
+export const marcarNotificacaoComoLida = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notificacao = await Notificacao.getById(id);
+    if (!notificacao) {
+      return res.status(404).json({ message: "Notificação não encontrada." });
+    }
+
+    await Notificacao.markAsRead(id);
+
+    return res.status(200).json({ message: "Notificação marcada como lida!" });
+  } catch (err) {
+    console.error("Erro ao marcar como lida:", err);
+    return res.status(500).json({ message: "Erro ao atualizar notificação." });
+  }
+};
+
+// Deletar notificação
+export const deletarNotificacao = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletado = await Notificacao.delete(id);
+
+    if (deletado === 0) {
+      return res.status(404).json({ message: "Notificação não encontrada." });
+    }
+
+    return res.status(200).json({ message: "Notificação excluída com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao excluir notificação:", err);
+    return res.status(500).json({ message: "Erro ao excluir notificação." });
+  }
+};

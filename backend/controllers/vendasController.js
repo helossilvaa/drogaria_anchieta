@@ -5,12 +5,29 @@ import{
     criarVenda
 } from "../models/vendas.js";
 
-import { criarItemVenda } from "../models/vendasItens.js";
+// Lista todas as vendas
+const listarVendaController = async (req, res) => {
+    try {
+        const todasVendas = await listarVenda();
 
+        // 🔹 Filtra vendas da unidade do usuário logado
+        const unidadeId = req.user.unidade_id;
+        const vendasDaUnidade = todasVendas.filter(v => v.unidade_id === unidadeId);
 
+        res.status(200).json(vendasDaUnidade);
+    } catch (error) {
+        console.error('Erro ao listar vendas: ', error);
+        res.status(500).json({ mensagem: 'Erro ao listar vendas' });
+    }
+};
+
+// Cria uma venda
 const criarVendaController = async (req, res) => {
-    try{
-        const {cliente_id, usuario_id, unidade_id, tipo_pagamento_id, total, data, itens} = req.body;
+    try {
+        const { cliente_id, usuario_id, tipo_pagamento_id, total, data, itens } = req.body;
+
+        // 🔹 Usa a unidade do usuário logado
+        const unidade_id = req.user.unidade_id;
 
         const vendaData = {
             cliente_id,
@@ -21,13 +38,11 @@ const criarVendaController = async (req, res) => {
             data
         };
 
-        // 1️⃣ Cria a venda
         const novaVenda = await criarVenda(vendaData);
 
-        // 2️⃣ Salva os itens da venda
         for (const item of itens) {
             await criarItemVenda({
-                venda_id: novaVenda.insertId, // ID da venda criada
+                venda_id: novaVenda.insertId,
                 produto_id: item.produto_id,
                 quantidade: item.quantidade,
                 preco: item.preco,
@@ -40,21 +55,12 @@ const criarVendaController = async (req, res) => {
             venda_id: novaVenda.insertId
         });
 
-    }catch (error){
+    } catch (error) {
         console.error('Erro ao criar venda: ', error);
-        res.status(500).json({mensagem: 'Erro ao criar venda'});
+        res.status(500).json({ mensagem: 'Erro ao criar venda' });
     }
 };
 
-const listarVendaController = async (req, res) => {
-    try {
-        const Venda = await listarVenda();
-        res.status(200).json(Venda);
-    }catch (error) {
-        console.error('Erro ao listar vendas: ', error);
-        res.status(500).json({mensagem: 'Erro ao listar vendas'});
-    }
-};
 
 const obterVendaPorIDController = async (req, res) => {
     try{
