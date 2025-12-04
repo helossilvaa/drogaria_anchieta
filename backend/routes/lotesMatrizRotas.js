@@ -1,11 +1,12 @@
 import express from 'express';
-import {criarLoteMatrizController, listarLotesMatrizController, obterLoteMatrizPorIdController, atualizarLoteMatrizController, deletarLoteMatrizController} from '../controllers/lotesMatrizController.js';
+import {criarLoteMatrizController, listarLotesMatrizController,listarLotesPorProdutoController, obterLoteMatrizPorIdController, atualizarLoteMatrizController, deletarLoteMatrizController} from '../controllers/lotesMatrizController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/', authMiddleware, criarLoteMatrizController);
 router.get('/', authMiddleware, listarLotesMatrizController);
+router.get('/produto/:id', authMiddleware, listarLotesPorProdutoController);
 router.get('/:id', authMiddleware, obterLoteMatrizPorIdController);
 router.put('/:id', authMiddleware, atualizarLoteMatrizController);
 router.delete('/:id', authMiddleware, deletarLoteMatrizController);

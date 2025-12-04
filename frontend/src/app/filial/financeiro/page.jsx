@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import Dashboard from '@/components/DashboardFinanceiro/page';
 import Contas from '@/components/contasFilial/page';
 import Salarios from '@/components/salariosFilial/page';
 import Vendas from '@/components/vendasFilial/page';
@@ -13,7 +12,7 @@ export default function Financeiro() {
   const containerRef = useRef(null);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
-  const items = ['Dashboard', 'Salários', 'Contas', 'Vendas', 'Transações'];
+  const items = ['Salários', 'Contas', 'Vendas', 'Transações'];
 
   useEffect(() => {
     const container = containerRef.current;
@@ -29,11 +28,10 @@ export default function Financeiro() {
   }, [activeIndex]);
 
  const contentMap = {
-  0: <Dashboard/>,
-  1: <Salarios/>,
-  2: <Contas/>,
-  3: <Vendas/>,
-  4: <Transacoes/>
+  0: <Salarios/>,
+  1: <Contas/>,
+  2: <Vendas/>,
+  3: <Transacoes/>
 }
 
   return (

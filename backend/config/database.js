@@ -33,6 +33,19 @@ async function readAll(table, where = null) {
     }
 }
  
+export async function readJoin(query, params = []) {
+  return new Promise((resolve, reject) => {
+    connection.query(query, params, (error, results) => {
+      if (error) {
+        console.error("Erro no readJoin:", error);
+        return reject(error);
+      }
+      resolve(results);
+    });
+  });
+}
+
+
 // Função para ler um registro específico
 async function read(table, where, columns = '*') {
     const connection = await getConnection();

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Layout from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -9,8 +10,7 @@ import { Input } from "@/components/ui/input";
 const API_URL = 'http://localhost:8080/produtos';
 const API_CATEGORIAS = "http://localhost:8080/categorias";
 const API_LOTESMATRIZ = "http://localhost:8080/lotesmatriz";
-const API_ESTOQUEMATRIZ = "http://localhost:8080/estoquematriz";
-const API_ESTOQUEFRANQUIA = "http://localhost:8080/estoquefranquia";
+const API_ESTOQUEFILIAL = "http://localhost:8080/estoqueFilial";
 
 const ABAS = {
   TODOS: 'todos',
@@ -27,7 +27,8 @@ export default function Produtos() {
   const [fornecedores, setFornecedores] = useState([]);
   const [lotes, setLotes] = useState([]);
   const [tarjas, setTarjas] = useState([]);
-  const [estoqueMatriz, setEstoqueMatriz] = useState([]); // === NOVO ===
+  const [estoqueFilial, setEstoqueFilial] = useState([]);
+  const [estoqueMinimo] = useState(30); // valor que você quiser
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('0');
   const [abaAtiva, setAbaAtiva] = useState(ABAS.TODOS);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +41,7 @@ export default function Produtos() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [produtoVisualizado, setProdutoVisualizado] = useState(null);
   const [produtoEditando, setProdutoEditando] = useState(null);
+  const [produtosCompletos, setProdutosCompletos] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [novoProduto, setNovoProduto] = useState({
     registro_anvisa: "",
@@ -92,12 +94,13 @@ export default function Produtos() {
 
   const getEstoqueStatus = (produto) => {
     const q = produto?.quantidade;
-    if (q == null) return "Desconhecido";
-    if (isProdutoVencido(produto)) return "Vencido";
-    if (q <= 0) return "Fora de estoque";
+
+    if (q === undefined || q === null) return "Desconhecido";
+    if (q === 0) return "Sem estoque";
     if (q <= 5) return "Baixo estoque";
-    return "Em estoque";
+    return "OK";
   };
+
 
   // fetch listas auxiliares
 
@@ -117,20 +120,20 @@ export default function Produtos() {
     }
   };
 
-  const fetchEstoqueMatriz = async () => {
+  const fetchEstoqueFilial = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(API_ESTOQUEMATRIZ, {
+      const res = await fetch(API_ESTOQUEFILIAL, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Erro ao carregar estoque matriz");
+      if (!res.ok) throw new Error("Erro ao carregar estoque da filial");
       const data = await res.json();
-      setEstoqueMatriz(Array.isArray(data) ? data : []);
+      setEstoqueFilial(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Erro ao buscar estoque matriz:", err);
+      console.error("Erro ao buscar estoque da filial:", err);
     }
   };
-
+  
   const fetchCategorias = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -173,10 +176,37 @@ export default function Produtos() {
     if (isAuthenticated) {
       fetchCategorias();
       fetchLotes();
-      fetchEstoqueMatriz(); // === NOVO ===
+      fetchEstoqueFilial();
       fetchProdutos();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!produtos || produtos.length === 0) return;
+    if (!estoqueFilial || estoqueFilial.length === 0) return;
+
+    const resultado = produtosCompletos.map(prod => {
+      // Filtra todos os lotes desse produto
+      const lotesDoProduto = estoqueFilial.filter(
+        es => Number(es.produto_id) === Number(prod.id)
+      );
+
+      // Soma a quantidade total
+      const quantidadeTotal = lotesDoProduto.reduce(
+        (total, lote) => total + Number(lote.quantidade || 0),
+        0
+      );
+
+      return {
+        ...prod,
+        quantidade: quantidadeTotal,
+        lotes: lotesDoProduto,
+      };
+    });
+
+    setProdutosCompletos(resultado);
+  }, [produtos, estoqueFilial]);
+
 
   const produtosFiltrados = produtos.filter((produto) => {
     const produtoCategoriaId = Number(produto?.categoria_id ?? produto?.categoria ?? 0);
@@ -202,7 +232,6 @@ export default function Produtos() {
         break;
     }
 
-    // FILTRO POR BUSCA
     if (searchTerm.trim() !== "") {
       const termo = searchTerm.toLowerCase();
       const nome = String(produto.nome || "").toLowerCase();
@@ -233,7 +262,6 @@ export default function Produtos() {
     if (novaPagina > 0 && novaPagina <= totalPaginas) setPaginaAtual(novaPagina);
   };
 
-  // normaliza objeto recebendo strings/objects -> form compatível para enviar ao backend (apenas *_id)
   const normalizarProduto = (p) => ({
     id: p.id ?? null,
     nome: p.nome || "",
@@ -252,91 +280,7 @@ export default function Produtos() {
     armazenamento: p.armazenamento || "",
   });
 
-  // criar produto (envia apenas *_id)
-  const handleCriarProduto = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' });
-      setTimeout(() => setMensagemFeedback(null), 2500);
-      return;
-    }
 
-    if (!novoProduto.nome || String(novoProduto.nome).trim() === "") {
-      setMensagemFeedback({ type: 'error', text: "O campo 'Nome' é obrigatório." });
-      setTimeout(() => setMensagemFeedback(null), 2500);
-      return;
-    }
-
-    if (!novoProduto.categoria_id) {
-      setMensagemFeedback({ type: 'error', text: "Selecione uma categoria." });
-      setTimeout(() => setMensagemFeedback(null), 2500);
-      return;
-    }
-
-    const payloadObj = normalizarProduto(novoProduto);
-
-    const finalPayload = {
-      registro_anvisa: payloadObj.registro_anvisa || null,
-      nome: payloadObj.nome,
-      foto: payloadObj.foto,
-      medida_id: payloadObj.medida_id ?? null,
-      tarja_id: payloadObj.tarja_id ?? null,
-      categoria_id: payloadObj.categoria_id ?? null,
-      marca_id: payloadObj.marca_id ?? null,
-      codigo_barras: payloadObj.codigo_barras || null,
-      descricao: payloadObj.descricao || null,
-      preco_unitario: payloadObj.preco_unitario ?? null,
-      validade: payloadObj.validade || null,
-      fornecedor_id: payloadObj.fornecedor_id ?? null,
-      lote_id: payloadObj.lote_id ?? null,
-      armazenamento: payloadObj.armazenamento || null,
-    };
-
-    try {
-      console.log("Criar payload:", finalPayload);
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(finalPayload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.mensagem || data.message || 'Erro ao criar produto');
-
-      setMensagemFeedback({ type: 'success', text: 'Produto criado com sucesso!' });
-      setTimeout(() => setMensagemFeedback(null), 4000);
-
-      setIsDialogOpen(false);
-
-      setNovoProduto({
-        registro_anvisa: "",
-        nome: "",
-        medida_id: "",
-        tarja_id: "",
-        categoria_id: "",
-        marca_id: "",
-        codigo_barras: "",
-        descricao: "",
-        preco_unitario: "",
-        validade: "",
-        fornecedor_id: "",
-        lote_id: "",
-        armazenamento: "",
-      });
-
-      await fetchProdutos();
-
-    } catch (err) {
-      console.error('Erro ao criar produto:', err, 'payload:', finalPayload);
-      setMensagemFeedback({ type: 'error', text: err.message || 'Erro ao criar produto' });
-      setTimeout(() => setMensagemFeedback(null), 4000);
-    }
-  };
-
-  // === ALTERAÇÃO: separar seleção de lote para NOVO e EDIT ===
   const handleSelectLoteNovo = (id) => {
     if (!id || Number(id) === 0) {
       setNovoProduto({ ...novoProduto, lote_id: "", validade: "", quantidade: "" });
@@ -366,7 +310,6 @@ export default function Produtos() {
       validade: lote.data_validade
     });
   };
-  // === FIM ALTERAÇÃO ===
 
   const handleAtualizarProduto = async () => {
     if (!produtoEditando) return;
@@ -417,7 +360,7 @@ export default function Produtos() {
       setIsEditDialogOpen(false);
       setProdutoEditando(null);
       await fetchProdutos();
-      await fetchEstoqueMatriz(); // atualiza lista de lotes/estoque
+      await fetchEstoqueMatriz();
     } catch (error) {
       console.error("Erro ao atualizar:", error);
 
@@ -474,7 +417,7 @@ export default function Produtos() {
       tarja_id: produto?.tarja_id ?? produto?.tarja ?? '',
     });
     // buscar estoque por produto para popular aba Lotes
-    fetchEstoqueMatriz(); // === NOVO ===
+    fetchEstoqueFilial();
     setIsEditDialogOpen(true);
   };
 
@@ -482,6 +425,25 @@ export default function Produtos() {
     setProdutoVisualizado(produto);
     setIsViewDialogOpen(true);
   };
+
+  function calcularEstoqueTotal(produto) {
+    if (!estoqueFilial || !Array.isArray(estoqueFilial)) return 0;
+  
+    const total = estoqueFilial
+      .filter(es => Number(es.produto_id) === Number(produto.id))
+      .reduce((sum, es) => sum + Number(es.quantidade || 30), 0);
+  
+    return total;
+  }
+  
+  function obterStatusEstoque(quantidade) {
+    if (quantidade <= estoqueMinimo) {
+      return { texto: "Baixo", cor: "text-red-600 font-semibold" };
+    }
+    return { texto: "Normal", cor: "text-green-600 font-semibold" };
+  }
+  
+
 
   const getAbaClasses = (aba) =>
     abaAtiva === aba
@@ -504,78 +466,12 @@ export default function Produtos() {
         )}
 
 
-        {/* Botão Criar Produto */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#89ccb5] text-white hover:bg-[#3e8473] hover:border-[#91c9bb] mb-4 mt-7 ">
-              Criar Produto
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[85vh] overflow-y-auto p-7 text-justify">
-            <DialogHeader>
-              <DialogTitle className="font-bold text-2xl  text-[#b8e5d7]">Novo Produto</DialogTitle></DialogHeader>
-            <div className="grid gap-2 mt-2">
-              <Input placeholder="Nome" value={novoProduto.nome} onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })} />
-              <Input placeholder="Registro ANVISA" value={novoProduto.registro_anvisa} onChange={(e) => setNovoProduto({ ...novoProduto, registro_anvisa: e.target.value })} />
-              <Input placeholder="Código de Barras" value={novoProduto.codigo_barras} onChange={(e) => setNovoProduto({ ...novoProduto, codigo_barras: e.target.value })} />
-              <Input placeholder="Descrição" value={novoProduto.descricao} onChange={(e) => setNovoProduto({ ...novoProduto, descricao: e.target.value })} />
-              <Input type="number" placeholder="Preço Unitário" value={novoProduto.preco_unitario} onChange={(e) => setNovoProduto({ ...novoProduto, preco_unitario: e.target.value })} />
-              <Input type="date" placeholder="Validade" value={novoProduto.validade} onChange={(e) => setNovoProduto({ ...novoProduto, validade: e.target.value })} />
 
-              <Select value={String(novoProduto.tarja_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, tarja_id: v ? Number(v) : "" })}>
-                <SelectTrigger><SelectValue placeholder="Tarja" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Selecione</SelectItem>
-                  {tarjas.length > 0 ? tarjas.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome || t.descricao || t.id}</SelectItem>)
-                    : (
-                      <>
-                        <SelectItem value="1">Sem Tarja</SelectItem>
-                        <SelectItem value="2">Vermelha</SelectItem>
-                        <SelectItem value="3">Amarela</SelectItem>
-                        <SelectItem value="4">Preta</SelectItem>
-                      </>
-                    )}
-                </SelectContent>
-              </Select>
-
-              <Select value={String(novoProduto.categoria_id || "")} onValueChange={(v) => setNovoProduto({ ...novoProduto, categoria_id: v ? Number(v) : "" })}>
-                <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Selecione</SelectItem>
-                  {categorias.map((cat) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome || cat.categoria}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Input placeholder="Medida ID" value={novoProduto.medida_id} onChange={(e) => setNovoProduto({ ...novoProduto, medida_id: e.target.value })} />
-              <Input placeholder="Marca ID" value={novoProduto.marca_id} onChange={(e) => setNovoProduto({ ...novoProduto, marca_id: e.target.value })} />
-              <Input placeholder="Fornecedor ID" value={novoProduto.fornecedor_id} onChange={(e) => setNovoProduto({ ...novoProduto, fornecedor_id: e.target.value })} />
-              <Select value={String(novoProduto.lote_id || "")} onValueChange={handleSelectLoteNovo} >
-                <SelectTrigger><SelectValue placeholder="Selecione o lote" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Sem lote</SelectItem>
-                  {lotes.map((lote) => (
-                    <SelectItem key={lote.id} value={String(lote.id)}>
-                      Lote {lote.numero_lote} — Validade {lote.data_validade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input placeholder="Armazenamento" value={novoProduto.armazenamento} onChange={(e) => setNovoProduto({ ...novoProduto, armazenamento: e.target.value })} />
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#4b9c86] text-white hover:bg-[#3e8473]" onClick={handleCriarProduto}>Salvar Produto</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* DIALOG EDITAR */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-h-[85vh] overflow-y-auto p-7 text-justify">
-            <DialogHeader><DialogTitle className="font-bold text-2xl  text-[#b8e5d7]">Editar Produto</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="font-bold text-2xl  text-[#a7e3d0]">Editar Produto</DialogTitle></DialogHeader>
             {produtoEditando && (
               <div className="grid gap-3 mt-2">
                 <Input placeholder="Nome" value={produtoEditando.nome} onChange={(e) => setProdutoEditando({ ...produtoEditando, nome: e.target.value })} />
@@ -638,7 +534,7 @@ export default function Produtos() {
           </DialogContent>
         </Dialog>
 
-        {/* DIALOG VISUALIZAR (NOVO) */}
+        {/* DIALOG VISUALIZARR */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Visualizar Produto</DialogTitle></DialogHeader>
@@ -698,14 +594,13 @@ export default function Produtos() {
           {/* ABAS */}
           <div className="flex space-x-4">
             <span className={getAbaClasses(ABAS.TODOS)} onClick={() => setAbaAtiva(ABAS.TODOS)}>Todos</span>
-            {/* <span className={getAbaClasses(ABAS.ESTOQUE)} onClick={() => setAbaAtiva(ABAS.ESTOQUE)}>Em Estoque</span> */}
             <span className={getAbaClasses(ABAS.VENCIDOS)} onClick={() => setAbaAtiva(ABAS.VENCIDOS)}>Vencidos</span>
           </div>
 
           {/* INPUT DE BUSCA */}
           <div className="relative">
             <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-              <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+              <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
             </div>
             <input type="search" id="search" placeholder="Buscar produto..." className="w-64 border rounded-2xl pl-9 pr-15 py-2 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />          </div>
         </div>
@@ -723,32 +618,44 @@ export default function Produtos() {
         </div>
 
         {/* TABELA */}
-        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <table className="w-full text-sm text-gray-500">
-            <thead className="uppercase bg-gray-200 text-gray-540">
-              <tr>
-                <th className="py-3 px-8">Nome</th>
-                <th className="py-3 px-8">Categoria</th>
-                <th className="py-3 px-8">Marca</th>
-                <th className="py-3 px-8">Código</th>
-                <th className="py-3 px-8">Validade</th>
-                <th className="py-3 px-8">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="relative overflow-x-auto rounded-lg">
+          <Table className="w-full text-sm text-gray-500">
+            <TableHeader className="relative overflow-x-auto bg-[#a9d6cd] rounded-xl">
+              <TableRow>
+                <TableHead className="py-3 px-6">Nome</TableHead>
+                <TableHead className="py-3 px-6">Categoria</TableHead>
+                <TableHead className="py-3 px-6">Código</TableHead>
+                <TableHead className="py-3 px-6">Estoque</TableHead>
+                <TableHead className="py-3 px-6">Status</TableHead>
+                <TableHead className="py-3 px-6">Marca</TableHead>
+                <TableHead className="py-3 px-6">Validade</TableHead>
+                <TableHead className="py-3 px-6">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {isLoading ? (
-                <tr><td colSpan="6" className="py-4">Carregando produtos...</td></tr>
+                <TableRow className="border-b-1"><TableCell colSpan="6" className="py-4">Carregando produtos...</TableCell></TableRow>
               ) : produtosPaginados.length === 0 ? (
-                <tr><td colSpan="6" className="py-4 text-gray-900">Nenhum produto encontrado.</td></tr>
+                <TableRow><TableCell colSpan="6" className="py-4 text-gray-900">Nenhum produto encontrado.</TableCell></TableRow>
               ) : (
                 produtosPaginados.map((produto) => (
-                  <tr key={produto.id} className="odd:bg-white even:bg-gray-50 border-b text-center">
-                    <td className="px-4 py-6 font-normal text-gray-900">{produto.nome}</td>
-                    <td className="px-10 py-6">{getCategoriaNome(produto.categoria_id)}</td>
-                    <td className="px-10 py-6">{produto.marca_id}</td>
-                    <td className="px-10 py-6">{produto.codigo_barras || "-"}</td>
-                    <td className="px-10 py-6">{produto.validade ? formatDate(produto.validade) : "N/A"}</td>
-                    <td className="flex py-4 px-6 justify-center gap-2">
+                  <TableRow key={produto.id} className="border-b-1 text-center">
+                    <TableCell className="px-4 py-6 font-normal text-gray-900">{produto.nome}</TableCell>
+                    <TableCell className="px-10 py-6">{getCategoriaNome(produto.categoria_id)}</TableCell>
+                    <TableCell className="px-10 py-6">{produto.codigo_barras || "-"}</TableCell>
+                    <TableCell>{calcularEstoqueTotal(produto)}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const qnt = calcularEstoqueTotal(produto);
+                        const status = obterStatusEstoque(qnt);
+                        return <span className={status.cor}>{status.texto}</span>;
+                      })()}
+                    </TableCell>
+
+
+                    <TableCell className="px-10 py-6">{produto.marca_id}</TableCell>
+                    <TableCell className="px-10 py-6">{produto.validade ? (produto.validade) : "N/A"}</TableCell>
+                    <TableCell className="flex py-4 px-6 justify-center gap-2">
 
                       <button onClick={() => handleEditar(produto)} className="rounded-full p-2 hover:bg-[#4b9c861f]" > <svg className="w-6 h-6 text-[#659b8d] dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"> <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.779 17.779 4.36 19.918 6.5 13.5m4.279 4.279 8.364-8.643a3.027 3.027 0 0 0-2.14-5.165 3.03 3.03 0 0 0-2.14.886L6.5 13.5m4.279 4.279L6.499 13.5m2.14 2.14 6.213-6.504M12.75 7.04 17 11.28" /> </svg> </button>
                       <button onClick={() => handleVisualizar(produto)} className="rounded-full p-2 hover:bg-[#4b9c861f]" >
@@ -758,12 +665,12 @@ export default function Produtos() {
                         </svg>
 
                       </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* PAGINAÇÃO */}

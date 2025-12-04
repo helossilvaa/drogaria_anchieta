@@ -16,6 +16,18 @@ const listarMovimentacoes = async () => {
         console.error('Erro ao listar produtos: ', error)
     }
 };
+
+
+
+const listarMovimentacoesPorProduto = async (produtoId) => {
+    try {
+        return await readAll('movimentacoes_estoque', `produto_id = ${produtoId}`);
+    } catch (error) {
+        console.error("Erro ao listar movimentações do produto:", error);
+        throw error;
+    }
+};
+
 const obterMovimentacaoPorId = async (id) => {
     try {
         return await read('movimentacoes_estoque', `id = ${id}`)
@@ -42,4 +54,4 @@ const deletarMovimentacao = async (id) => {
     }
 }
 
-export { criarMovimentacao, listarMovimentacoes, obterMovimentacaoPorId, atualizarMovimentacao, deletarMovimentacao };
+export { criarMovimentacao, listarMovimentacoes, listarMovimentacoesPorProduto, obterMovimentacaoPorId, atualizarMovimentacao, deletarMovimentacao };

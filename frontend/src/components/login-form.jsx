@@ -8,7 +8,6 @@ import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
 
 export function LoginForm() {
-
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -32,17 +31,24 @@ export function LoginForm() {
       const data = await res.json();
 
       if (res.ok && data.token) {
+        // ✔️ SALVA TOKEN
         localStorage.setItem("token", data.token);
+
+        // ✔️ SALVA USUÁRIO (CORREÇÃO PRINCIPAL)
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
+
         toast.success("Login realizado com sucesso!");
-        const departamento = data.usuario?.departamento; 
-    
+
+        // ✔️ Identifica o departamento para redirecionar
+        const departamento = data.usuario?.departamento;
+
         setTimeout(() => {
-          if (departamento === "Diretor Geral") router.push("/matriz");
-          else if (departamento === "Diretor Administrativo") router.push("/filial");
-          else if (departamento === "Gerente") router.push("/filial");
+          if (departamento === "diretor geral") router.push("/matriz");
+          else if (departamento === "diretor administrativo") router.push("/filial");
+          else if (departamento === "gerente") router.push("/filial");
           else router.push("/pdv");
-        }, 1000);
+        }, 800);
+
       } else {
         setErro(data.error || "Credenciais inválidas");
         toast.error(data.error || "Credenciais inválidas");
@@ -54,21 +60,18 @@ export function LoginForm() {
     } finally {
       setLoading(false);
     }
-    
-   
-
   };
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
       <ToastContainer position="top-right" autoClose={2000} pauseOnHover={false} theme="light" />
+
       <div className="hidden md:flex w-1/2 bg-gradient-to-r from-teal-300 to-red-300 items-center">
         <div className="container flex justify-end items-center">
           <h2 className="bg-white w-50 p-4 rounded-l-full font-bold text-center">LOGIN</h2>
         </div>
       </div>
 
-      
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 md:p-10">
         <Image
           src="/logo.png"
@@ -91,6 +94,7 @@ export function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+
             <FloatingInput
               id="senha"
               type="password"

@@ -2,11 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
-import cron from "node-cron";
+import cron from 'node-cron'
 
-import {atualizarStatusSalarios} from './services/atualizarStatusSalarios.js'
-import { registrarPagamentoMensal } from './services/registrarPagamento.js';
-import { transacaoPagamento } from './controllers/transaçãoPagamentoController.js';
 import authRotas from './routes/authRotas.js';
 import usuarioRotas from './routes/usuarioRotas.js';
 import vendasRotas from './routes/vendasRotas.js';
@@ -21,16 +18,21 @@ import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
+
+// import salariosRotas from './routes/salariosRotas.js';
+
 import salariosRotas from './routes/salariosFilialRotas.js';
+
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
 import lotesMatrizRotas from './routes/lotesMatrizRotas.js';
 import estoqueMatrizRotas from './routes/estoqueMatrizRotas.js';
-import estoqueFranquiaRotas  from './routes/estoqueFranquiaRotas.js';
+import estoqueFranquiaRotas from './routes/estoqueFranquiaRotas.js';
+import movimentacaoEstoqueRotas from './routes/movimentacaoEstoqueRotas.js';
+import notificacoesRotas from './routes/notificacoesRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
-import transacoesRotas from './routes/transacoesFilialRotas.js';
 
 dotenv.config();
 
@@ -45,7 +47,7 @@ try {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
   }));
-  // app.use(express.json());
+ 
 
   app.use(session({
     secret: 'sJYMmuCB2Z187XneUuaOVYTVUlxEOb2K94tFZy370HjOY7T7aiCKvwhNQpQBYL9e',
@@ -74,16 +76,26 @@ app.use("/api", descontosRotas);
 app.use('/api', fornecedoresRotas);
 app.use('/api', contasFilialRotas);
 app.use ('/produtos', produtosRotas);
+
+// app.use('/api', salariosRotas);
+
 app.use('/api', salariosRotas);
+// app.use('/api', transacoesRotas);
+// app.use('/api', salariosMatrizRotas);
+
 app.use('/departamento', departamentosRotas);
 app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
-app.use( '/lotesmatriz', lotesMatrizRotas);
-app.use( '/estoquematriz', estoqueMatrizRotas);
-app.use( '/estoquefranquia', estoqueFranquiaRotas);
+app.use ('/lotesmatriz', lotesMatrizRotas);
+app.use ('/estoquematriz', estoqueMatrizRotas);
+app.use ('/estoqueFilial', estoqueFranquiaRotas);
+app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
-app.use('/api', transacoesRotas);
+
+app.use("/notificacoes", notificacoesRotas);
+
+// app.use('/api', transacoesRotas);
 
 
 app.get('/health', (req, res) => {
@@ -107,6 +119,7 @@ const server = app.listen(porta, () => {
 });
 
 
+
 cron.schedule("0 5 * * *", async () => {
   console.log("Verificando pagamentos do dia 5...");
   await registrarPagamentoMensal();
@@ -117,8 +130,6 @@ cron.schedule("0 7 * * *", async () => {
   console.log("Atualizando status dos salários...");
   await atualizarStatusSalarios();
 });
-
-
 
 
 process.on('SIGTERM', () => {

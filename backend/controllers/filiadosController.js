@@ -135,7 +135,7 @@ export const deletarFiliado = async (req, res) => {
 export const obterFiliadoPorCPFController = async (req, res) => {
   try {
     const { cpf } = req.params;
-    const filiado = await Filiados.getByCPF(cpf);
+    const filiado = await Filiado.getByCPF(cpf); // ← CORRETO
 
     if (!filiado) {
       return res.status(404).json({ mensagem: "Filiado não encontrado" });

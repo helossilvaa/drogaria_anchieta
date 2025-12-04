@@ -27,6 +27,15 @@ const obterLoteMatrizPorId = async (id) => {
     }
 };
 
+const listarLotesPorProduto = async (produtoId) => {
+    try {
+        return await readAll("lotes_matriz", `produto_id = ${produtoId}`);
+    } catch (error) {
+        console.error("Erro ao listar lotes por produto:", error);
+        throw error;
+    }
+};
+
 const atualizarLoteMatriz = async (id, loteMatrizData) => {
     try {
         return await update("lotes_matriz", `id = ${id}`, loteMatrizData);
@@ -50,5 +59,6 @@ export {
     listarLotesMatriz,
     obterLoteMatrizPorId,
     atualizarLoteMatriz,
-    deletarLoteMatriz
+    deletarLoteMatriz,
+    listarLotesPorProduto
 };
