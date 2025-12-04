@@ -1,10 +1,265 @@
 "use client";
 import Layout from "@/components/layout/layout";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  CircleDollarSign,
+  Users,
+  ShoppingCart,
+  ArrowUp,
+  ArrowDown
+} from "lucide-react";
 
-export default function DashboardMatriz() {
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter
+} from "@/components/ui/card";
+
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+
+import { AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
+
+const API_VENDAS = "http://localhost:8080/vendas";
+const API_CLIENTES = "http://localhost:8080/clientes";
+const API_TRANSACOES = "http://localhost:8080/transacoes";
+
+function KPICard({ label, value, icon, variation, onClick }) {
   return (
-    <>
-   <Layout></Layout>
-    </>
+    <Card 
+      onClick={onClick} 
+      className="cursor-pointer hover:shadow-xl transition-all rounded-xl bg-white min-w-[250px]"
+    >
+      <CardContent className="flex justify-between items-center gap-4 p-6">
+        <div>
+          <p className="text-gray-500 text-sm">{label}</p>
+          <p className="text-2xl font-bold text-pink-600">{value}</p>
+
+          {variation !== undefined && (
+            <p
+              className={`text-xs flex items-center gap-1 ${
+                variation >= 0 ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {variation >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+              {Math.abs(variation)}% em relação ao período anterior
+            </p>
+          )}
+        </div>
+
+        {icon}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChartArea({ data, dataKey, title }) {
+  const chartConfig = {
+    [dataKey]: {
+      label: dataKey === "vendas" ? "Vendas" : "Clientes",
+      color: dataKey === "vendas" ? "var(--chart-3)" : "var(--chart-2)",
+    },
+  };
+
+  return (
+    <Card className="rounded-xl shadow-md">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>Dados do período selecionado</CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <ChartContainer config={chartConfig}>
+          <AreaChart data={data} margin={{ left: 12, right: 12 }}>
+            <CartesianGrid vertical={false} stroke="#e5e7eb" />
+            <XAxis
+              dataKey="dia"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
+            <YAxis />
+
+            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              stroke="#ec4899" // cor da linha (rosa)
+              fill="#fce7f3" // cor de preenchimento
+              fillOpacity={1}
+            />
+
+            <ChartLegend content={<ChartLegendContent />} />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+
+      <CardFooter>
+        <p className="text-sm text-gray-500">
+          Visualização do período selecionado
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export default function Dashboard() {
+  const router = useRouter();
+
+  const [activePeriod, setActivePeriod] = useState("semana");
+
+  const [vendas, setVendas] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [transacoes, setTransacoes] = useState(0);
+
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        const token = localStorage.getItem("token");
+
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        // Vendas
+        const resVendas = await fetch(API_VENDAS, { headers });
+        const dataVendas = await resVendas.json();
+        setVendas(dataVendas);
+
+        // Clientes
+        const resClientes = await fetch(API_CLIENTES, { headers });
+        const dataClientes = await resClientes.json();
+        setClientes(dataClientes);
+
+        // Transações
+        const resTransacoes = await fetch(API_TRANSACOES, { headers });
+        const dataTransacoes = await resTransacoes.json();
+        setTransacoes(dataTransacoes.length);
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      }
+    }
+
+    carregarDados();
+  }, []);
+
+  const agruparVendas = () => {
+    const agrupado = {};
+    const hoje = new Date();
+  
+    vendas.forEach((venda) => {
+      const dataObj = new Date(venda.data);
+      const diaFormatado = dataObj.toLocaleDateString("pt-BR");
+      let key = "";
+  
+      if (activePeriod === "hoje") {
+        if (diaFormatado === hoje.toLocaleDateString("pt-BR")) key = diaFormatado;
+        else return;
+      } else if (activePeriod === "semana") {
+        const inicioSemana = new Date(hoje);
+        inicioSemana.setHours(0, 0, 0, 0);
+        inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
+  
+        const fimSemana = new Date(inicioSemana);
+        fimSemana.setDate(inicioSemana.getDate() + 6);
+  
+        if (dataObj >= inicioSemana && dataObj <= fimSemana) key = "Semana Atual";
+        else return;
+      } else if (activePeriod === "mes") {
+        const mesVenda = dataObj.getMonth();
+        const anoVenda = dataObj.getFullYear();
+  
+        if (mesVenda === hoje.getMonth() && anoVenda === hoje.getFullYear())
+          key = `${mesVenda + 1}/${anoVenda}`;
+        else return;
+      }
+  
+      if (!agrupado[key]) {
+        agrupado[key] = { dia: key, vendas: 0, clientesSet: new Set() };
+      }
+  
+      agrupado[key].vendas += Number(venda.total);
+      agrupado[key].clientesSet.add(venda.cliente_id); // adiciona cliente único
+    });
+  
+    return Object.values(agrupado).map((item) => ({
+      dia: item.dia,
+      vendas: item.vendas,
+      clientes: item.clientesSet.size,
+    }));
+  };
+  
+  const vendasArray = agruparVendas();
+  const periods = ["hoje", "semana", "mes"];
+
+  const kpis = [
+    {
+      label: "Vendas",
+      value: `R$ ${vendas.reduce((acc, v) => acc + Number(v.total), 0).toFixed(2)}`,
+      icon: <CircleDollarSign size={28} className="text-green-800" />
+    },
+    {
+      label: "Clientes Atendidos",
+      value: new Set(vendas.map((v) => v.cliente_id)).size,
+      icon: <Users size={28} className="text-green-800" />,
+    },
+    {
+      label: "Transações",
+      value: transacoes,
+      icon: <ShoppingCart size={28} className="text-green-800" />,
+    },
+  ];
+
+  return (
+    <Layout>
+      <div className="min-h-screen p-6 bg-gray-50">
+
+        {/* Selector de período */}
+        <div className="flex gap-6 border-b border-gray-300 mb-6">
+          {periods.map((p) => (
+            <button
+              key={p}
+              onClick={() => setActivePeriod(p)}
+              className={`pb-2 font-medium ${
+                activePeriod === p
+                  ? "text-pink-600 border-b-2 border-pink-600"
+                  : "text-gray-500 hover:text-pink-600"
+              }`}
+            >
+              {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          {kpis.map((kpi) => (
+            <KPICard key={kpi.label} {...kpi} />
+          ))}
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartArea
+            data={vendasArray}
+            dataKey="vendas"
+            title="Vendas"
+          />
+          <ChartArea
+            data={vendasArray}
+            dataKey="clientes"
+            title="Clientes Atendidos"
+          />
+        </div>
+      </div>
+    </Layout>
   );
 }
