@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
+import cron from 'node-cron'
 
 import authRotas from './routes/authRotas.js';
 import usuarioRotas from './routes/usuarioRotas.js';
@@ -79,8 +80,8 @@ app.use ('/produtos', produtosRotas);
 // app.use('/api', salariosRotas);
 
 app.use('/api', salariosRotas);
-app.use('/api', transacoesRotas);
-app.use('/api', salariosMatrizRotas);
+// app.use('/api', transacoesRotas);
+// app.use('/api', salariosMatrizRotas);
 
 app.use('/departamento', departamentosRotas);
 app.use('/unidade', franquiaRotas);
