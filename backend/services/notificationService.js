@@ -11,11 +11,11 @@ export const NotificationService = {
 
     const created = await create("notificacao_tipos", {
       nome,
-      descricao,
-      icone,
-      cor,
-      acao_texto_padrao,
-      extra_info_padrao,
+      descricao: descricao || nome,
+      icone: icone || 'default-icon',
+      cor: cor || 'pink',
+      acao_texto_padrao: acao_texto_padrao || null,
+      extra_info_padrao: extra_info_padrao || null, 
     });
 
     return created;

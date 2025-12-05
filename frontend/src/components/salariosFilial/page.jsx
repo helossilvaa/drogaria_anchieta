@@ -181,7 +181,12 @@ export default function Salarios() {
         body: JSON.stringify(salarioParaAPI),
       });
 
-      if (!res.ok) throw new Error("Erro ao salvar salário");
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Erro ao salvar salário");
+        return;
+      }
+
 
       alert(`Salário ${editarSalarioId ? "editado" : "cadastrado"} com sucesso!`);
       setAbrirModal(false);
@@ -206,7 +211,7 @@ export default function Salarios() {
     setNovoSalario({
       id_funcionario: s.id_funcionario || s.id_funcionario_original || "",
       registro: s.registro || "",
-      nome: s.funcionario || "", 
+      nome: s.funcionario || "",
       departamento_id: s.departamento_id ?? "",
       valor: getValorParaInput(s.valor ?? ""),
       status_pagamento: s.status_pagamento ?? "pendente",
@@ -239,16 +244,16 @@ export default function Salarios() {
     }
   };
 
- const salariosFiltrados = salarios.filter((s) => {
-  if (!pesquisa) return true;
+  const salariosFiltrados = salarios.filter((s) => {
+    if (!pesquisa) return true;
 
-  const termo = pesquisa.toLowerCase();
+    const termo = pesquisa.toLowerCase();
 
-  return (
-    (s.funcionario && s.funcionario.toLowerCase().includes(termo)) ||
-    (s.registro && String(s.registro).includes(termo))
-  );
-});
+    return (
+      (s.funcionario && s.funcionario.toLowerCase().includes(termo)) ||
+      (s.registro && String(s.registro).includes(termo))
+    );
+  });
 
 
   const indexUltimo = paginaAtual * itensPorPagina;
@@ -331,7 +336,7 @@ export default function Salarios() {
                     nome: funcionarioSelecionado?.nome || "",
                     departamento_id: funcionarioSelecionado?.departamento_id || "",
                   }));
-                  
+
                 }}
                 disabled={!!editarSalarioId}   // 🔥 CONGELA NO EDITAR
                 className="border rounded-md p-2 w-full"
@@ -452,7 +457,7 @@ export default function Salarios() {
 
       {/* TABELA */}
       <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse min-w-[1000px]">
+        <table className="w-full border-collapse table-auto">
           <thead>
             <tr className="bg-[#245757] text-left text-white rounded-t-lg">
               <th className="p-2">Registro</th>
@@ -467,7 +472,11 @@ export default function Salarios() {
 
           <tbody>
             {salariosPagina.map((u) => (
-              <tr key={u.id} className="border-t hover:bg-gray-50">
+              <tr
+                key={u.id}
+                className="border-t hover:bg-gray-50 cursor-pointer"
+                onClick={() => window.location.href = `/salariosFilial/funcionario/${u.id_funcionario}`}
+              >
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
                 <td className="p-2">{getNomeDepartamento(u.departamento)}</td>

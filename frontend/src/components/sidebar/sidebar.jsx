@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   UserStar,
+  Truck
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,6 +44,7 @@ export default function Sidebar() {
         { label: "Produtos", icon: <PackageSearch />, href: "/matriz/produtos" },
         { label: "Filiados", icon: <UserStar />, href: "/matriz/filiados" },
         { label: "Parcerias e Descontos", icon: <Handshake />, href: "/matriz/parceriasdescontos" },
+        { label: "Fornecedores", icon: <Truck />, href: "/matriz/fornecedores" },
       ]);
     } else if (departamento === "diretor administrativo") {
       setMenuItems([
