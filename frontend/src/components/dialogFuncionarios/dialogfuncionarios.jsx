@@ -283,7 +283,7 @@ export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) 
           <DialogClose asChild>
             <Button variant="outline" size="sm">Cancelar</Button>
           </DialogClose>
-          <Button size="sm" onClick={handleSubmit}>Salvar alterações</Button>
+          <Button size="sm" onClick={handleSubmit} variant="verde" >Salvar alterações</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

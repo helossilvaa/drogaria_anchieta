@@ -54,15 +54,41 @@ const atualizarFuncionario = async (id, dados) => {
   }
 };
 
-// deletar funcionário
+// deletar funcionário (ou inativar se tiver vínculo)
 const deletarFuncionario = async (id) => {
   try {
-    return await deleteRecord('funcionarios', `id = ${id}`);
+    // verifica se existe usuário vinculado
+    const usuario = await readJoin(
+      `SELECT id FROM usuarios WHERE funcionario_id = ?`,
+      [id]
+    );
+
+    // verifica se existe salário vinculado
+    const salario = await readJoin(
+      `SELECT id FROM salarios WHERE id_funcionario = ?`,
+      [id]
+    );
+
+    if (usuario.length === 0 && salario.length === 0) {
+      // não existe vínculo, pode deletar
+      await deleteRecord('funcionarios', `id = ${id}`);
+      return { deletado: true, mensagem: "Funcionário excluído com sucesso" };
+    } else {
+      // existe vínculo, apenas inativa
+      await update('funcionarios', { status: 'inativo' }, `id = ${id}`);
+
+      if (usuario.length > 0) {
+        await update('usuarios', { status: 'inativo' }, `funcionario_id = ${id}`);
+      }
+
+      return { deletado: false, mensagem: "Funcionário possui vínculos e foi inativado" };
+    }
   } catch (error) {
-    console.error('Erro ao deletar funcionário:', error);
+    console.error('Erro ao deletar ou inativar funcionário:', error);
     throw error;
   }
 };
+
 
 // mudar status
 const mudarStatusFuncionario = async (id, novoStatus) => {
