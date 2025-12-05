@@ -35,6 +35,9 @@ import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
+import SalariosPorFilialRotas from './routes/salariosPorFilialRotas.js';
+import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
+import FuncionariosPorFilialRotas from './routes/funcionariosPorFilialRotas.js';
 import './services/transacaoVendas.js';
 
 
@@ -92,8 +95,10 @@ app.use ('/estoqueFilial', estoqueFranquiaRotas);
 app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
-
 app.use("/notificacoes", notificacoesRotas);
+app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
+app.use('/vendasPorFilial', vendasPorFilialRotas);
+app.use('/salariosPorFilial', SalariosPorFilialRotas);
 
 
 app.get('/health', (req, res) => {
