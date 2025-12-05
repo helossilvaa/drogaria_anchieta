@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -19,53 +18,57 @@ import { CalendarioConfig } from "../calendarioConfig/calendario";
 import { ImagePlus } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
-export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuario }) {
+export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) {
   const [previewImage, setPreviewImage] = useState(null);
   const [fotoArquivo, setFotoArquivo] = useState(null);
   const API_URL = "http://localhost:8080";
 
   const [formValues, setFormValues] = useState({
+    registro: "",
     nome: "",
     cpf: "",
     data_nascimento: "",
     email: "",
     telefone: "",
-    rua: "",
+    logradouro: "",
     numero: "",
     cidade: "",
     estado: "",
+    cep: "",
+    genero: "",
+    departamento_id: "",
+    status: "ativo",
   });
 
   useEffect(() => {
-    if (!open || !usuario) return;
-
-    const funcionario = usuario.funcionario;
+    if (!open || !funcionario) return;
 
     setFormValues({
-      nome: funcionario?.nome || "",
-      cpf: funcionario?.cpf || "",
-      data_nascimento: funcionario?.data_nascimento?.split("T")[0] || "",
-      email: funcionario?.email || "",
-      telefone: funcionario?.telefone || "",
-      rua: funcionario?.logradouro || "",
-      numero: funcionario?.numero || "",
-      cidade: funcionario?.cidade || "",
-      estado: funcionario?.estado || "",
+      registro: funcionario.registro || "",
+      nome: funcionario.nome || "",
+      cpf: funcionario.cpf || "",
+      data_nascimento: funcionario.data_nascimento?.split("T")[0] || "",
+      email: funcionario.email || "",
+      telefone: funcionario.telefone || "",
+      logradouro: funcionario.logradouro || "",
+      numero: funcionario.numero || "",
+      cidade: funcionario.cidade || "",
+      estado: funcionario.estado || "",
+      cep: funcionario.cep || "",
+      genero: funcionario.genero || "",
+      departamento_id: funcionario.departamento_id || "",
+      status: funcionario.status || "ativo",
     });
 
-    
-    setPreviewImage(usuario.foto ? `${API_URL}${usuario.foto}` : null);
-
-  }, [open, usuario]);
+    setPreviewImage(funcionario.foto ? `${API_URL}${funcionario.foto}` : null);
+  }, [open, funcionario]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setFotoArquivo(file);
-
-   
     setPreviewImage(URL.createObjectURL(file));
   };
 
@@ -73,16 +76,13 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
     setFormValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // PATCH geral dos dados do funcionário (exceto status)
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
-    if (!token || !usuario) return;
-
-    const funcionarioId = usuario.funcionario?.id;
-    const usuarioId = usuario.id;
+    if (!token || !funcionario) return;
 
     try {
-   
-      await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
+      await fetch(`${API_URL}/funcionarios/${funcionario.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -90,45 +90,35 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
         },
         body: JSON.stringify({
           nome: formValues.nome,
-          cpf: formValues.cpf,
           data_nascimento: formValues.data_nascimento,
           email: formValues.email,
           telefone: formValues.telefone,
-          logradouro: formValues.rua,
+          logradouro: formValues.logradouro,
           numero: formValues.numero,
           cidade: formValues.cidade,
           estado: formValues.estado,
+          cep: formValues.cep,
+          genero: formValues.genero,
+          departamento_id: formValues.departamento_id,
         }),
       });
 
-      let fotoAtualizadaUrl = null;
-
-      
       if (fotoArquivo) {
         const formData = new FormData();
         formData.append("foto", fotoArquivo);
 
-        const response = await fetch(`${API_URL}/usuarios/${usuarioId}`, {
+        const response = await fetch(`${API_URL}/funcionarios/${funcionario.id}`, {
           method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
 
         const data = await response.json();
-
-        
-        if (data?.foto) {
-          fotoAtualizadaUrl = `${API_URL}${data.foto}`;
-        }
+        if (data?.foto) setPreviewImage(`${API_URL}${data.foto}`);
       }
 
-      toast.success("Dados atualizados com sucesso!");
-
-    
-      if (onFotoAtualizada && fotoAtualizadaUrl) {
-        onFotoAtualizada(fotoAtualizadaUrl, true);
-      }
-
+      toast.success("Dados do funcionário atualizados!");
+      onSaved?.();
       onOpenChange(false);
 
     } catch (err) {
@@ -137,23 +127,46 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
     }
   };
 
+  // PUT apenas para alterar o status
+  const handleStatusChange = async (novoStatus) => {
+    const token = localStorage.getItem("token");
+    if (!token || !funcionario) return;
+
+    try {
+      const res = await fetch(`${API_URL}/funcionarios/${funcionario.id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: novoStatus }),
+      });
+
+      if (!res.ok) throw new Error("Erro ao alterar status");
+
+      toast.success("Status atualizado!");
+      setFormValues(prev => ({ ...prev, status: novoStatus }));
+      onSaved?.();
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao atualizar status");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ToastContainer position="top-right" autoClose={2000} />
-      <DialogTrigger asChild>
-                
-            </DialogTrigger>
       <DialogContent className="!max-w-[900px] p-6">
         <DialogHeader>
           <DialogTitle>Editar funcionário</DialogTitle>
-          <DialogDescription>Altere os dados do funcionário</DialogDescription>
+          <DialogDescription>Altere os dados do funcionário (CPF e registro não podem ser alterados)</DialogDescription>
         </DialogHeader>
 
-     
+        {/* FOTO E NOME */}
         <div className="grid grid-cols-[80px_1fr] gap-3 items-center mb-4">
           <div className="flex flex-col items-center">
             <Label htmlFor="file-upload">Foto</Label>
-
             <input
               id="file-upload"
               type="file"
@@ -161,7 +174,6 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
               className="hidden"
               onChange={handleFileChange}
             />
-
             <label
               htmlFor="file-upload"
               className="flex items-center justify-center w-16 h-16 rounded-full border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition overflow-hidden"
@@ -173,18 +185,21 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
               )}
             </label>
           </div>
-
           <div className="grid gap-2">
             <Label>Nome</Label>
             <Input name="nome" value={formValues.nome} onChange={handleChange} size="sm" />
           </div>
         </div>
 
-        
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* REGISTRO, CPF, DATA */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="grid gap-2">
-            <Label>CPF</Label>
-            <Input name="cpf" value={formValues.cpf} onChange={handleChange} size="sm" />
+            <Label>Registro (não pode alterar)</Label>
+            <Input name="registro" value={formValues.registro} size="sm" disabled />
+          </div>
+          <div className="grid gap-2">
+            <Label>CPF (não pode alterar)</Label>
+            <Input name="cpf" value={formValues.cpf} size="sm" disabled />
           </div>
           <div className="grid gap-2">
             <Label>Data de Nascimento</Label>
@@ -195,6 +210,7 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
           </div>
         </div>
 
+        {/* EMAIL, TELEFONE */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <Label>Email</Label>
@@ -206,18 +222,18 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
           </div>
         </div>
 
+        {/* ENDEREÇO */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="grid grid-cols-[1fr_100px] gap-2">
             <div>
               <Label>Rua</Label>
-              <Input name="rua" value={formValues.rua} onChange={handleChange} size="sm" />
+              <Input name="logradouro" value={formValues.logradouro} onChange={handleChange} size="sm" />
             </div>
             <div>
               <Label>Nº</Label>
               <Input name="numero" value={formValues.numero} onChange={handleChange} size="sm" />
             </div>
           </div>
-
           <div className="grid grid-cols-[1fr_200px] gap-2">
             <div>
               <Label>Cidade</Label>
@@ -230,6 +246,36 @@ export function DialogFuncionario({ open, onOpenChange, onFotoAtualizada, usuari
                 onChange={(v) => setFormValues(prev => ({ ...prev, estado: v }))}
               />
             </div>
+          </div>
+        </div>
+
+        {/* CEP, GÊNERO, STATUS */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div>
+            <Label>CEP</Label>
+            <Input name="cep" value={formValues.cep} onChange={handleChange} size="sm" />
+          </div>
+          <div>
+            <Label>Gênero</Label>
+            <Input name="genero" value={formValues.genero} onChange={handleChange} size="sm" />
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Select
+              value={formValues.status}
+              onValueChange={(v) => handleStatusChange(v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
+                <SelectItem value="de férias">Férias</SelectItem>
+                <SelectItem value="de licença">Licença</SelectItem>
+                <SelectItem value="de atestado">Atestado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

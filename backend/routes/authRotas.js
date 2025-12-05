@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
-import { loginController, cadastroUsuarioController } from '../controllers/authController.js';
+import { loginController, cadastroUsuarioController, alterarSenhaController } from '../controllers/authController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +29,7 @@ router.post('/cadastro', upload.single('foto'), cadastroUsuarioController);
 // Rota de login
 router.post('/login', loginController);
 
+router.patch('/usuarios/:id', alterarSenhaController);
 // Rota de logout
 
 router.post('/logout', (req, res) => {

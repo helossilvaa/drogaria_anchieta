@@ -52,33 +52,47 @@ const obterFuncionarioIdController = async (req, res) => {
 // criar funcionário
 const criarFuncionarioController = async (req, res) => {
   try {
+
+    let dados = {};
+
+    
+    if (req.body.data) {
+      dados = JSON.parse(req.body.data);
+    }
+
     let fotoUrl = null;
 
     if (req.file) {
-      fotoUrl = `/uploads/${req.file.filename}`;
+      fotoUrl = `/uploads/funcionarios/${req.file.filename}`;
     }
 
+    const registro = Math.floor(10000000 + Math.random() * 90000000);
+
     const novoFuncionarioData = {
-      registro: req.body.registro,
-      cpf: req.body.cpf,
-      telefone: req.body.telefone,
-      data_nascimento: req.body.data_nascimento,
-      genero: req.body.genero,
-      nome: req.body.nome,
-      email: req.body.email,
-      departamento_id: req.body.departamento_id,
-      logradouro: req.body.logradouro,
-      cidade: req.body.cidade,
-      estado: req.body.estado,
-      cep: req.body.cep,
-      numero: req.body.numero,
-      unidade_id: req.body.unidade_id ?? null,
+      registro,
+      cpf: dados.cpf,
+      telefone: dados.telefone,
+      data_nascimento: dados.data_nascimento,
+      genero: dados.genero,
+      nome: dados.nome,
+      email: dados.email,
+      departamento_id: dados.departamento_id,
+      logradouro: dados.logradouro,
+      cidade: dados.cidade,
+      estado: dados.estado,
+      cep: dados.cep,
+      numero: dados.numero,
+      unidade_id: dados.unidade_id ?? null,
       foto: fotoUrl
     };
 
     const novo = await criarFuncionario(novoFuncionarioData);
 
-    res.status(201).json({ mensagem: "Funcionário criado com sucesso", novo });
+    res.status(201).json({
+      mensagem: "Funcionário criado com sucesso",
+      registro,
+      novo
+    });
 
   } catch (error) {
     console.error("Erro ao criar funcionário:", error);
@@ -147,15 +161,13 @@ const mudarStatusFuncionarioController = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const usuarioFuncao = req.usuarioFuncao;
+    const usuarioDepartamento = req.user.departamento;
 
-    if (usuarioFuncao !== 'Diretor Administrativo' && usuarioFuncao !== 'Diretor Geral') {
+    // Só departamentos específicos podem mudar status
+    if (usuarioDepartamento !== 'diretor administrativo' && usuarioDepartamento !== 'diretor geral') {
       return res.status(403).json({ mensagem: 'Acesso negado.' });
     }
 
-    if (status !== 'ativo' && status !== 'inativo') {
-      return res.status(400).json({ mensagem: 'Status inválido.' });
-    }
 
     await mudarStatusFuncionario(id, status);
 
@@ -168,11 +180,38 @@ const mudarStatusFuncionarioController = async (req, res) => {
 };
 
 
+const obterFuncionariosUnidadeController = async (req, res) => {
+  try {
+   const usuario = req.user; 
+
+    
+    if (!usuario || !usuario.unidade_id) { 
+      return res.status(400).json({ mensagem: "Usuário ou ID da unidade não encontrado" });
+    }
+
+    const unidadeId = usuario.unidade_id;
+
+    
+    const funcionarios = await listarFuncionarios();
+
+  
+    const funcionariosDaUnidade = funcionarios.filter(f => f.unidade_id === unidadeId);
+
+    res.status(200).json(funcionariosDaUnidade);
+
+  } catch (error) {
+    console.error("Erro ao listar funcionários da unidade:", error);
+    res.status(500).json({ mensagem: "Erro ao listar funcionários da unidade", error });
+  }
+};
+
+
 export {
   listarFuncionariosController,
   obterFuncionarioIdController,
   criarFuncionarioController,
   atualizarFuncionarioController,
   deletarFuncionarioController,
-  mudarStatusFuncionarioController
+  mudarStatusFuncionarioController,
+  obterFuncionariosUnidadeController
 };

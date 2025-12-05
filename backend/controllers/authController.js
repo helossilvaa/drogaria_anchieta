@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { read, compare } from '../config/database.js';
 import { JWT_SECRET } from '../config/jwt.js';
-import { criarUsuario } from '../models/usuario.js';
+import { criarUsuario, updateUsuarioSenha} from '../models/usuario.js';
 import generateHashedPassword from '../utils/hashPassword.js';
 import { fileURLToPath } from 'url';
 
@@ -10,82 +10,76 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const cadastroUsuarioController = async (req, res) => {
   try {
-    const {
-      cpf,
-      registro,
-      telefone,
-      data_nascimento,
-      genero,
-      nome,
-      senha,
-      email,
-      departamento,
-      endereco,
-      cidade,
-      estado,
-      cep,
-      numero
-    } = req.body;
+    const { funcionario_id, senha, departamento_id } = req.body;
 
+    if (!funcionario_id || !senha || !departamento_id) {
+      return res.status(400).json({ mensagem: "Campos obrigatórios ausentes" });
+    }
+
+    // Gera hash da senha
     const senhaHash = await generateHashedPassword(senha);
 
-    let fotoPath = null;
-    if (req.file) {
-      fotoPath = `/img/usuarios/${req.file.filename}`;
-
-    };
-
     const usuarioData = {
-      cpf: cpf,
-      registro: registro,
-      telefone: telefone,
-      data_nascimento: data_nascimento,
-      genero: genero,
-      nome: nome,
+      funcionario_id,
       senha: senhaHash,
-      email: email,
-      departamento: departamento,
-      endereco: endereco,
-      cidade: cidade,
-      estado: estado,
-      cep: cep,
-      numero: numero,
-      foto: fotoPath
+      departamento_id,
+      status: "ativo",
     };
 
     const usuarioId = await criarUsuario(usuarioData);
-    res.status(201).json({ mensagem: 'Usuário cadastrado com sucesso', id: usuarioId });
 
-
-
+    res.status(201).json({ mensagem: "Usuário criado com sucesso", id: usuarioId });
   } catch (error) {
-    console.error('Erro ao cadastrar usuário: ', error);
-    res.status(500).json({ mensagem: 'Erro ao cadastrar novo usuário' })
+    console.error("Erro ao criar usuário:", error);
+    res.status(500).json({ mensagem: "Erro ao criar usuário" });
   }
+};
 
+const alterarSenhaController = async (req, res) => {
+  try {
+    const { senha } = req.body;
+    const usuarioId = req.params.id;
+
+    if (!senha) {
+      return res.status(400).json({ mensagem: "Campo 'senha' obrigatório" });
+    }
+
+    const senhaHash = await generateHashedPassword(senha);
+
+    await updateUsuarioSenha(usuarioId, senhaHash);
+
+    res.status(200).json({ mensagem: "Senha alterada com sucesso" });
+  } catch (err) {
+    console.error("Erro ao alterar senha:", err);
+    res.status(500).json({ mensagem: "Erro ao alterar senha" });
+  }
 };
 
 
-const loginController = async (req, res) => {
 
+const loginController = async (req, res) => {
   const { email, senha } = req.body;
 
   try {
-
     const resultado = await read(
-      'usuarios u JOIN funcionarios f ON f.id = u.funcionario_id LEFT JOIN departamento d ON u.departamento_id = d.id', `f.email = '${email}'`,'u.*, f.nome, f.email, d.departamento'
+      'usuarios u JOIN funcionarios f ON f.id = u.funcionario_id LEFT JOIN departamento d ON u.departamento_id = d.id',
+      `f.email = '${email}'`,
+      'u.*, f.nome, f.email, f.status AS status_funcionario, d.departamento'
     );
-    
-    // garante que sempre pegue o primeiro usuário retornado
+
     const usuario = Array.isArray(resultado) ? resultado[0] : resultado;
-    
+
     if (!usuario) {
       return res.status(404).json({ mensagem: 'Usuário não encontrado' });
     }
-    
+
+    // Verifica se o funcionário está inativo
+    if (usuario.status_funcionario === 'inativo') {
+      return res.status(403).json({ mensagem: 'Funcionário inativo. Acesso negado.' });
+    }
+
     // compara senha
     const senhaCorreta = await compare(senha, usuario.senha);
     if (!senhaCorreta) {
@@ -94,12 +88,13 @@ const loginController = async (req, res) => {
 
     // gera token
     const token = jwt.sign(
-      { id: usuario.id, departamento: usuario.departamento, nome: usuario.nome, status: usuario.status },
+      { id: usuario.id, departamento: usuario.departamento, nome: usuario.nome, status: usuario.status_funcionario },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     res.json({ mensagem: 'Login realizado com sucesso', token, usuario });
+
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ mensagem: 'Erro ao fazer login' });
@@ -107,4 +102,4 @@ const loginController = async (req, res) => {
 };
 
 
-export { loginController, cadastroUsuarioController };
+export { loginController, cadastroUsuarioController, alterarSenhaController };

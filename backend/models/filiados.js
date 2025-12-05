@@ -16,7 +16,6 @@ export const Filiado = {
 
   },
 
-
   update: async (id, data) => {
     return await update("filiados", data, `id = ${id}`);
   },

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/jwt.js'; 
-import { read } from '../config/database.js'; 
+import { JWT_SECRET } from '../config/jwt.js';
+import { read } from '../config/database.js';
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -26,14 +26,20 @@ const authMiddleware = async (req, res, next) => {
     let funcionario = await read('funcionarios', `id = ${usuario.funcionario_id}`);
     funcionario = Array.isArray(funcionario) ? funcionario[0] : funcionario;
 
-    
+    // busca o nome do departamento
+    let departamento = await read('departamento', `id = ${usuario.departamento_id}`);
+    departamento = Array.isArray(departamento) ? departamento[0] : departamento;
+
+
+
     req.user = {
       id: usuario.id,
       funcionario_id: usuario.funcionario_id,
       departamento_id: usuario.departamento_id,
+      departamento: departamento?.departamento ?? null,
       status: usuario.status,
       nome: funcionario?.nome ?? null,
-      unidade_id: funcionario?.unidade_id ?? null 
+      unidade_id: funcionario?.unidade_id ?? null
 
     };
 

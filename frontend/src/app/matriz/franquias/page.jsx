@@ -10,10 +10,6 @@ import TableFranquias from "@/components/tableFranquias/table";
 
 export default function Franquia () {
 
-    const [franquia, setFranquia] = useState([]);
-
-    
-
     const router = useRouter();
 
 

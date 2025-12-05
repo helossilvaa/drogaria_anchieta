@@ -31,15 +31,13 @@ export function LoginForm() {
       const data = await res.json();
 
       if (res.ok && data.token) {
-        // ✔️ SALVA TOKEN
+      
         localStorage.setItem("token", data.token);
 
-        // ✔️ SALVA USUÁRIO (CORREÇÃO PRINCIPAL)
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
         toast.success("Login realizado com sucesso!");
-
-        // ✔️ Identifica o departamento para redirecionar
+        
         const departamento = data.usuario?.departamento;
 
         setTimeout(() => {

@@ -35,5 +35,6 @@ const atualizarVenda = async (id, vendaData) => {
         throw error;
     }
 };
+
  
 export { criarVenda, listarVenda, obterVendaPorID, atualizarVenda };
