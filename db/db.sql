@@ -31,7 +31,7 @@ CREATE TABLE funcionarios (
     cep VARCHAR(9) NOT NULL,
     numero INT NOT NULL,
     foto VARCHAR(500) NULL,
-    status ENUM('ativo', 'inativo') DEFAULT 'ativo',
+    status ENUM('ativo', 'inativo', 'férias', 'licença', 'atestado') DEFAULT 'ativo',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (departamento_id) REFERENCES departamento(id)
@@ -43,7 +43,7 @@ CREATE TABLE usuarios (
     departamento_id INT NOT NULL,
     foto VARCHAR(500) NULL,
     funcionario_id INT NOT NULL,
-    status ENUM('ativo', 'inativo', 'férias', 'licença', 'atestado') DEFAULT 'ativo',
+    status ENUM('ativo', 'inativo') DEFAULT 'ativo',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (departamento_id) REFERENCES departamento(id),
@@ -198,12 +198,15 @@ CREATE TABLE tiposdescontos (
 );
 
 CREATE TABLE descontos (
-	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     tipodesconto_id INT NOT NULL,
     nome VARCHAR(50) NOT NULL,
-	desconto DECIMAL(5,2) NOT NULL,
+    desconto DECIMAL(5,2) NOT NULL,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (tipodesconto_id) REFERENCES tiposdescontos (id)
 );
+ 
 
 CREATE TABLE filiados (
 	id INT NOT NULL PRIMARY KEY auto_increment,
@@ -296,8 +299,6 @@ CREATE TABLE relatorios (
     FOREIGN KEY (tipoRelatorio_id) REFERENCES tiporelatorio(id)
 );
 
-ALTER TABLE vendas
-ADD COLUMN desconto_valor DECIMAL(10,2) DEFAULT 0;
 
 CREATE TABLE vendas (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -307,6 +308,7 @@ CREATE TABLE vendas (
     tipo_pagamento_id INT NULL,
     desconto_id INT NULL,
     total DECIMAL(10,2) NOT NULL,
+    desconto_valor DECIMAL(10,2) NOT NULL,
     data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES filiados(id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
@@ -367,7 +369,7 @@ CREATE TABLE transacoes (
 CREATE TABLE notificacao_tipos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(50) NOT NULL UNIQUE, 
-    icone VARCHAR(100) NOT NULL,
+    icone VARCHAR(100),
     cor VARCHAR(20) DEFAULT 'pink',
     acao_texto_padrao VARCHAR(100),
     extra_info_padrao VARCHAR(255)
@@ -437,10 +439,10 @@ insert into marcas (marca) values
 ('Band-Aid'), ('Neosaldina'), ('Engov'), ('Dorfax'), ('Novalgina'), ('Coristina'), ('Caladryl'), ('Maalox');
 
 insert into departamento (departamento, tipoUnidade_id) VALUES
-('Caixa', 2 ), 
-('Gerente', 2 ),
-('Diretor Administrativo', 2 ),  
-('Diretor Geral', 1 );
+('caixa', 2 ), 
+('gerente', 2 ),
+('diretor administrativo', 2 ),  
+('diretor geral', 1 );
 
 INSERT INTO funcionarios (registro, cpf, telefone, data_nascimento, genero, 
 nome, email, departamento_id, logradouro, cidade, estado, cep, numero) VALUES 
@@ -453,14 +455,12 @@ nome, email, departamento_id, logradouro, cidade, estado, cep, numero) VALUES
 ('123456', '15544650870', '5511996108022', '2008-09-11', 'masculino', 'Gerson Rodrigues', 
 'gerson@gmail.com', 4, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37');
 
-
 INSERT INTO usuarios (
  senha, departamento_id, funcionario_id) VALUES 
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '1', '1'),
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '2', '2'),
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '3', '3'),
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '4', '4');
-
 
 insert into tiposdescontos (tipo) values
 ("Convênio"),
@@ -476,6 +476,9 @@ INSERT INTO filiados (nome, cpf, data_nascimento, email, telefone, cep, cidade, 
 
 INSERT INTO categorias (categoria) VALUES
 ('medicamento'), ('cosmetico'), ('higiene'), ('alimentacao'), ('conveniencia');
+
+DELETE FROM categorias
+WHERE id BETWEEN 6 AND 10;
 
 INSERT INTO fornecedores 
 (fornecedor, cnpj, logradouro, cidade, estado, cep, telefone, email, status, bairro, numero) VALUES
@@ -527,6 +530,7 @@ INSERT INTO contas (nomeConta, categoria, dataPostada, dataVencimento, valor, co
 ('Mensalidade do sistema de gestão', 'Financeiras / Bancárias', '2025-10-09', '2025-10-20', 250.00, '', 2),
 ('Juros de antecipação de recebíveis', 'Financeiras / Bancárias', '2025-10-15', '2025-10-29', 370.00, '', 3),
 ('Pagamento de boletos via banco', 'Financeiras / Bancárias', '2025-10-18', '2025-10-31', 100.00, '', 1);
+
 
 
 INSERT INTO produtos (registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento) values
@@ -1037,6 +1041,26 @@ INSERT INTO descontos (tipodesconto_id, nome, desconto) VALUES
    (2, "CUPOM40", 0.40),
    (2, "CUPOM45", 0.45),
    (2, "CUPOM5", 0.50);
+
+   INSERT INTO vendas (cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data)
+VALUES
+-- Hoje
+(1, 1, 1, 1, NULL, 150.50, NOW()),
+(2, 1, 1, 2, 1, 200.00, NOW()),
+(3, 2, 1, 1, NULL, 75.00, NOW()),
+ 
+-- Ontem
+(1, 1, 1, 1, 1, 120.00, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(2, 2, 1, 2, NULL, 180.75, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+ 
+-- Semana passada
+(3, 1, 1, 1, NULL, 90.00, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(4, 2, 1, 2, 2, 300.00, DATE_SUB(NOW(), INTERVAL 5 DAY)),
+ 
+-- Mês passado
+(1, 1, 1, 1, NULL, 250.00, DATE_SUB(NOW(), INTERVAL 30 DAY)),
+(2, 2, 1, 2, 1, 400.00, DATE_SUB(NOW(), INTERVAL 35 DAY)),
+(3, 1, 1, 1, NULL, 180.00, DATE_SUB(NOW(), INTERVAL 40 DAY));
 
 INSERT INTO parcerias (parceiro, porcentagem) VALUES
     ("MedSênior", 0.13),

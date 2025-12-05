@@ -1,58 +1,160 @@
 "use client";
 
-import { BarChart, Bar, XAxis, CartesianGrid } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { useState, useEffect } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  CartesianGrid,
+  Tooltip as BarTooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+
+import { ChartContainer } from "@/components/ui/chart";
 import { TrendingUp } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 
-export function ChartVendasHora({ data, funcionarios }) {
-  // Configurando cores para cada funcionário
-  const chartConfig = {};
-  funcionarios.forEach((f, idx) => {
-    chartConfig[f.nome] = {
-      label: f.nome,
-      color: `var(--chart-${(idx % 6) + 1})`, // cores alternadas
-    };
-  });
+const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const mesesAno = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-  // Transformando os dados para stacked bar chart
-  const chartData = data.map(entry => {
-    const obj = { hour: entry.hour };
-    funcionarios.forEach(f => {
-      obj[f.nome] = entry[f.nome] || 0;
+export function ChartVendasHora({ data = [], funcionarios = [], periodo = "7dias" }) {
+  const [periodoLocal, setPeriodoLocal] = useState(periodo);
+  const [chartData, setChartData] = useState([]);
+  const [chartConfig, setChartConfig] = useState({});
+
+  // Normaliza o dia conforme período
+  const normalizarDia = (dia) => {
+    if (!dia) return "";
+    const dt = new Date(dia);
+
+    if (periodoLocal === "6meses") {
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+    }
+    if (periodoLocal === "30dias" || periodoLocal === "7dias") {
+      return dt.toISOString().split("T")[0];
+    }
+    return dia;
+  };
+
+  const formatLabel = (dia) => {
+    if (!dia) return "";
+    if (periodoLocal === "6meses") {
+      const [year, month] = dia.split("-");
+      return mesesAno[Number(month) - 1];
+    }
+    if (periodoLocal === "7dias") {
+      const dt = new Date(dia);
+      return diasSemana[dt.getDay()];
+    }
+    if (periodoLocal === "30dias") {
+      const dt = new Date(dia);
+      return dt.getDate().toString();
+    }
+    return dia;
+  };
+
+  useEffect(() => {
+    // Configuração de cores por funcionário
+    const config = {};
+    funcionarios.forEach((f, idx) => {
+      config[f.nome] = { color: `var(--chart-${(idx % 6) + 1})` };
     });
-    return obj;
-  });
+    setChartConfig(config);
+
+    // Normaliza os dados para o gráfico
+    const final = data.map((d) => ({
+      ...d,
+      dia: normalizarDia(d.dia),
+    }));
+    setChartData(final);
+  }, [data, funcionarios, periodoLocal]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    const total = payload.reduce((sum, p) => sum + (p.value || 0), 0);
+    return (
+      <div className="bg-white p-3 rounded-md shadow-lg border border-gray-200">
+        <div className="font-semibold mb-1">{formatLabel(label)}</div>
+        <div className="mb-1 font-medium">
+          Total:{" "}
+          {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+        </div>
+        {payload.map((p) => (
+          <div key={p.dataKey} className="flex justify-between gap-2 text-sm">
+            <span style={{ color: p.fill }}>{p.dataKey}</span>
+            <span>
+              {(p.value || 0).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Vendas por hora</CardTitle>
-        <CardDescription>Total de vendas por funcionário</CardDescription>
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="flex gap-3">
+            Vendas <TrendingUp className="h-4 w-4" />
+          </CardTitle>
+          <CardDescription>Total de vendas por funcionário</CardDescription>
+        </div>
+
+        <Select value={periodoLocal} onValueChange={setPeriodoLocal}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7dias">Últimos 7 dias</SelectItem>
+            <SelectItem value="30dias">Últimos 30 dias</SelectItem>
+            <SelectItem value="6meses">Últimos 6 meses</SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
-      <CardContent className="h-64 w-full">
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="hour" tickLine={false} axisLine={false} />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            {funcionarios.map((f, idx) => (
-              <Bar
-                key={f.id}
-                dataKey={f.nome}
-                stackId="a"
-                fill={`var(--chart-${(idx % 6) + 1})`}
-                radius={[idx === 0 ? 4 : 0, idx === 0 ? 4 : 0, idx === 0 ? 4 : 0, idx === 0 ? 4 : 0]}
+
+      <CardContent className="w-full h-[300px]">
+        <ChartContainer config={chartConfig} className="w-full h-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="dia"
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={formatLabel}
               />
-            ))}
-          </BarChart>
+              <BarTooltip content={<CustomTooltip />} />
+              {funcionarios.map((f, idx) => (
+                <Bar
+                  key={f.nome}
+                  dataKey={f.nome}
+                  stackId="a"
+                  fill={`var(--chart-${(idx % 6) + 1})`}
+                  radius={[3, 3, 0, 0]}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-1 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Vendas <TrendingUp className="h-4 w-4" />
-        </div>
-      </CardFooter>
     </Card>
   );
 }

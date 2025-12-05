@@ -147,13 +147,16 @@ const atualizarFuncionarioController = async (req, res) => {
 // deletar funcionário
 const deletarFuncionarioController = async (req, res) => {
   try {
-    await deletarFuncionario(req.params.id);
-    res.status(200).json({ mensagem: "Funcionário excluído com sucesso" });
+    const resultado = await deletarFuncionario(req.params.id);
+
+    // Retorna a mensagem que veio do model
+    res.status(200).json({ mensagem: resultado.mensagem, deletado: resultado.deletado });
   } catch (error) {
-    console.error("Erro ao deletar funcionário:", error);
-    res.status(500).json({ mensagem: "Erro ao deletar funcionário", error });
+    console.error("Erro ao deletar/inativar funcionário:", error);
+    res.status(500).json({ mensagem: "Erro ao deletar/inativar funcionário", error });
   }
 };
+
 
 
 // mudar status do funcionário

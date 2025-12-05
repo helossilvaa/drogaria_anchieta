@@ -11,7 +11,7 @@ export const Conta = {
         c.valor,
         c.dataVencimento,
         c.dataPostada,
-        c.conta_pdf,
+        c.conta_pdf, 
         c.unidade_id,
         COALESCE(pc.status_pagamento, c.status) AS status_pagamento,
         pc.data_pagamento

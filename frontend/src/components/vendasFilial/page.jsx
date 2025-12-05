@@ -179,7 +179,7 @@ export default function Vendas() {
       </div>
 
       <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse min-w-[1000px]">
+        <table className="w-full border-collapse table-auto">
           <thead>
             <tr className="bg-[#245757] text-white">
               <th className="p-2">Cliente</th>

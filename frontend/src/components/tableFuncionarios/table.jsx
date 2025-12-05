@@ -6,9 +6,21 @@ import { MoreVerticalIcon, Trash2, UserPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
 import { DialogUsuario } from "@/components/dialogUsuario/dialogUsuario";
 import { DialogFuncionario } from "../dialogFuncionarios/dialogfuncionarios";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Badge colorido
@@ -18,9 +30,8 @@ const StatusBadge = ({ status }) => {
     inativo: "bg-red-100 text-red-700",
     ferias: "bg-yellow-100 text-yellow-700",
     licença: "bg-blue-100 text-blue-700",
-    atestado: "bg-orange-100 text-orange-700"
+    atestado: "bg-orange-100 text-orange-700",
   };
-
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[status] || "bg-gray-100 text-gray-700"}`}>
       {String(status || "").charAt(0).toUpperCase() + String(status || "").slice(1)}
@@ -33,14 +44,7 @@ const Avatar = ({ nome, foto }) => {
   const [imgErro, setImgErro] = useState(false);
 
   if (foto && !imgErro) {
-    return (
-      <img
-        src={`http://localhost:8080${foto}`}
-        alt={nome}
-        className="w-9 h-9 object-cover rounded-full"
-        onError={() => setImgErro(true)}
-      />
-    );
+    return <img src={`http://localhost:8080${foto}`} alt={nome} className="w-9 h-9 object-cover rounded-full" onError={() => setImgErro(true)} />;
   }
 
   const initials = nome
@@ -60,6 +64,7 @@ export default function TableFuncionarios() {
   const [openDialogUsuario, setOpenDialogUsuario] = useState(false);
   const [openDialogFuncionario, setOpenDialogFuncionario] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
   const fetchData = async () => {
     try {
@@ -67,7 +72,7 @@ export default function TableFuncionarios() {
 
       const [funcRes, depRes] = await Promise.all([
         fetch(`${API_URL}/funcionarios/unidade`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/departamento`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/departamento`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       const funcionariosRaw = await funcRes.json();
@@ -78,7 +83,7 @@ export default function TableFuncionarios() {
 
       const funcionariosComDep = funcionariosRaw.map(f => ({
         ...f,
-        departamentoNome: depMap[f.departamento_id] || "-"
+        departamentoNome: depMap[f.departamento_id] || "-",
       }));
 
       setFuncionarios(funcionariosComDep);
@@ -91,6 +96,25 @@ export default function TableFuncionarios() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${API_URL}/funcionarios/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+  
+      if (!res.ok) throw new Error(data.mensagem || "Erro ao excluir usuário");
+  
+      toast.success(data.mensagem);
+      fetchData();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Erro ao excluir usuário");
+    } finally {
+      setDeleteDialog({ open: false, id: null });
+    }
+  };
+  
 
   const columns = [
     {
@@ -105,25 +129,19 @@ export default function TableFuncionarios() {
             <span className="text-xs text-gray-500">{item.email}</span>
           </div>
         </div>
-      )
+      ),
     },
     {
       name: "Departamento",
       uid: "departamento",
       sortable: true,
-      render: item => <span className="text-sm capitalize">{item.departamentoNome || "-"}</span>
+      render: item => <span className="text-sm capitalize">{item.departamentoNome || "-"}</span>,
     },
     {
       name: "Telefone",
       uid: "telefone",
       sortable: true,
-      render: item => <span className="text-sm">{item.telefone || "-"}</span>
-    },
-    {
-      name: "Gênero",
-      uid: "genero",
-      sortable: true,
-      render: item => <span className="text-sm capitalize">{item.genero || "-"}</span>
+      render: item => <span className="text-sm">{item.telefone || "-"}</span>,
     },
     {
       name: "Status",
@@ -146,7 +164,7 @@ export default function TableFuncionarios() {
                     <CommandItem
                       onSelect={() => {
                         setSelectedFuncionario(item);
-                        setOpenDialogUsuario(true); // abre diálogo de criar usuário
+                        setOpenDialogUsuario(true);
                       }}
                       className="cursor-pointer"
                     >
@@ -155,13 +173,16 @@ export default function TableFuncionarios() {
                     <CommandItem
                       onSelect={() => {
                         setSelectedFuncionario(item);
-                        setOpenDialogFuncionario(true); // abre diálogo de editar funcionário
+                        setOpenDialogFuncionario(true);
                       }}
                       className="cursor-pointer"
                     >
                       <UserPen className="mr-2 h-4 w-4" /> Editar
                     </CommandItem>
-                    <CommandItem className="cursor-pointer text-red-600">
+                    <CommandItem
+                      onSelect={() => setDeleteDialog({ open: true, id: item.id })}
+                      className="cursor-pointer text-red-600"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" /> Excluir
                     </CommandItem>
                   </CommandGroup>
@@ -169,36 +190,52 @@ export default function TableFuncionarios() {
               </Command>
             </PopoverContent>
           </Popover>
+
+          {/* AlertDialog de confirmação de exclusão */}
+          <AlertDialog
+            open={deleteDialog.open && deleteDialog.id === item.id}
+            onOpenChange={(open) => setDeleteDialog({ open, id: item.id })}
+          >
+            <AlertDialogTrigger asChild>
+              <div />
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirma exclusão?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Você tem certeza que deseja excluir o usuário {item.nome}? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleDelete(item.id)}>Excluir</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <>
       <TableBase columns={columns} data={funcionarios} defaultSortColumn="nome" />
-      
-      {/* Diálogo de Criar Usuário */}
       {selectedFuncionario && (
-        <DialogUsuario
-          open={openDialogUsuario}
-          onOpenChange={setOpenDialogUsuario}
-          funcionario={selectedFuncionario}
-          onCreated={fetchData}
-        />
+        <>
+          <DialogUsuario
+            open={openDialogUsuario}
+            onOpenChange={setOpenDialogUsuario}
+            funcionario={selectedFuncionario}
+            onCreated={fetchData}
+          />
+          <DialogFuncionario
+            open={openDialogFuncionario}
+            onOpenChange={setOpenDialogFuncionario}
+            funcionario={selectedFuncionario}
+            onSaved={fetchData}
+          />
+        </>
       )}
-
-      {/* Diálogo de Editar Funcionário */}
-      {selectedFuncionario && (
-        <DialogFuncionario
-          open={openDialogFuncionario}
-          onOpenChange={setOpenDialogFuncionario}
-          funcionario={selectedFuncionario}
-          onSaved={fetchData} // atualiza tabela após salvar
-        />
-      )}
-
-      <ToastContainer position="top-right" autoClose={2000} />
     </>
   );
 }
