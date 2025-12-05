@@ -54,16 +54,27 @@ export default function ParceriasDescontos() {
     };
 
     const fetchDescontos = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/descontos`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setDescontos(data);
-      } catch (error) {
-        console.error("Erro ao carregar descontos:", error);
-      }
-    };
+  try {
+    const res = await fetch(`${API_URL}/api/descontos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+
+    if (Array.isArray(data)) {
+      setDescontos(data);
+    } else if (Array.isArray(data.data)) {
+      setDescontos(data.data);
+    } else {
+      console.error("Resposta inesperada da API:", data);
+      setDescontos([]); 
+    }
+
+  } catch (error) {
+    console.error("Erro ao carregar descontos:", error);
+    setDescontos([]); 
+  }
+};
 
     fetchParcerias();
     fetchDescontos();
@@ -328,9 +339,11 @@ export default function ParceriasDescontos() {
   );
 
   // Função para filtrar os descontos pelo nome
-  const filteredDescontos = descontos.filter(desconto =>
-    desconto.nome.toLowerCase().includes(searchDesconto.toLowerCase())
-  );
+ const filteredDescontos = Array.isArray(descontos)
+  ? descontos.filter(desconto =>
+      desconto.nome?.toLowerCase().includes(searchDesconto.toLowerCase())
+    )
+  : [];
 
   // Paginação das parcerias
   const startParceria = (paginaParceria - 1) * itensPorPagina;

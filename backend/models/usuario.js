@@ -64,5 +64,4 @@ const obterStatusUsuario = async (id) => {
     }
 };
 
-
 export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario};

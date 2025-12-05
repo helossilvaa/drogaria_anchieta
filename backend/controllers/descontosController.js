@@ -1,93 +1,93 @@
-import { Descontos } from "../models/descontos.js";
+import {
+  criarDescontoDB,
+  listarDescontosDB,
+  obterDescontoPorIdDB,
+  atualizarDescontoDB,
+  deletarDescontoDB
+} from "../models/descontos.js";
+import { enviarNotificacao } from "../utils/enviarNotificacao.js";
 
-// Lista todos os descontos
+// Listar descontos
 export const listarDescontos = async (req, res) => {
   try {
-    const descontos = await Descontos.getAll();
-    return res.status(200).json(descontos);
-  } catch (err) {
-    console.error("Erro ao listar os descontos:", err);
-    return res.status(500).json({ message: "Erro ao listar os descontos." });
+    const descontos = await listarDescontosDB();
+    res.json(descontos);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 };
 
-// Criar novo desconto
+// Criar desconto
 export const criarDesconto = async (req, res) => {
   try {
-    const { tipodesconto_id, nome, desconto } = req.body;
+    const data = req.body;
+    const descontoCriado = await criarDescontoDB(data);
 
-    if (typeof nome !== "string" || nome.trim() === "") {
-      return res.status(400).json({ message: "Nome do desconto é inválido." });
-    }
+    // Notificação para todas as filiais
+    await enviarNotificacao({
+      tipo: "desconto_novo",
+      titulo: "Novo Desconto",
+      mensagem: `Um novo desconto foi criado: ${data.nome}`,
+      destino: "filial"
+    });
 
-    const descontoExistente = await Descontos.getByNome(nome);
-    if (
-      descontoExistente &&
-      descontoExistente.nome.toLowerCase() === nome.toLowerCase()
-    ) {
-      return res.status(400).json({ message: "Já existe um desconto com esse nome." });
-    }
-
-    const novoDesconto = { tipodesconto_id, nome, desconto };
-    const descontoCriado = await Descontos.create(novoDesconto);
-
-    return res.status(201).json(descontoCriado);
-  } catch (err) {
-    console.error("Erro ao criar desconto:", err);
-    return res.status(500).json({ message: "Erro ao criar desconto." });
+    res.status(201).json(descontoCriado);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 };
 
-// Atualizar desconto existente
+// Atualizar desconto
 export const atualizarDesconto = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { tipodesconto_id, nome, desconto } = req.body;
+    const id = req.params.id;
+    const data = req.body;
 
-    if (!nome || !desconto || !tipodesconto_id) {
-      return res.status(400).json({ message: "Dados inválidos." });
+    const descontoExiste = await obterDescontoPorIdDB(id);
+
+    if (!descontoExiste) {
+      return res.status(404).json({ erro: "Desconto não encontrado" });
     }
 
-    const descontos = await Descontos.getAll();
-    
-    const descontoExistente = descontos.find(d => d.id === parseInt(id));
+    await atualizarDescontoDB(id, data);
 
-    if (!descontoExistente) {
-      return res.status(404).json({ message: "Desconto não encontrado." });
-    }
+    // Notificação de atualização
+    await enviarNotificacao({
+      tipo: "desconto_atualizado",
+      titulo: "Desconto Atualizado",
+      mensagem: `O desconto "${descontoExiste.nome}" foi atualizado.`,
+      destino: "filial"
+    });
 
-    const nomeDuplicado = descontos.find(
-      d => d.nome.toLowerCase() === nome.toLowerCase() && d.id !== parseInt(id)
-    );
-
-    if (nomeDuplicado) {
-      return res.status(400).json({ message: "Já existe um desconto com esse nome." });
-    }
-
-    await Descontos.update(id, { tipodesconto_id, nome, desconto });
-
-    return res.status(200).json({ message: "Desconto atualizado com sucesso." });
-  } catch (err) {
-    console.error("Erro ao atualizar desconto:", err);
-    return res.status(500).json({ message: "Erro ao atualizar desconto." });
+    res.json({ msg: "Desconto atualizado com sucesso" });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 };
 
 // Excluir desconto
 export const excluirDesconto = async (req, res) => {
   try {
-    const { id } = req.params;
-    const descontoExistente = await Descontos.getAll();
-    const desconto = descontoExistente.find(d => d.id === parseInt(id));
+    const id = req.params.id;
 
-    if (!desconto) {
-      return res.status(404).json({ message: "Desconto não encontrado." });
+    const descontoExiste = await obterDescontoPorIdDB(id);
+
+    if (!descontoExiste) {
+      return res.status(404).json({ erro: "Desconto não encontrado" });
     }
 
-    await Descontos.delete(id);
-    return res.status(200).json({ message: "Desconto excluído com sucesso." });
-  } catch (err) {
-    console.error("Erro ao excluir desconto:", err);
-    return res.status(500).json({ message: "Erro ao excluir desconto." });
+    await deletarDescontoDB(id);
+
+    // Notificação de exclusão
+    await enviarNotificacao({
+      tipo: "desconto_excluido",
+      titulo: "Desconto Removido",
+      mensagem: `O desconto "${descontoExiste.nome}" foi excluído.`,
+      destino: "filial"
+    });
+
+    res.json({ msg: "Desconto excluído com sucesso" });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 };
