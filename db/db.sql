@@ -283,6 +283,9 @@ CREATE TABLE relatorios (
     FOREIGN KEY (tipoRelatorio_id) REFERENCES tiporelatorio(id)
 );
 
+ALTER TABLE vendas
+ADD COLUMN desconto_valor DECIMAL(10,2) DEFAULT 0;
+
 CREATE TABLE vendas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cliente_id INT NULL,

@@ -1,5 +1,5 @@
 import { create } from "../config/database.js";
-
+ 
 const criarItemVenda = async (itemData) => {
     try {
         return await create("vendas_itens", itemData);
@@ -8,5 +8,5 @@ const criarItemVenda = async (itemData) => {
         throw error;
     }
 };
-
+ 
 export { criarItemVenda };

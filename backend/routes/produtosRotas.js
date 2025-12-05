@@ -1,5 +1,5 @@
 import express from 'express';
-import { criarProdutoController, listarProdutosController, obterProdutoPorIdController, atualizarProdutoController, deletarProdutoController, obterProdutoPorCodigoBarrasController } from '../controllers/produtosController.js';
+import { criarProdutoController, listarProdutosController, obterProdutoPorIdController, atualizarProdutoController, deletarProdutoController, obterProdutoPorCodigoBarrasController, relatorioValidadeController } from '../controllers/produtosController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
  
 const router = express.Router();
@@ -9,6 +9,9 @@ router.get('/', authMiddleware, listarProdutosController);
 router.get('/codigo_barras/:codigo_barras', authMiddleware, obterProdutoPorCodigoBarrasController);
 router.put('/:id', authMiddleware, atualizarProdutoController);
 router.get('/:id', authMiddleware, obterProdutoPorIdController);
+router.delete('/:id', authMiddleware, deletarProdutoController );
+router.get("/relatorio/validade", relatorioValidadeController);
+
  
 router.options('/', (req, res) => {
     res.setHeader('Allow', 'POST, GET');

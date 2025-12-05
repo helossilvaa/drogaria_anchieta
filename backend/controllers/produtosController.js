@@ -98,6 +98,40 @@ const deletarProdutoController = async (req, res) => {
     }
 };
 
+const relatorioValidadeController = async (req, res) => {
+    try {
+        const produtos = await listarProdutos();
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const limite = new Date();
+        limite.setDate(limite.getDate() + 30); // próximos 30 dias
+
+        const vencidos = [];
+        const proximos = [];
+
+        produtos.forEach(prod => {
+            if (!prod.validade) return;
+
+            const validade = new Date(prod.validade);
+            validade.setHours(0, 0, 0, 0);
+
+            if (validade < hoje) {
+                vencidos.push(prod);
+            } else if (validade >= hoje && validade <= limite) {
+                proximos.push(prod);
+            }
+        });
+
+        res.status(200).json({ vencidos, proximos });
+
+    } catch (error) {
+        console.error("Erro ao gerar relatório de validade:", error);
+        res.status(500).json({ mensagem: "Erro ao gerar relatório" });
+    }
+};
+
 
 export {
     criarProdutoController,
@@ -105,5 +139,6 @@ export {
     obterProdutoPorIdController,
     atualizarProdutoController,
     deletarProdutoController,
-    obterProdutoPorCodigoBarrasController
+    obterProdutoPorCodigoBarrasController,
+    relatorioValidadeController
 }
