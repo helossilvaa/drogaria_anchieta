@@ -5,31 +5,35 @@ import{
     criarVenda
 } from "../models/vendas.js";
 
-import { criarItemVenda } from "../models/vendasItens.js";
-import { query } from "../config/database.js";
+// Lista todas as vendas
+const listarVendaController = async (req, res) => {
+    try {
+        const todasVendas = await listarVenda();
 
+        // 🔹 Filtra vendas da unidade do usuário logado
+        const unidadeId = req.user.unidade_id;
+        const vendasDaUnidade = todasVendas.filter(v => v.unidade_id === unidadeId);
 
+        res.status(200).json(vendasDaUnidade);
+    } catch (error) {
+        console.error('Erro ao listar vendas: ', error);
+        res.status(500).json({ mensagem: 'Erro ao listar vendas' });
+    }
+};
+
+// Cria uma venda
 const criarVendaController = async (req, res) => {
     try {
-        const {
-            cliente_id,
-            usuario_id,
-            unidade_id,
-            tipo_pagamento_id,
-            desconto_id,     // opcional
-            desconto_valor,  // ⭐ AGORA VEM DO FRONTEND
-            total,
-            data,
-            itens
-        } = req.body;
+        const { cliente_id, usuario_id, tipo_pagamento_id, total, data, itens } = req.body;
+
+        // 🔹 Usa a unidade do usuário logado
+        const unidade_id = req.user.unidade_id;
 
         const vendaData = {
             cliente_id,
             usuario_id,
             unidade_id,
             tipo_pagamento_id,
-            desconto_id,
-            desconto_valor,     // ⭐ SALVANDO NO BANCO
             total,
             data
         };
@@ -47,26 +51,16 @@ const criarVendaController = async (req, res) => {
         }
 
         res.status(201).json({
-            mensagem: "Venda criada com sucesso!",
+            mensagem: 'Venda criada com sucesso!',
             venda_id: novaVenda.insertId
         });
 
     } catch (error) {
-        console.error("Erro ao criar venda: ", error);
-        res.status(500).json({ mensagem: "Erro ao criar venda" });
+        console.error('Erro ao criar venda: ', error);
+        res.status(500).json({ mensagem: 'Erro ao criar venda' });
     }
 };
 
-
-const listarVendaController = async (req, res) => {
-    try {
-        const Venda = await listarVenda();
-        res.status(200).json(Venda);
-    }catch (error) {
-        console.error('Erro ao listar vendas: ', error);
-        res.status(500).json({mensagem: 'Erro ao listar vendas'});
-    }
-};
 
 const obterVendaPorIDController = async (req, res) => {
     try{
@@ -88,13 +82,13 @@ const obterVendaPorIDController = async (req, res) => {
 const atualizarVendaController = async (req, res) =>{
     try{
         const {id} = req.params;
-        const {cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data} = req.body;
+        const {cliente_id, usuario_id, unidade_id, tipo_pagamento_id, total, data} = req.body;
 
         const VendaExistir = await obterVendaPorID(id);
         if (!VendaExistir){
             return res.status(404).json({mensagem: 'Venda não encontrada'});
         }
-        const VendaData = {id, cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data};
+        const VendaData = {id, cliente_id, usuario_id, unidade_id, tipo_pagamento_id, total, data};
 
         await atualizarVenda (id, VendaData);
         res.status(200).json({mensagem:'Venda atualizada'});
@@ -103,29 +97,10 @@ const atualizarVendaController = async (req, res) =>{
         res.status(500).json({mensagem: 'Erro ao atualizar'});
     }
 };
-const evolucaoVendasMensalController = async (req, res) => {
-  try {
-    const sql = `
-      SELECT DATE_FORMAT(data, '%Y-%m') AS mes,
-             COALESCE(SUM(total), 0) AS total_vendas
-      FROM vendas
-      GROUP BY mes
-      ORDER BY mes ASC
-    `;
-
-    const dados = await query(sql);
-    res.status(200).json(dados);
-  } catch (error) {
-    console.error("Erro ao gerar evolução mensal de vendas:", error);
-    res.status(500).json({ mensagem: "Erro ao gerar evolução mensal de vendas" });
-  }
-};
-
 
 export{
     criarVendaController,
     listarVendaController,
     obterVendaPorIDController,
-    atualizarVendaController,
-    evolucaoVendasMensalController
+    atualizarVendaController
 };

@@ -73,9 +73,20 @@ const updateUsuarioSenha = async (id, novaSenhaHash) => {
     );
   } catch (err) {
     console.error("Erro ao atualizar senha do usuário:", err);
+
+    
+const getByDepartamentoWithUnidade = async (departamento_id) => {
+  try {
+    const tabela = `usuarios u JOIN funcionarios f ON u.funcionario_id = f.id`;
+    const where = `u.departamento_id = ${departamento_id} AND u.status = 'ativo'`;
+    const result = await readAll(tabela, where);
+    return Array.isArray(result) ? result : [];
+  } catch (err) {
+    console.error("Erro getByDepartamentoWithUnidade:", err);
     throw err;
   }
 };
 
 
-export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario, updateUsuarioSenha};
+export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario, };
+export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario,updateUsuarioSenha, getByDepartamentoWithUnidade};

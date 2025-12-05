@@ -1,14 +1,14 @@
 import { create, read, readAll, update } from "../config/database.js";
- 
+
 const criarVenda = async (vendaData) => {
     try {
-        return await create("vendas", vendaData);
+        return await create("vendas", vendaData); 
     } catch (error) {
         console.error("Erro ao criar venda:", error);
         throw error;
     }
 };
- 
+
 const listarVenda = async () => {
     try {
         return await readAll("vendas");
@@ -17,7 +17,7 @@ const listarVenda = async () => {
         throw error;
     }
 };
- 
+
 const obterVendaPorID = async (id) => {
     try {
         return await read("vendas", `id = ${id}`);
@@ -26,7 +26,7 @@ const obterVendaPorID = async (id) => {
         throw error;
     }
 };
- 
+
 const atualizarVenda = async (id, vendaData) => {
     try {
         return await update("vendas", vendaData, `id = ${id}`);
@@ -36,5 +36,4 @@ const atualizarVenda = async (id, vendaData) => {
     }
 };
 
- 
 export { criarVenda, listarVenda, obterVendaPorID, atualizarVenda };

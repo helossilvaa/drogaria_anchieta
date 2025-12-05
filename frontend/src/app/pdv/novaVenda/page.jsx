@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Minus, Plus, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 export default function NovaVendaPage() {
   const [produtos, setProdutos] = useState([]);
   const [codigoBarras, setCodigoBarras] = useState("");
@@ -36,20 +38,19 @@ export default function NovaVendaPage() {
   const [cliente, setCliente] = useState(null);
   const [erroCliente, setErroCliente] = useState("");
   const [loadingCliente, setLoadingCliente] = useState(false);
-  const [itensCarrinho, setItensCarrinho] = useState ([])
+  const [itensCarrinho, setItensCarrinho] = useState([])
   const [carrinho, setCarrinho] = useState([]); // <-- isso estava faltando
+  const [desconto_id, setDescontoId] = useState("");
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) {
       setCarrinho(JSON.parse(carrinhoSalvo));
     }
   }, []);
-  
-
 
   const removerProduto = (id) => {
     setListaVenda(prev => prev.filter(p => p.id !== id));
-    mostrarAlerta("Produto removido da venda!", "sucesso");
+    toast.success("Produto removido da venda!");
   };
 
   const itensPorPagina = 5;
@@ -61,48 +62,89 @@ export default function NovaVendaPage() {
   const API_PRODUTOS = "http://localhost:8080/produtos";
   const API_URL = "http://localhost:8080/api/filiados";
 
+  const resetCampos = () => {
+    // Cliente
+    setClienteId("");
+    setCliente(null);
+    setCpfCliente("");
+    setErroCliente("");
 
+    // Produtos / carrinho
+    setFiliados([]);
+    setItensCarrinho([]);
+    setCarrinho([]);
+    setListaVenda([]);
+    setProdutos(""); // se estiver usando para o input de produto
+    setNomeProduto("");
+    setCodigoBarras("");
+
+    // Pagamento e descontos
+    setUnidadeId("");
+    setTipoPagamentoId("");
+    setPagamentoFeito(false);
+    setFormaPagamento("");
+    setDesconto(0);
+    setDescontoId("");
+    setCodigoDesconto("");
+
+    // Outros
+    setMensagemFeedback({ type: "", text: "" });
+    setAlerta(null);
+    setPaginaAtual(1);
+  };
+
+
+  // Função para fechar o dialog e limpar
+  const fecharDialog = () => {
+    resetCampos();      // limpa os campos
+    setMostrarNota(false); // fecha o dialog
+  };
+  const tiposPagamento = {
+    1: "PIX",
+    2: "CRÉDITO",
+    3: "DÉBITO",
+  };
 
   // Buscar cliente
   async function buscarCliente() {
     setErroCliente("");
     setCliente(null);
     setLoadingCliente(true);
-  
     try {
       const res = await fetch(`http://localhost:8080/api/filiados/cpf/${cpfCliente}`);
-  
       if (!res.ok) {
         setErroCliente("Usuário não encontrado.");
+        toast.error("Usuário não encontrado.");
         return;
       }
-  
       const data = await res.json();
-      setCliente(data);          // guarda o objeto
-      setClienteId(data.id);     // <<< AQUI resolve o problema
+      setCliente(data);
+      setClienteId(data.id);
     } catch (error) {
       setErroCliente("Erro ao buscar cliente.");
+      toast.error("Erro ao buscar cliente.");
     } finally {
       setLoadingCliente(false);
     }
   }
-  
 
-
+  // Salvar venda no banco de dados
   async function salvarVenda() {
     try {
+      setOpen(true);
+      setIsLoading(true);
+      setPagamentoFeito(false);
       const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
       const token = localStorage.getItem("token");
-
       if (!usuarioLogado?.id) {
         console.error("Usuário não encontrado no localStorage");
-        alert("Usuário não encontrado!");
+        toast.error("Usuário não encontrado!");
+        setOpen(false);
         return;
       }
-
       if (!cliente_id || !unidade_id || !tipo_pagamento_id) {
         console.error("Campos obrigatórios não preenchidos");
-        alert("Preencha cliente, unidade e forma de pagamento!");
+        toast.error("Preencha cliente, unidade, forma de pagamento e desconto!");
         return;
       }
 
@@ -111,13 +153,15 @@ export default function NovaVendaPage() {
         usuario_id: usuarioLogado.id,
         unidade_id: Number(unidade_id),
         tipo_pagamento_id: Number(tipo_pagamento_id),
-        total,
-        data,
-        itens: itensCarrinho // <--- ADICIONE ISSO
-      };
-      
 
-      console.log("Venda enviada:", venda);
+        desconto_id: desconto_id ? Number(desconto_id) : null,
+        desconto_valor: Number(desconto),   // ⭐ ENVIA O VALOR REAL DESCONTADO
+
+        total: subtotalGeral - desconto,    // ⭐ total final após desconto
+
+        data,
+        itens: itensCarrinho
+      };
 
       const resposta = await fetch("http://localhost:8080/vendas", {
         method: "POST",
@@ -127,21 +171,24 @@ export default function NovaVendaPage() {
         },
         body: JSON.stringify(venda),
       });
-
       if (!resposta.ok) {
         throw new Error("Erro ao salvar venda: " + resposta.status);
       }
-
       const resultado = await resposta.json();
       console.log("Venda criada no backend:", resultado);
 
-      alert("Venda registrada com sucesso!");
-
+      // Simula processamento de pagamento
+      setTimeout(() => {
+        setIsLoading(false);
+        setPagamentoFeito(true);
+      }, 2000);
     } catch (error) {
       console.error("Erro ao registrar venda:", error);
-      alert("Erro ao registrar venda. Veja o console.");
+      toast.error("Erro ao registrar venda. Veja o console.");
+      setOpen(false);
     }
   }
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -166,7 +213,8 @@ export default function NovaVendaPage() {
     }
     setUserToken(token);
     setIsLoading(true);
-
+    
+    // Produtos
     try {
       const res = await fetch(`${API_PRODUTOS}`, {
         method: "GET",
@@ -179,6 +227,7 @@ export default function NovaVendaPage() {
         throw new Error("Erro ao carregar a lista de produtos");
       }
       const data = await res.json();
+
       const produtosComQuantidade = data.map((p, i) => ({
         id: p.id ?? i,
         foto: p.foto ?? "",
@@ -188,25 +237,25 @@ export default function NovaVendaPage() {
         quantidade: 1,
       }));
       setProdutos(produtosComQuantidade);
-    } catch (err) {
+    }  catch (err) {
       console.error("Erro ao buscar produtos:", err);
-      setMensagemFeedback({
-        type: "error",
-        text: err.message || "Erro ao carregar produtos.",
-      });
+      toast.error(err.message || "Erro ao carregar produtos.");
     } finally {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchProdutos();
   }, []);
 
+  // alterar quantidade
   const alterarQuantidade = (id, delta) => {
     setListaVenda(prev =>
       prev.map(p => p.id === id ? { ...p, quantidade: Math.max(1, p.quantidade + delta) } : p)
     );
   };
+  // Calcular o valor
   const calcularSubtotal = (preco, quantidade) => preco * quantidade;
   const subtotalGeral = listaVenda.reduce((acc, p) => acc + calcularSubtotal(p.preco, p.quantidade), 0);
   const total = subtotalGeral - Number(desconto);
@@ -216,80 +265,105 @@ export default function NovaVendaPage() {
   };
   const paginaAnterior = () => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1);
   const proximaPagina = () => paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
+
+  // Baixar nota fiscal
   const handleProsseguir = () => {
-    if (!formaPagamento) {
-      mostrarAlerta("Selecione uma forma de pagamento antes de prosseguir!", "erro");
-      return;
-    }
     setMostrarNota(true);
   };
+
+  // Desconto
   const aplicarDesconto = async () => {
     let valorDesconto = 0;
-    const codigoNormalizado = codigoDesconto.trim().toUpperCase(); // Para CUPOM e CONVENIO
-    const cpfLimpo = codigoDesconto.replace(/\D/g, ""); // Apenas números
+
+    const codigoNormalizado = codigoDesconto.trim().toUpperCase();
+    const cpfLimpo = codigoDesconto.replace(/\D/g, "");
+
+    // DESCONTO POR CPF (FILIADO)
     if (cpfLimpo.length === 11) {
       if (subtotalGeral >= 100) {
         const existe = filiados.find(f => f.cpf.replace(/\D/g, "") === cpfLimpo);
+
         if (!existe) {
-          mostrarAlerta("CPF não encontrado no sistema de filiados.", "erro");
-          setDesconto(0); setCodigoDesconto(""); return;
+           toast.error("CPF não encontrado no sistema de filiados.");
+          setDesconto(0);
+          return; // ❌ não limpa o campo mais
         }
+
         valorDesconto = subtotalGeral * 0.2;
-        mostrarAlerta("Desconto de 20% aplicado para filiado!", "sucesso");
+        toast.success("Desconto de 20% aplicado para filiado!");
       } else {
-        mostrarAlerta("Compra deve ser maior que R$100 para aplicar desconto por CPF.", "erro");
-        setDesconto(0); setCodigoDesconto(""); return;
+        toast.error("Compra deve ser maior que R$100 para aplicar desconto por CPF.");
+        setDesconto(0);
+        return; // ❌ não limpa
       }
     }
+
+    // DESCONTO POR CUPOM
     else if (codigoNormalizado.startsWith("CUPOM")) {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:8080/api/descontos?nome=${codigoDesconto}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+
+        const res = await fetch(
+          `http://localhost:8080/api/descontos?nome=${codigoDesconto}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
         if (!res.ok) throw new Error("Cupom inválido");
+
         const cupomData = await res.json();
+
         const descontoCupom = Array.isArray(cupomData)
           ? Number(cupomData[0].desconto)
           : Number(cupomData.desconto);
+
         valorDesconto = subtotalGeral * descontoCupom;
-        mostrarAlerta(`Desconto de ${descontoCupom * 100}% aplicado pelo cupom!`, "sucesso");
+
+        toast.success(`Desconto de ${descontoCupom * 100}% aplicado pelo cupom!`);
+
       } catch (err) {
-        mostrarAlerta(err.message || "Cupom inválido.", "erro");
-        setDesconto(0); setCodigoDesconto(""); return;
+        toast.error(err.message || "Cupom inválido.");
+        setDesconto(0);
+        return; 
       }
     }
+
+    // DESCONTO POR CONVÊNIO
     else {
       try {
         const token = localStorage.getItem("token");
         const convenioNome = codigoDesconto.trim();
-        console.log("--- TENTANDO BUSCAR CONVÊNIO POR NOME ---");
-        console.log("Busca por nome:", convenioNome);
-        const res = await fetch(`http://localhost:8080/parcerias/buscar?parceiro=${convenioNome}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+
+        const res = await fetch(
+          `http://localhost:8080/parcerias/buscar?parceiro=${convenioNome}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
         if (!res.ok) {
           const erroApi = await res.json().catch(() => ({}));
           throw new Error(erroApi.message || "Convênio não encontrado.");
         }
+
         const convenioData = await res.json();
-        console.log("RETORNO API CONVÊNIO:", convenioData);
         const porcentagemNumerica = Number(convenioData.porcentagem);
+
         if (isNaN(porcentagemNumerica) || !convenioData) {
           throw new Error("Dados do convênio inválidos.");
         }
+
         valorDesconto = subtotalGeral * porcentagemNumerica;
-        const porcentagemFormatada = (porcentagemNumerica * 100).toFixed(0);
-        mostrarAlerta(`Desconto de ${porcentagemFormatada}% aplicado através do convênio!`, "sucesso");
+        toast.success(`Desconto de ${(porcentagemNumerica * 100).toFixed(0)}% aplicado através do convênio!`);
+
       } catch (err) {
         console.error("ERRO CONVÊNIO:", err);
-        mostrarAlerta(err.message || "Código ou Convênio inválido.", "erro");
-        setDesconto(0); setCodigoDesconto(""); return;
+        toast.error(err.message || "Código ou Convênio inválido.");
+        setDesconto(0);
+        return; // ❌ não limpa
       }
     }
+    // APLICA O DESCONTO, MAS NÃO LIMPA O CAMPO
     setDesconto(valorDesconto);
-    setCodigoDesconto("");
   };
+
   const imprimirNota = () => {
     window.print();
   };
@@ -332,31 +406,32 @@ export default function NovaVendaPage() {
       console.error("Erro ao buscar CEP:", error);
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensagemFeedback({ type: "", text: "" });
     const userToken = localStorage.getItem("token");
     if (!userToken) {
-      mostrarAlerta("Você precisa estar logado para cadastrar filiado.", "erro");
+      toast.error("Você precisa estar logado para cadastrar filiado.");
       return;
     }
     const cpfLimpo = novoFiliado.cpf.replace(/\D/g, "");
     const telefoneLimpo = novoFiliado.telefone.replace(/\D/g, "");
     const cepLimpo = novoFiliado.cep.replace(/\D/g, "");
     if (cpfLimpo.length !== 11) {
-      mostrarAlerta("CPF deve conter exatamente 11 dígitos.", "erro");
+      toast.error("CPF deve conter exatamente 11 dígitos.");
       return;
     }
     if (telefoneLimpo.length < 8) {
-      mostrarAlerta("Telefone deve conter pelo menos 8 dígitos.", "erro");
+      toast.error("Telefone deve conter pelo menos 8 dígitos.");
       return;
     }
     if (cepLimpo.length !== 8) {
-      mostrarAlerta("CEP deve conter exatamente 8 dígitos.", "erro");
+      toast.error("CEP deve conter exatamente 8 dígitos.");
       return;
     }
     if (novoFiliado.estado.length !== 2) {
-      mostrarAlerta("Estado deve ser uma sigla de 2 caracteres.", "erro");
+      toast.error("Estado deve ser uma sigla de 2 caracteres.");
       return;
     }
     const filiadoEnvio = {
@@ -386,7 +461,7 @@ export default function NovaVendaPage() {
         }
         throw new Error(erroMsg);
       }
-      mostrarAlerta("Filiado cadastrado com sucesso!", "sucesso");
+      toast.success("Filiado cadastrado com sucesso!");
       setNovoFiliado({
         nome: "",
         cpf: "",
@@ -403,7 +478,7 @@ export default function NovaVendaPage() {
       });
     } catch (erro) {
       console.error("Erro ao salvar filiado:", erro);
-      mostrarAlerta(erro.message || "Erro ao salvar filiado.", "erro");
+      toast.error(erro.message || "Erro ao salvar filiado.");
     }
   };
   const parseProduto = (raw) => {
@@ -426,12 +501,12 @@ export default function NovaVendaPage() {
   const buscarProdutoPorNome = (nome) => {
     const code = String(nome ?? nomeProduto ?? "").trim();
     if (!code) {
-      mostrarAlerta("Digite um nome válido.", "erro");
+      toast.error("Digite um nome válido.");
       return;
     }
     const produtoEncontrado = produtos.find(p => String(p.nome) === code);
     if (!produtoEncontrado) {
-      mostrarAlerta("Produto não encontrado!", "erro");
+      toast.error("Produto não encontrado!");
       return;
     }
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
@@ -447,17 +522,19 @@ export default function NovaVendaPage() {
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
     setNomeProduto("");
-    mostrarAlerta("Produto adicionado à venda!", "sucesso");
+    toast.success("Produto adicionado à venda!");
   };
+
+// Buscas produto por codigo de barras
   const buscarProdutoPorCodigo = (codigo) => {
     const code = String(codigo ?? codigoBarras ?? "").trim();
     if (!code) {
-      mostrarAlerta("Digite um código de barras válido.", "erro");
+      toast.error("Digite um código de barras válido.");
       return;
     }
     const produtoEncontrado = produtos.find(p => String(p.codigo_barras) === code);
     if (!produtoEncontrado) {
-      mostrarAlerta("Produto não encontrado!", "erro");
+      toast.error("Produto não encontrado!");
       return;
     }
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
@@ -473,7 +550,7 @@ export default function NovaVendaPage() {
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
     setCodigoBarras("");
-    mostrarAlerta("Produto adicionado à venda!", "sucesso");
+    toast.success("Produto adicionado à venda!");
   };
   const handleFinalizar = async () => {
     setOpen(true);
@@ -484,20 +561,19 @@ export default function NovaVendaPage() {
     setTimeout(async () => {
       setIsLoading(false);
       setPagamentoFeito(true);
-
-      // Aqui: pagamento concluído, então salvar a venda
       try {
         const vendaCriada = await salvarVenda();
         console.log("Venda criada no backend:", vendaCriada);
-        mostrarAlerta("Venda registrada com sucesso.", "sucesso");
-      } catch (erro) {
+        toast.success("Venda registrada com sucesso.");
+      } catch (erro) {  
         console.error("Erro ao registrar venda:", erro);
-        mostrarAlerta("Erro ao salvar a venda.", "erro");
+        toast.error("Erro ao salvar a venda.");
       }
     }, 5000);
   };
 
   console.log(produtosExibidos);
+
   return (
     <Layout>
       <div className="min-h-screen flex items-center justify-center py-10 relative">
@@ -679,10 +755,11 @@ export default function NovaVendaPage() {
               </CardContent>
             </Card>
           </div>
+          
           <Card className="border-pink-100">
             <CardContent className="p-6">
               <div className="space-y-6">
-                {/* IDENTIFICAÇÃO DO CLIENTE */}
+{/* IDENTIFICAÇÃO DO CLIENTE */}
                 <div className="bg-white p-4 rounded-xl shadow border border-pink-200 space-y-3">
                   <h2 className="text-lg font-semibold text-pink-600">Identificação do Cliente</h2>
 
@@ -718,7 +795,7 @@ export default function NovaVendaPage() {
                   )}
                 </div>
 
-                {/* SUBTOTAL */}
+               
                 <div>
                   <p className="text-gray-500 mb-1">Subtotal</p>
                   <p className="font-medium text-gray-700">
@@ -727,7 +804,7 @@ export default function NovaVendaPage() {
                   <Separator className="my-1" />
                 </div>
 
-                {/* DESCONTO */}
+{/* DESCONTO */}
                 <div>
                   <p className="text-gray-500 mb-1">Desconto</p>
 
@@ -750,7 +827,6 @@ export default function NovaVendaPage() {
                   <Separator className="my-1" />
                 </div>
 
-                {/* TOTAL */}
                 <div>
                   <p className="text-pink-600 font-semibold text-lg mb-1">Total</p>
                   <p className="text-gray-800 font-bold text-xl">
@@ -761,10 +837,9 @@ export default function NovaVendaPage() {
 
                 <div className="flex flex-col md:flex-row gap-4 mt-4">
 
-                  {/* Bloco completo: Unidade + Pagamento */}
+{/* Bloco completo: Unidade + Pagamento */}
                   <div className="flex flex-col md:flex-row gap-6 mt-4">
-
-                    {/* Seleção de Unidade */}
+{/* Seleção de Unidade */}
                     <div className="space-y-2 w-full">
                       <label className="text-gray-600 font-medium text-sm">Unidade</label>
 
@@ -792,7 +867,7 @@ export default function NovaVendaPage() {
                       </Select>
                     </div>
 
-                    {/* Forma de Pagamento */}
+{/* Forma de Pagamento */}
                     <div className="space-y-2 w-full">
                       <label className="text-gray-600 font-medium text-sm">Pagamento</label>
 
@@ -854,7 +929,7 @@ export default function NovaVendaPage() {
 
               </div>
 
-
+{/* Cadastrar novo filiado */}
               <div className="mt-6 text-center">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -1009,13 +1084,20 @@ export default function NovaVendaPage() {
                     </DialogTitle>
                   </DialogHeader>
                   {isLoading && (
-                    <div className="flex flex-col items-center gap-3 py-4">
-                      <Loader2 className="animate-spin w-10 h-10 text-pink-600" />
-                      <p className="text-sm text-gray-600">
-                        Estamos confirmando seu pagamento, aguarde um momento...
+                    <div className="flex flex-col items-center gap-4 py-6 animate-fadeIn">
+                      <div className="relative flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-full border-4 border-pink-300 animate-ping absolute"></div>
+                        <Loader2 className="w-12 h-12 text-pink-600 animate-spin" />
+                      </div>
+
+                      <p className="text-sm text-gray-700 animate-pulse text-center">
+                        Processando seu pagamento...
+                        <br />Isso pode levar apenas alguns segundos.
                       </p>
+
                       <Button
                         variant="outline"
+                        className="border-pink-400 text-pink-600 hover:bg-pink-50 transition"
                         onClick={() => {
                           setIsLoading(false);
                           setOpen(false);
@@ -1023,111 +1105,158 @@ export default function NovaVendaPage() {
                       >
                         Cancelar
                       </Button>
-
                     </div>
                   )}
+
                   {pagamentoFeito && (
-                    <div className="flex flex-col items-center gap-3 py-4">
-                      <CheckCircle2 className="w-10 h-10 text-green-700" />
-                      <p className="text-sm text-gray-600">
-                        Pagamento realizado com sucesso!
+                    <div className="flex flex-col items-center gap-4 py-6">
+
+                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100">
+                        <CheckCircle2 className="w-8 h-8 text-green-700" />
+                      </div>
+
+                      <p className="text-base text-gray-700 font-medium">
+                        Pagamento concluído!
                       </p>
+
+                      <p className="text-sm text-gray-500 text-center max-w-xs">
+                        Tudo certo! Agora você pode gerar a nota fiscal da sua venda.
+                      </p>
+
                       <Button
                         onClick={handleProsseguir}
+                        className="mt-2 bg-pink-600 hover:bg-pink-700 text-white rounded-full px-6 py-2 shadow-sm"
                       >
                         Nota fiscal
                       </Button>
                     </div>
                   )}
+
                 </DialogContent>
               </Dialog>
               <Dialog open={mostrarNota} onOpenChange={setMostrarNota}>
-                <DialogContent className="max-w-2xl bg-white">
-                  <DialogHeader>
-                    <DialogTitle className="text-pink-600 text-xl font-bold">
-                      Nota Fiscal da Compra
+                <DialogContent className="max-w-2xl bg-white rounded-2xl shadow-lg p-6">
+
+                  {/* Cabeçalho */}
+                  <DialogHeader className="border-b pb-4">
+                    <DialogTitle className="text-pink-600 text-2xl font-bold tracking-wide">
+                      Nota Fiscal
                     </DialogTitle>
-                    <DialogDescription className="text-gray-600">
-                      Confira os detalhes da sua compra antes de imprimir.
+                    <DialogDescription className="text-gray-500 text-sm">
+                      Detalhes da compra realizada.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="mt-4">
-                    <table className="w-full text-sm border border-gray-200">
-                      <thead className="bg-pink-50">
-                        <tr>
-                          <th className="p-2 text-left">Produto</th>
-                          <th className="p-2">Qtd</th>
-                          <th className="p-2 text-right">Preço</th>
-                          <th className="p-2 text-right">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {listaVenda.map((p) => (
-                          <tr key={p.id} className="border-t">
-                            <td className="p-2">{p.nome}</td>
-                            <td className="p-2 text-center">{p.quantidade}</td>
-                            <td className="p-2 text-right">R$ {p.preco.toFixed(2)}</td>
-                            <td className="p-2 text-right">
-                              R$ {(p.preco * p.quantidade).toFixed(2)}
-                            </td>
+
+                  {/* Conteúdo principal */}
+                  <div className="mt-6">
+
+                    {/* Tabela */}
+                    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                      <table className="w-full text-sm">
+                        <thead className="bg-pink-50 text-pink-700">
+                          <tr>
+                            <th className="p-3 text-left font-semibold">Produto</th>
+                            <th className="p-3 text-center font-semibold">Qtd</th>
+                            <th className="p-3 text-right font-semibold">Preço</th>
+                            <th className="p-3 text-right font-semibold">Subtotal</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="mt-4 text-right text-gray-700 space-y-1">
-                      <p>Subtotal: R$ {subtotalGeral.toFixed(2)}</p>
-                      <p>Desconto: R$ {desconto.toFixed(2)}</p>
-                      <p className="font-bold text-lg text-pink-600">Total: R$ {total.toFixed(2)}</p>
-                      <p>Forma de pagamento: {formaPagamento}</p>
+                        </thead>
+
+                        <tbody className="divide-y divide-gray-100">
+                          {listaVenda.map((p) => (
+                            <tr key={p.id} className="hover:bg-gray-50 transition">
+                              <td className="p-3">{p.nome}</td>
+                              <td className="p-3 text-center">{p.quantidade}</td>
+                              <td className="p-3 text-right">
+                                R$ {p.preco.toFixed(2)}
+                              </td>
+                              <td className="p-3 text-right">
+                                R$ {(p.preco * p.quantidade).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Totais */}
+                    <div className="mt-6 bg-gray-50 p-4 rounded-xl shadow-inner text-right space-y-1 text-gray-700">
+                      {/* <p className="text-sm">Cliente: <span className="font-medium">{cliente.nome}</span></p> */}
+                      <p className="text-sm">Subtotal: <span className="font-medium">R$ {subtotalGeral.toFixed(2)}</span></p>
+                      <p className="text-sm">Desconto: <span className="font-medium">R$ {desconto.toFixed(2)}</span></p>
+                      <p className="text-sm mt-2 text-gray-600">
+                        Forma de pagamento: <span className="font-medium">{tiposPagamento[tipo_pagamento_id]}</span>
+                      </p>
+                      <p className="font-bold text-xl text-pink-600 mt-2">
+                        Total: R$ {total.toFixed(2)}
+                      </p>
+
                     </div>
                   </div>
-                  <DialogFooter className="flex justify-between mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => setMostrarNota(false)}
-                      className="border-pink-300 text-pink-600 rounded-full hover:bg-pink-100"
-                    >
-                      Fechar
-                    </Button>
-                    <Button onClick={imprimirNota} className="bg-pink-500 hover:bg-pink-600 text-white rounded-full">
-                      Imprimir nota fiscal
-                    </Button>
-                  </DialogFooter>
+
+                  {/* Rodapé */}
+                  <Dialog open={mostrarNota} onOpenChange={fecharDialog}>
+                    {/* conteúdo do dialog */}
+                    <DialogFooter className="flex justify-between mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={fecharDialog}
+                        className="border-pink-300 text-pink-600 rounded-full hover:bg-pink-100"
+                      >
+                        Fechar
+                      </Button>
+                      <Button
+                        onClick={imprimirNota}
+                        className="bg-pink-500 hover:bg-pink-600 text-white rounded-full px-6 shadow-md"
+                      >
+                        Imprimir nota fiscal
+                      </Button>
+                    </DialogFooter>
+                  </Dialog>
+
                 </DialogContent>
               </Dialog>
+
             </CardContent>
           </Card>
         </div>
-      </div>
-      <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Carrinho</h1>
 
-      {carrinho.length === 0 ? (
-        <p className="text-gray-500">Seu carrinho está vazio.</p>
-      ) : (
-        <div className="space-y-4">
-          {carrinho.map((item) => (
-            <div
-              key={item.id}
-              className="border p-4 rounded-lg shadow-sm flex justify-between"
-            >
-              <div>
-                <h2 className="font-semibold">{item.nome}</h2>
-                <p>Qtd: {item.quantidade}</p>
-                <p>Preço: R${item.preco_unitario.toFixed(2)}</p>
-              </div>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Carrinho</h1>
 
-              {item.foto && (
-                <img
-                  src={`http://localhost:8080/uploads/produtos/${item.foto}`}
-                  className="w-20 h-20 object-cover rounded"
-                />
-              )}
+          {carrinho.length === 0 ? (
+            <p className="text-gray-500">Seu carrinho está vazio.</p>
+          ) : (
+            <div className="space-y-4">
+              {carrinho.map((item) => (
+                <div
+                  key={item.id}
+                  className="border p-4 rounded-lg shadow-sm flex justify-between items-center"
+                >
+                  <div>
+                    <h2 className="font-semibold">{item.nome}</h2>
+                    <p>Qtd: {item.quantidade}</p>
+                    <p>Preço: R${item.preco_unitario.toFixed(2)}</p>
+                  </div>
+
+                  {item.foto && (
+                    <img
+                      src={`http://localhost:8080/uploads/produtos/${item.foto}`}
+                      alt={item.nome}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          )}
+        </div>  
+
+      </div>
+
+
     </Layout>
   );
 }
+
+
