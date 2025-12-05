@@ -1,5 +1,5 @@
 "use client";
- 
+
 import Layout from "@/components/layout/layout";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { toast, Toaster } from "sonner";
-import Link from "next/link";
- 
+import Link from "next/link"; // IMPORTAÇÃO CORRETA
+import { useRouter } from "next/navigation";
+
 export default function ProdutosPage() {
   const API_CATEGORIAS = "http://localhost:8080/categorias";
   const API_PRODUTOS = "http://localhost:8080/produtos";
- 
+
   const [categorias, setCategorias] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [quantidades, setQuantidades] = useState({});
@@ -22,34 +23,37 @@ export default function ProdutosPage() {
   const [erro, setErro] = useState(null);
   const [busca, setBusca] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("0");
- 
+
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 8;
- 
+
+  const router = useRouter();
+
   async function carregarCategorias() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(API_CATEGORIAS, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
- 
+
       if (!res.ok) throw new Error("Erro ao buscar categorias.");
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Retorno inesperado da API.");
- 
+
       setCategorias([{ id: "0", categoria: "Todos" }, ...data]);
+      toast.success("Categorias carregadas com sucesso!");
     } catch (error) {
       console.log("Erro ao carregar categorias:", error);
       toast.error("Erro ao carregar categorias!");
     }
   }
- 
+
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) setCarrinho(JSON.parse(carrinhoSalvo));
   }, []);
- 
+
   async function carregarProdutos() {
     setLoading(true);
     setErro(null);
@@ -58,22 +62,19 @@ export default function ProdutosPage() {
       const res = await fetch(API_PRODUTOS, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
- 
-      if (!res.ok) {
-        toast.error("Erro ao buscar produtos.");
-        throw new Error("Erro ao buscar produtos.");
-      }
- 
+
+      if (!res.ok) throw new Error("Erro ao buscar produtos.");
+
       const data = await res.json();
       let lista = [];
- 
+
       if (Array.isArray(data.produtos)) lista = data.produtos;
       else if (Array.isArray(data)) lista = data;
       else lista = [data];
- 
+
       lista.sort((a, b) => a.nome.localeCompare(b.nome));
- 
       setProdutos(lista);
+      toast.success("Produtos carregados com sucesso!");
     } catch (error) {
       setErro(error.message);
       toast.error("Falha ao carregar produtos.");
@@ -81,35 +82,34 @@ export default function ProdutosPage() {
       setLoading(false);
     }
   }
- 
+
   useEffect(() => {
     carregarCategorias();
     carregarProdutos();
   }, []);
- 
+
   function alterarQuantidade(nome, tipo) {
     setQuantidades((prev) => ({
       ...prev,
       [nome]: Math.max(1, (prev[nome] || 1) + (tipo === "mais" ? 1 : -1)),
     }));
   }
- 
+
   function adicionarAoCarrinho(produto) {
     const quantidade = quantidades[produto.nome] || 1;
- 
+
     const novoItem = {
       id: produto.id,
       nome: produto.nome,
       preco_unitario: produto.preco_unitario,
       quantidade,
-      foto: produto.foto
+      foto: produto.foto,
     };
- 
+
     setCarrinho((prev) => {
       const existente = prev.find((p) => p.id === produto.id);
- 
       let novoCarrinho;
- 
+
       if (existente) {
         novoCarrinho = prev.map((p) =>
           p.id === produto.id
@@ -119,23 +119,36 @@ export default function ProdutosPage() {
       } else {
         novoCarrinho = [...prev, novoItem];
       }
- 
+
       localStorage.setItem("carrinho", JSON.stringify(novoCarrinho));
       return novoCarrinho;
     });
- 
+
     setQuantidades((prev) => ({ ...prev, [produto.nome]: 1 }));
- 
-    toast.success("Produto adicionado ao carrinho!");
+
+    // Toast com foto do produto
+    toast.success(
+      <div className="flex items-center gap-3">
+        {produto.foto && (
+          <img
+            src={`http://localhost:8080/uploads/produtos/${produto.foto}`}
+            alt={produto.nome}
+            className="w-12 h-12 object-cover rounded"
+          />
+        )}
+        <div>
+          <p className="font-semibold">{produto.nome}</p>
+          <p className="text-sm">Adicionado ao carrinho!</p>
+        </div>
+      </div>
+    );
+
+    // Redireciona para novaVenda
+    router.push("/pdv/novaVenda");
   }
- 
- 
- 
+
   const produtosFiltrados = produtos.filter((p) => {
-    if (
-      categoriaSelecionada !== "0" &&
-      String(p.categoria_id) !== categoriaSelecionada
-    ) {
+    if (categoriaSelecionada !== "0" && String(p.categoria_id) !== categoriaSelecionada) {
       return false;
     }
     if (busca.trim() !== "" && !p.nome.toLowerCase().includes(busca.toLowerCase())) {
@@ -143,23 +156,19 @@ export default function ProdutosPage() {
     }
     return true;
   });
- 
-  const totalPaginas = Math.max(
-    1,
-    Math.ceil(produtosFiltrados.length / itensPorPagina)
-  );
+
+  const totalPaginas = Math.max(1, Math.ceil(produtosFiltrados.length / itensPorPagina));
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const fim = inicio + itensPorPagina;
   const produtosExibidos = produtosFiltrados.slice(inicio, fim);
- 
+
   const paginaAnterior = () => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1);
-  const proximaPagina = () =>
-    paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
- 
+  const proximaPagina = () => paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
+
   return (
     <Layout>
       <Toaster richColors position="top-right" />
- 
+
       <div className="p-8 space-y-6">
         {/* Topo: Busca + Carrinho */}
         <div className="flex justify-between items-center">
@@ -169,7 +178,7 @@ export default function ProdutosPage() {
             onChange={(e) => setBusca(e.target.value)}
             className="w-80 border-pink-400 focus:ring-pink-300"
           />
- 
+
           <Link href="/pdv/novaVenda" className="relative">
             <ShoppingCart
               className="text-pink-600 hover:text-pink-500 cursor-pointer"
@@ -182,7 +191,7 @@ export default function ProdutosPage() {
             )}
           </Link>
         </div>
- 
+
         {/* Categorias */}
         <div className="flex gap-6 text-gray-600 font-medium border-b pb-2">
           {categorias.map((c) => {
@@ -193,37 +202,32 @@ export default function ProdutosPage() {
                 onClick={() =>
                   setCategoriaSelecionada(isSelected ? "0" : c.id.toString())
                 }
-                className={`transition-colors ${isSelected
-                  ? "text-pink-600 font-semibold"
-                  : "hover:text-pink-600"
-                  }`}
+                className={`transition-colors ${isSelected ? "text-pink-600 font-semibold" : "hover:text-pink-600"}`}
               >
                 {c.categoria}
               </button>
             );
           })}
         </div>
- 
+
         {/* Erro */}
         {erro && (
           <p className="text-red-600 text-center mt-4 font-medium">{erro}</p>
         )}
- 
+
         {/* Loader */}
         {loading && (
           <div className="flex justify-center mt-8">
             <Loader2 className="animate-spin text-pink-600" size={32} />
           </div>
         )}
- 
+
         {/* Produtos */}
- 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           {!loading &&
             produtosExibidos.map((p) => (
               <Card key={p.id} className="shadow-md rounded-xl border border-pink-100">
                 <CardContent className="space-y-3">
-                  {/* Imagem do produto */}
                   {p.foto ? (
                     <img
                       src={`http://localhost:8080/uploads/produtos/${p.foto}`}
@@ -235,22 +239,19 @@ export default function ProdutosPage() {
                       Sem foto
                     </div>
                   )}
- 
-                  {/* Nome + categoria + botãozinho de estoque */}
+
                   <div className="flex justify-between items-start">
                     <div>
                       <h2 className="text-lg font-semibold">{p.nome}</h2>
                       <p className="text-sm text-gray-500">{p.descricao}</p>
                     </div>
- 
-                    {/* Badge de categoria */}
+
                     {p.categoria_nome && (
                       <Badge className="bg-orange-100 text-orange-600 capitalize text-sm">
                         {p.categoria_nome}
                       </Badge>
                     )}
- 
-                    {/* Botãozinho de estoque */}
+
                     <span
                       className={`w-4 h-4 rounded-full ml-2 mt-1 ${p.quantidade_estoque === 0
                         ? "bg-red-500"
@@ -267,29 +268,20 @@ export default function ProdutosPage() {
                       }
                     ></span>
                   </div>
- 
-                  {/* Preço */}
+
                   <p className="text-xl font-bold text-gray-800">R${Number(p.preco_unitario).toFixed(2)}</p>
- 
-                  {/* Controle de quantidade + Comprar */}
+
                   <div className="flex items-center gap-2 mt-3">
                     <div className="flex items-center gap-2 border rounded-xl p-1">
-                      <button
-                        onClick={() => alterarQuantidade(p.nome, "menos")}
-                        className="p-1 rounded-full hover:bg-pink-100"
-                      >
+                      <button onClick={() => alterarQuantidade(p.nome, "menos")} className="p-1 rounded-full hover:bg-pink-100">
                         <Minus size={16} />
                       </button>
                       <span className="w-6 text-center">{quantidades[p.nome] || 1}</span>
-                      <button
-                        onClick={() => alterarQuantidade(p.nome, "mais")}
-                        className="p-1 rounded-full hover:bg-pink-100"
-                      >
+                      <button onClick={() => alterarQuantidade(p.nome, "mais")} className="p-1 rounded-full hover:bg-pink-100">
                         <Plus size={16} />
                       </button>
                     </div>
- 
-                    {/* Botões de ação */}
+
                     <Button
                       onClick={() => adicionarAoCarrinho(p)}
                       disabled={p.quantidade_estoque === 0}
@@ -300,22 +292,18 @@ export default function ProdutosPage() {
                     >
                       {p.quantidade_estoque === 0 ? "Indisponível" : "COMPRAR"}
                     </Button>
- 
                   </div>
- 
- 
                 </CardContent>
               </Card>
- 
             ))}
         </div>
- 
+
         {!loading && produtosFiltrados.length === 0 && (
           <p className="text-center text-gray-500 mt-8 text-lg">
             Nenhum produto encontrado.
           </p>
         )}
- 
+
         {/* Paginação */}
         {produtosFiltrados.length > 0 && (
           <div className="flex justify-center gap-4 mt-8">
@@ -339,8 +327,6 @@ export default function ProdutosPage() {
           </div>
         )}
       </div>
-    </Layout >
+    </Layout>
   );
 }
- 
- 

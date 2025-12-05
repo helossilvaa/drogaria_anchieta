@@ -30,20 +30,14 @@ import {
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const API_VENDAS = "http://localhost:8080/vendas";
-const API_CLIENTES = "http://localhost:8080/clientes";
-const API_TRANSACOES = "http://localhost:8080/transacoes";
 
-function KPICard({ label, value, icon, variation, onClick }) {
+function KPICard({ label, value, icon, variation }) {
   return (
-    <Card 
-      onClick={onClick} 
-      className="cursor-pointer hover:shadow-xl transition-all rounded-xl bg-white min-w-[250px]"
-    >
+    <Card className="cursor-pointer hover:shadow-xl transition-all rounded-xl bg-white min-w-[250px]">
       <CardContent className="flex justify-between items-center gap-4 p-6">
         <div>
           <p className="text-gray-500 text-sm">{label}</p>
           <p className="text-2xl font-bold text-pink-600">{value}</p>
-
           {variation !== undefined && (
             <p
               className={`text-xs flex items-center gap-1 ${
@@ -55,7 +49,6 @@ function KPICard({ label, value, icon, variation, onClick }) {
             </p>
           )}
         </div>
-
         {icon}
       </CardContent>
     </Card>
@@ -76,38 +69,26 @@ function ChartArea({ data, dataKey, title }) {
         <CardTitle>{title}</CardTitle>
         <CardDescription>Dados do período selecionado</CardDescription>
       </CardHeader>
-
       <CardContent>
         <ChartContainer config={chartConfig}>
           <AreaChart data={data} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} stroke="#e5e7eb" />
-            <XAxis
-              dataKey="dia"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
+            <XAxis dataKey="dia" tickLine={false} axisLine={false} tickMargin={8} />
             <YAxis />
-
             <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-
             <Area
               type="monotone"
               dataKey={dataKey}
-              stroke="#ec4899" // cor da linha (rosa)
-              fill="#fce7f3" // cor de preenchimento
+              stroke="#ec4899"
+              fill="#fce7f3"
               fillOpacity={1}
             />
-
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
       </CardContent>
-
       <CardFooter>
-        <p className="text-sm text-gray-500">
-          Visualização do período selecionado
-        </p>
+        <p className="text-sm text-gray-500">Visualização do período selecionado</p>
       </CardFooter>
     </Card>
   );
@@ -117,32 +98,29 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [activePeriod, setActivePeriod] = useState("semana");
-
   const [vendas, setVendas] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [transacoes, setTransacoes] = useState(0);
 
   useEffect(() => {
     async function carregarDados() {
       try {
         const token = localStorage.getItem("token");
-
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Vendas
+        // Extrair usuário logado do token (ajuste conforme seu JWT)
+        let userId = null;
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userId = payload.id; // ou payload.userId
+        }
+
+        // Buscar todas as vendas
         const resVendas = await fetch(API_VENDAS, { headers });
         const dataVendas = await resVendas.json();
-        setVendas(dataVendas);
 
-        // Clientes
-        const resClientes = await fetch(API_CLIENTES, { headers });
-        const dataClientes = await resClientes.json();
-        setClientes(dataClientes);
+        // Filtrar vendas do usuário logado
+        const vendasUsuario = dataVendas.filter(v => v.usuario_id === userId);
+        setVendas(vendasUsuario);
 
-        // Transações
-        const resTransacoes = await fetch(API_TRANSACOES, { headers });
-        const dataTransacoes = await resTransacoes.json();
-        setTransacoes(dataTransacoes.length);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
       }
@@ -154,12 +132,12 @@ export default function Dashboard() {
   const agruparVendas = () => {
     const agrupado = {};
     const hoje = new Date();
-  
+
     vendas.forEach((venda) => {
       const dataObj = new Date(venda.data);
       const diaFormatado = dataObj.toLocaleDateString("pt-BR");
       let key = "";
-  
+
       if (activePeriod === "hoje") {
         if (diaFormatado === hoje.toLocaleDateString("pt-BR")) key = diaFormatado;
         else return;
@@ -167,36 +145,36 @@ export default function Dashboard() {
         const inicioSemana = new Date(hoje);
         inicioSemana.setHours(0, 0, 0, 0);
         inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
-  
+
         const fimSemana = new Date(inicioSemana);
         fimSemana.setDate(inicioSemana.getDate() + 6);
-  
+
         if (dataObj >= inicioSemana && dataObj <= fimSemana) key = "Semana Atual";
         else return;
       } else if (activePeriod === "mes") {
         const mesVenda = dataObj.getMonth();
         const anoVenda = dataObj.getFullYear();
-  
+
         if (mesVenda === hoje.getMonth() && anoVenda === hoje.getFullYear())
           key = `${mesVenda + 1}/${anoVenda}`;
         else return;
       }
-  
+
       if (!agrupado[key]) {
         agrupado[key] = { dia: key, vendas: 0, clientesSet: new Set() };
       }
-  
+
       agrupado[key].vendas += Number(venda.total);
-      agrupado[key].clientesSet.add(venda.cliente_id); // adiciona cliente único
+      agrupado[key].clientesSet.add(venda.cliente_id);
     });
-  
+
     return Object.values(agrupado).map((item) => ({
       dia: item.dia,
       vendas: item.vendas,
       clientes: item.clientesSet.size,
     }));
   };
-  
+
   const vendasArray = agruparVendas();
   const periods = ["hoje", "semana", "mes"];
 
@@ -213,7 +191,7 @@ export default function Dashboard() {
     },
     {
       label: "Transações",
-      value: transacoes,
+      value: vendas.length,
       icon: <ShoppingCart size={28} className="text-green-800" />,
     },
   ];
@@ -248,16 +226,8 @@ export default function Dashboard() {
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartArea
-            data={vendasArray}
-            dataKey="vendas"
-            title="Vendas"
-          />
-          <ChartArea
-            data={vendasArray}
-            dataKey="clientes"
-            title="Clientes Atendidos"
-          />
+          <ChartArea data={vendasArray} dataKey="vendas" title="Vendas" />
+          <ChartArea data={vendasArray} dataKey="clientes" title="Clientes Atendidos" />
         </div>
       </div>
     </Layout>
