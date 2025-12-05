@@ -1,6 +1,6 @@
 import express from 'express'; 
 import authMiddleware from '../middlewares/authMiddleware.js';
-import { criarConta, listarConta, editarConta, excluirConta, pagarConta } from "../controllers/contasMatrizController.js"; 
+import { criarConta, listarConta, editarConta, excluirConta, pagarConta } from "../controllers/contasFilialController.js"; 
 
 const router = express.Router(); 
 

@@ -44,7 +44,7 @@ export default function ParceriasDescontos() {
     const fetchParcerias = async () => {
       try {
         const res = await fetch(`${API_URL}/parcerias`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}`},
         });
         const data = await res.json();
         setParcerias(data);
@@ -54,27 +54,32 @@ export default function ParceriasDescontos() {
     };
 
     const fetchDescontos = async () => {
-  try {
-    const res = await fetch(`${API_URL}/api/descontos`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      try {
+        const res = await fetch(`${API_URL}/api/descontos`, { 
+          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+            console.error(`Erro ao carregar descontos: Status HTTP ${res.status}`);
+            try {
+                const errorData = await res.json();
+                console.error("Detalhes do erro:", errorData);
+            } catch (e) {
+                console.warn("Não foi possível ler o JSON do erro de resposta.");
+            }
+            setDescontos([]);
+            return; 
+        }
 
-    const data = await res.json();
+        const data = await res.json();
+        console.log("Descontos da API:", data);
+        
+        setDescontos(Array.isArray(data) ? data : []); 
 
-    if (Array.isArray(data)) {
-      setDescontos(data);
-    } else if (Array.isArray(data.data)) {
-      setDescontos(data.data);
-    } else {
-      console.error("Resposta inesperada da API:", data);
-      setDescontos([]); 
-    }
-
-  } catch (error) {
-    console.error("Erro ao carregar descontos:", error);
-    setDescontos([]); 
-  }
-};
+      } catch (error) {
+        console.error("Erro ao carregar descontos (fetch/json parse):", error);
+        setDescontos([]);
+      }
+    };
 
     fetchParcerias();
     fetchDescontos();
@@ -113,7 +118,7 @@ export default function ParceriasDescontos() {
       const data = await res.json();
       if (res.ok) {
         const resParcerias = await fetch(`${API_URL}/parcerias`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
         const parceriasData = await resParcerias.json();
         setParcerias(parceriasData);
@@ -159,7 +164,7 @@ export default function ParceriasDescontos() {
 
       if (res.ok) {
         const resParcerias = await fetch(`${API_URL}/parcerias`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
         const parceriasData = await resParcerias.json();
         setParcerias(parceriasData);
@@ -169,7 +174,7 @@ export default function ParceriasDescontos() {
         setPorcentagem("");
         setErro("");
 
-         toast.success("Parceiro editado com sucesso!");
+        toast.success("Parceiro editado com sucesso!");
       } else {
         toast.error(data.message || "Erro ao atualizar parceria.");
       }
@@ -191,7 +196,7 @@ export default function ParceriasDescontos() {
     try {
       const res = await fetch(`${API_URL}/parcerias/${parceriaExcluindo.id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
@@ -234,7 +239,7 @@ export default function ParceriasDescontos() {
 
       if (res.ok) {
         const resDescontos = await fetch(`${API_URL}/api/descontos`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
         const descontosData = await resDescontos.json();
         setDescontos(descontosData);
@@ -285,7 +290,7 @@ export default function ParceriasDescontos() {
       const data = await res.json();
       if (res.ok) {
         const resDescontos = await fetch(`${API_URL}/api/descontos`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
         const descontosData = await resDescontos.json();
         setDescontos(descontosData);
@@ -316,7 +321,7 @@ export default function ParceriasDescontos() {
     try {
       const res = await fetch(`${API_URL}/api/descontos/${descontoExcluindo.id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok) {
@@ -339,11 +344,11 @@ export default function ParceriasDescontos() {
   );
 
   // Função para filtrar os descontos pelo nome
- const filteredDescontos = Array.isArray(descontos)
-  ? descontos.filter(desconto =>
+  const filteredDescontos = Array.isArray(descontos)
+    ? descontos.filter(desconto =>
       desconto.nome?.toLowerCase().includes(searchDesconto.toLowerCase())
     )
-  : [];
+    : [];
 
   // Paginação das parcerias
   const startParceria = (paginaParceria - 1) * itensPorPagina;

@@ -288,6 +288,7 @@ export default function Contas() {
 
     return (
         <>
+        <div className="w-full p-4 ">
             {/* FILTROS */}
             <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
                 <div className="flex gap-4 flex-wrap">
@@ -479,8 +480,8 @@ export default function Contas() {
                 </div>
             )}
             {/* Tabela */}
-            <div className="mt-6 overflow-x-auto">
-                <table className="w-full border-collapse min-w-[1000px]">
+            <div className="mt-4 overflow-x-auto">
+                <table className="w-full border-collapse table-auto">
                     <thead>
                         {/* ✅ Cabeçalho da tabela */}
                         <tr className="bg-[#245757] text-left text-white rounded-t-lg">
@@ -618,6 +619,7 @@ export default function Contas() {
                         </button>
                     </div>
                 )}
+            </div>
             </div>
         </>
     );

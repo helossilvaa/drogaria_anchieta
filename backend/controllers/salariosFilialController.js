@@ -75,6 +75,7 @@ export const editarSalario = async (req, res) => {
   const { id } = req.params;
   const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
+  
   if (!id_funcionario || !departamento_id || !valor) {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
@@ -121,5 +122,25 @@ export const excluirSalario = async (req, res) => {
   } catch (err) {
     console.error("Erro ao excluir salário:", err);
     return res.status(500).json({ message: "Erro ao excluir salário." });
+  }
+};
+
+export const listarSalariosPorFuncionario = async (req, res) => {
+  const { id_funcionario } = req.params;
+
+  try {
+    // Pega a unidade do usuário autenticado (opcional)
+    const unidade_id = req.user.unidade_id;
+
+    // Busca salários do funcionário
+    const salarios = await query(
+      "SELECT * FROM salarios WHERE id_funcionario = ? AND unidade_id = ? ORDER BY data_atualizado DESC",
+      [id_funcionario, unidade_id]
+    );
+
+    return res.status(200).json(salarios);
+  } catch (err) {
+    console.error("Erro ao listar salários do funcionário:", err);
+    return res.status(500).json({ message: "Erro ao listar salários do funcionário." });
   }
 };
