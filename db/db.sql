@@ -1050,3 +1050,5 @@ insert into notificacao_tipos (nome, icone, cor, acao_texto_padrao) values
 ('Lote enviado', 'Truck', 'pink', 'Acompanhar carregamento'),
 ('Estoque baixo', 'TriangleAlert', 'pink', 'Pedir mais'),
 ('Contas pendentes', 'DollarSign', 'pink', 'Pagar agora'),
+('Editado', 'Trash', 'pink', NULL),
+('Excluído', 'Pencil', 'pink', NULL);
