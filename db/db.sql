@@ -437,10 +437,10 @@ insert into marcas (marca) values
 ('Band-Aid'), ('Neosaldina'), ('Engov'), ('Dorfax'), ('Novalgina'), ('Coristina'), ('Caladryl'), ('Maalox');
 
 insert into departamento (departamento, tipoUnidade_id) VALUES
-('Caixa', 2 ), 
-('Gerente', 2 ),
-('Diretor Administrativo', 2 ),  
-('Diretor Geral', 1 );
+('caixa', 2 ), 
+('gerente', 2 ),
+('diretor administrativo', 2 ),  
+('diretor geral', 1 );
 
 INSERT INTO funcionarios (registro, cpf, telefone, data_nascimento, genero, 
 nome, email, departamento_id, logradouro, cidade, estado, cep, numero) VALUES 
@@ -453,14 +453,12 @@ nome, email, departamento_id, logradouro, cidade, estado, cep, numero) VALUES
 ('123456', '15544650870', '5511996108022', '2008-09-11', 'masculino', 'Gerson Rodrigues', 
 'gerson@gmail.com', 4, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37');
 
-
 INSERT INTO usuarios (
  senha, departamento_id, funcionario_id) VALUES 
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '1', '1'),
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '2', '2'),
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '3', '3'),
 ('$2b$10$dgYjcImDdSpbgQD/7BBRre.fGZohwfG24FwQW9jfg86MKCmnRSx5.', '4', '4');
-
 
 insert into tiposdescontos (tipo) values
 ("Convênio"),
