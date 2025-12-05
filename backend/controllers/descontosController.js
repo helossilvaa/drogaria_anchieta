@@ -1,10 +1,4 @@
-import {
-  criarDescontoDB,
-  listarDescontosDB,
-  obterDescontoPorIdDB,
-  atualizarDescontoDB,
-  deletarDescontoDB
-} from "../models/descontos.js";
+import { criarDescontoDB, listarDescontosDB, obterDescontoPorIdDB, atualizarDescontoDB, deletarDescontoDB } from "../models/descontos.js";
 import { enviarNotificacao } from "../utils/enviarNotificacao.js";
 
 // Listar descontos
@@ -13,6 +7,7 @@ export const listarDescontos = async (req, res) => {
     const descontos = await listarDescontosDB();
     res.json(descontos);
   } catch (error) {
+    console.error("ERRO FATAL ao listar descontos:", error); 
     res.status(500).json({ erro: error.message });
   }
 };

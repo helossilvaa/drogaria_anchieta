@@ -8,16 +8,17 @@ import {
   deletarNotificacao,
   obterNotificacaoPorId
 } from "../controllers/notificacoesController.js";
+import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.post("/notificacoes", criarNotificacao);
-router.get("/notificacoes", listarNotificacoes);
-router.get("/notificacoes/usuario/:usuario_id", listarNotificacoesPorUsuario);
-router.get("/notificacoes/unidade/:unidade_id", listarNotificacoesPorUnidade);
-router.get("/notificacoes/:id", obterNotificacaoPorId);
-router.put("/notificacoes/:id/lida", marcarNotificacaoComoLida);
-router.delete("/notificacoes/:id", deletarNotificacao);
+router.post("/notificacoes",authMiddleware, criarNotificacao);
+router.get("/notificacoes",authMiddleware, listarNotificacoes);
+router.get("/notificacoes/usuario/:usuario_id",authMiddleware, listarNotificacoesPorUsuario);
+router.get("/notificacoes/unidade/:unidade_id",authMiddleware, listarNotificacoesPorUnidade);
+router.get("/notificacoes/:id",authMiddleware, obterNotificacaoPorId);
+router.put("/notificacoes/:id/lida",authMiddleware, marcarNotificacaoComoLida);
+router.delete("/notificacoes/:id", authMiddleware, deletarNotificacao);
 
 router.options("/", (req, res) => {
   res.setHeader("Allow", "POST, GET");
