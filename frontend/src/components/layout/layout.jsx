@@ -92,11 +92,6 @@ export default function Layout({ children }) {
           <Sidebar usuario={usuario} />
         </div>
 
-<<<<<<< HEAD
-       
-        <div className="conteudo bg-gray-50 rounded-2xl p-3 h-full justify-center align-center">
-          {children}
-=======
         {/* Conteúdo principal */}
         <div className="flex-1 flex flex-col p-4 gap-4">
           {/* Barra superior */}
@@ -127,7 +122,6 @@ export default function Layout({ children }) {
           <div className="conteudo bg-gray-50 rounded-2xl p-3 h-full sm:flex flex-col lg:gap-4">
             {children}
           </div>
->>>>>>> 6650b1c4b17a3844697712570c4f2eadddbf6a48
         </div>
       </div>
     </UserContext.Provider>

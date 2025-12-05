@@ -21,7 +21,7 @@ export default function Contas() {
     ];
 
     const [abrirModal, setAbrirModal] = useState(false);
-    const [conta, setConta] = useState([]);
+    const [conta, setConta] = useState([]); 
     const [novaConta, setNovaConta] = useState(estadoInicialConta);
     const [editarContaId, setEditarContaId] = useState(null);
     const [excluirContaId, setExcluirContaId] = useState(null);
@@ -239,24 +239,26 @@ export default function Contas() {
     };
 
     const confirmarExcluir = async () => {
-        try {
-            const res = await fetch(`${API_URL}/${excluirContaId}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+    try {
+        const token = localStorage.getItem("token"); 
 
-            if (!res.ok) throw new Error("Erro ao excluir conta");
-            alert("Conta excluída com sucesso!");
-            setAbrirModalExcluir(false);
-            setExcluirContaId(null);
-            fetchConta();
-        } catch (error) {
-            console.error(error);
-            alert("Erro ao excluir conta.");
-        }
-    };
+        const res = await fetch(`${API_URL}/${excluirContaId}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) throw new Error("Erro ao excluir conta");
+        alert("Conta excluída com sucesso!");
+        setAbrirModalExcluir(false);
+        setExcluirContaId(null);
+        fetchConta();
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao excluir conta.");
+    }
+};
 
     // --- FILTRAGEM ---
     const contaFiltradas = conta.filter((c) => {

@@ -73,6 +73,8 @@ const updateUsuarioSenha = async (id, novaSenhaHash) => {
     );
   } catch (err) {
     console.error("Erro ao atualizar senha do usuário:", err);
+  }
+};
 
     
 const getByDepartamentoWithUnidade = async (departamento_id) => {
@@ -88,5 +90,5 @@ const getByDepartamentoWithUnidade = async (departamento_id) => {
 };
 
 
-export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario, };
+
 export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario,updateUsuarioSenha, getByDepartamentoWithUnidade};

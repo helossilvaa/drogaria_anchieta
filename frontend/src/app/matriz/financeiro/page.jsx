@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import DashboardFinanceiro from '@/components/DashboardFinanceiro/page';
-import Contas from '@/components/contasFilial/page';
+import Contas from '@/components/contasMatriz/page';
 import Salarios from '@/components/salariosMatriz/page';
 import Vendas from '@/components/vendasFilial/page';
 import Transacoes from '@/components/transacoesFilial/page';
