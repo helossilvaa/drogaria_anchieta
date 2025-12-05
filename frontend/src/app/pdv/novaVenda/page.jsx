@@ -39,8 +39,10 @@ export default function NovaVendaPage() {
   const [erroCliente, setErroCliente] = useState("");
   const [loadingCliente, setLoadingCliente] = useState(false);
   const [itensCarrinho, setItensCarrinho] = useState([])
-  const [carrinho, setCarrinho] = useState([]); // <-- isso estava faltando
+  const [carrinho, setCarrinho] = useState([]);
   const [desconto_id, setDescontoId] = useState("");
+
+
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) {
@@ -63,22 +65,19 @@ export default function NovaVendaPage() {
   const API_URL = "http://localhost:8080/api/filiados";
 
   const resetCampos = () => {
-    // Cliente
     setClienteId("");
     setCliente(null);
     setCpfCliente("");
     setErroCliente("");
 
-    // Produtos / carrinho
     setFiliados([]);
     setItensCarrinho([]);
     setCarrinho([]);
     setListaVenda([]);
-    setProdutos(""); // se estiver usando para o input de produto
+    setProdutos("");
     setNomeProduto("");
     setCodigoBarras("");
 
-    // Pagamento e descontos
     setUnidadeId("");
     setTipoPagamentoId("");
     setPagamentoFeito(false);
@@ -87,24 +86,23 @@ export default function NovaVendaPage() {
     setDescontoId("");
     setCodigoDesconto("");
 
-    // Outros
     setMensagemFeedback({ type: "", text: "" });
     setAlerta(null);
     setPaginaAtual(1);
   };
 
+  const tiposPagamento = {
+        1: "PIX",
+        2: "CRÉDITO",
+        3: "DÉBITO",
+      };
 
   // Função para fechar o dialog e limpar
   const fecharDialog = () => {
-    resetCampos();      // limpa os campos
-    setMostrarNota(false); // fecha o dialog
+    resetCampos();
+    setMostrarNota(false); 
   };
-  const tiposPagamento = {
-    1: "PIX",
-    2: "CRÉDITO",
-    3: "DÉBITO",
-  };
-
+ 
   // Buscar cliente
   async function buscarCliente() {
     setErroCliente("");
@@ -143,7 +141,6 @@ export default function NovaVendaPage() {
         return;
       }
       if (!cliente_id || !unidade_id || !tipo_pagamento_id) {
-        console.error("Campos obrigatórios não preenchidos");
         toast.error("Preencha cliente, unidade, forma de pagamento e desconto!");
         return;
       }
@@ -153,16 +150,12 @@ export default function NovaVendaPage() {
         usuario_id: usuarioLogado.id,
         unidade_id: Number(unidade_id),
         tipo_pagamento_id: Number(tipo_pagamento_id),
-
         desconto_id: desconto_id ? Number(desconto_id) : null,
-        desconto_valor: Number(desconto),   // ⭐ ENVIA O VALOR REAL DESCONTADO
-
-        total: subtotalGeral - desconto,    // ⭐ total final após desconto
-
+        desconto_valor: Number(desconto), 
+        total: subtotalGeral - desconto,
         data,
         itens: itensCarrinho
       };
-
       const resposta = await fetch("http://localhost:8080/vendas", {
         method: "POST",
         headers: {
@@ -177,6 +170,8 @@ export default function NovaVendaPage() {
       const resultado = await resposta.json();
       console.log("Venda criada no backend:", resultado);
 
+    
+    
       // Simula processamento de pagamento
       setTimeout(() => {
         setIsLoading(false);
@@ -286,7 +281,7 @@ export default function NovaVendaPage() {
         if (!existe) {
            toast.error("CPF não encontrado no sistema de filiados.");
           setDesconto(0);
-          return; // ❌ não limpa o campo mais
+          return; 
         }
 
         valorDesconto = subtotalGeral * 0.2;
@@ -294,7 +289,7 @@ export default function NovaVendaPage() {
       } else {
         toast.error("Compra deve ser maior que R$100 para aplicar desconto por CPF.");
         setDesconto(0);
-        return; // ❌ não limpa
+        return; 
       }
     }
 
@@ -357,10 +352,9 @@ export default function NovaVendaPage() {
         console.error("ERRO CONVÊNIO:", err);
         toast.error(err.message || "Código ou Convênio inválido.");
         setDesconto(0);
-        return; // ❌ não limpa
+        return; 
       }
     }
-    // APLICA O DESCONTO, MAS NÃO LIMPA O CAMPO
     setDesconto(valorDesconto);
   };
 
@@ -488,6 +482,7 @@ export default function NovaVendaPage() {
       preco: Number(raw.preco || raw.preco_unitario || 0),
     };
   };
+
   const fetchTentativa = async (url) => {
     try {
       const r = await fetch(url);
@@ -498,6 +493,7 @@ export default function NovaVendaPage() {
       return null;
     }
   };
+  // Buscar produto
   const buscarProdutoPorNome = (nome) => {
     const code = String(nome ?? nomeProduto ?? "").trim();
     if (!code) {
@@ -576,6 +572,7 @@ export default function NovaVendaPage() {
 
   return (
     <Layout>
+      
       <div className="min-h-screen flex items-center justify-center py-10 relative">
         {alerta && (
           <div
@@ -729,6 +726,7 @@ export default function NovaVendaPage() {
                         </td>
                       </tr>
                     ))}
+                    
                   </tbody>
                 </table>
                 {totalPaginas > 1 && (
@@ -1080,7 +1078,7 @@ export default function NovaVendaPage() {
                         ? "Processando pagamento..."
                         : pagamentoFeito
                           ? "Pagamento Concluído!"
-                          : "Processo cancelado"}
+                          : "Caixa pronto para uma nova venda"}
                     </DialogTitle>
                   </DialogHeader>
                   {isLoading && (
@@ -1220,38 +1218,6 @@ export default function NovaVendaPage() {
             </CardContent>
           </Card>
         </div>
-
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Carrinho</h1>
-
-          {carrinho.length === 0 ? (
-            <p className="text-gray-500">Seu carrinho está vazio.</p>
-          ) : (
-            <div className="space-y-4">
-              {carrinho.map((item) => (
-                <div
-                  key={item.id}
-                  className="border p-4 rounded-lg shadow-sm flex justify-between items-center"
-                >
-                  <div>
-                    <h2 className="font-semibold">{item.nome}</h2>
-                    <p>Qtd: {item.quantidade}</p>
-                    <p>Preço: R${item.preco_unitario.toFixed(2)}</p>
-                  </div>
-
-                  {item.foto && (
-                    <img
-                      src={`http://localhost:8080/uploads/produtos/${item.foto}`}
-                      alt={item.nome}
-                      className="w-20 h-20 object-cover rounded"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>  
-
       </div>
 
 

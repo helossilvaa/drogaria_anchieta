@@ -6,10 +6,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast, Toaster } from "sonner";
-import Link from "next/link"; // IMPORTAÇÃO CORRETA
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 export default function ProdutosPage() {
   const API_CATEGORIAS = "http://localhost:8080/categorias";
@@ -17,7 +25,6 @@ export default function ProdutosPage() {
 
   const [categorias, setCategorias] = useState([]);
   const [produtos, setProdutos] = useState([]);
-  const [quantidades, setQuantidades] = useState({});
   const [carrinho, setCarrinho] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
@@ -88,65 +95,6 @@ export default function ProdutosPage() {
     carregarProdutos();
   }, []);
 
-  function alterarQuantidade(nome, tipo) {
-    setQuantidades((prev) => ({
-      ...prev,
-      [nome]: Math.max(1, (prev[nome] || 1) + (tipo === "mais" ? 1 : -1)),
-    }));
-  }
-
-  function adicionarAoCarrinho(produto) {
-    const quantidade = quantidades[produto.nome] || 1;
-
-    const novoItem = {
-      id: produto.id,
-      nome: produto.nome,
-      preco_unitario: produto.preco_unitario,
-      quantidade,
-      foto: produto.foto,
-    };
-
-    setCarrinho((prev) => {
-      const existente = prev.find((p) => p.id === produto.id);
-      let novoCarrinho;
-
-      if (existente) {
-        novoCarrinho = prev.map((p) =>
-          p.id === produto.id
-            ? { ...p, quantidade: p.quantidade + quantidade }
-            : p
-        );
-      } else {
-        novoCarrinho = [...prev, novoItem];
-      }
-
-      localStorage.setItem("carrinho", JSON.stringify(novoCarrinho));
-      return novoCarrinho;
-    });
-
-    setQuantidades((prev) => ({ ...prev, [produto.nome]: 1 }));
-
-    // Toast com foto do produto
-    toast.success(
-      <div className="flex items-center gap-3">
-        {produto.foto && (
-          <img
-            src={`http://localhost:8080/uploads/produtos/${produto.foto}`}
-            alt={produto.nome}
-            className="w-12 h-12 object-cover rounded"
-          />
-        )}
-        <div>
-          <p className="font-semibold">{produto.nome}</p>
-          <p className="text-sm">Adicionado ao carrinho!</p>
-        </div>
-      </div>
-    );
-
-    // Redireciona para novaVenda
-    router.push("/pdv/novaVenda");
-  }
-
   const produtosFiltrados = produtos.filter((p) => {
     if (categoriaSelecionada !== "0" && String(p.categoria_id) !== categoriaSelecionada) {
       return false;
@@ -170,7 +118,8 @@ export default function ProdutosPage() {
       <Toaster richColors position="top-right" />
 
       <div className="p-8 space-y-6">
-        {/* Topo: Busca + Carrinho */}
+
+        {/* Topo: busca */}
         <div className="flex justify-between items-center">
           <Input
             placeholder="Busque por um produto..."
@@ -178,42 +127,54 @@ export default function ProdutosPage() {
             onChange={(e) => setBusca(e.target.value)}
             className="w-80 border-pink-400 focus:ring-pink-300"
           />
-
-          <Link href="/pdv/novaVenda" className="relative">
-            <ShoppingCart
-              className="text-pink-600 hover:text-pink-500 cursor-pointer"
-              size={28}
-            />
-            {carrinho.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                {carrinho.reduce((total, p) => total + p.quantidade, 0)}
-              </span>
-            )}
-          </Link>
         </div>
 
-        {/* Categorias */}
-        <div className="flex gap-6 text-gray-600 font-medium border-b pb-2">
-          {categorias.map((c) => {
-            const isSelected = categoriaSelecionada === c.id.toString();
-            return (
-              <button
-                key={c.id}
-                onClick={() =>
-                  setCategoriaSelecionada(isSelected ? "0" : c.id.toString())
-                }
-                className={`transition-colors ${isSelected ? "text-pink-600 font-semibold" : "hover:text-pink-600"}`}
-              >
-                {c.categoria}
-              </button>
-            );
-          })}
+        {/* Categorias responsivas */}
+        <div className="w-full">
+
+          {/* Mobile: SELECT */}
+          <div className="sm:hidden mb-3">
+            <Select
+              value={categoriaSelecionada}
+              onValueChange={(v) => setCategoriaSelecionada(v)}
+            >
+              <SelectTrigger className="border-pink-400 focus:ring-pink-300">
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {categorias.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.categoria}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop: botões */}
+          <div className="hidden sm:flex gap-6 text-gray-600 font-medium border-b pb-2">
+            {categorias.map((c) => {
+              const isSelected = categoriaSelecionada === c.id.toString();
+              return (
+                <button
+                  key={c.id}
+                  onClick={() =>
+                    setCategoriaSelecionada(isSelected ? "0" : c.id.toString())
+                  }
+                  className={`transition-colors ${
+                    isSelected ? "text-pink-600 font-semibold" : "hover:text-pink-600"
+                  }`}
+                >
+                  {c.categoria}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Erro */}
-        {erro && (
-          <p className="text-red-600 text-center mt-4 font-medium">{erro}</p>
-        )}
+        {erro && <p className="text-red-600 text-center mt-4 font-medium">{erro}</p>}
 
         {/* Loader */}
         {loading && (
@@ -228,6 +189,7 @@ export default function ProdutosPage() {
             produtosExibidos.map((p) => (
               <Card key={p.id} className="shadow-md rounded-xl border border-pink-100">
                 <CardContent className="space-y-3">
+
                   {p.foto ? (
                     <img
                       src={`http://localhost:8080/uploads/produtos/${p.foto}`}
@@ -253,46 +215,29 @@ export default function ProdutosPage() {
                     )}
 
                     <span
-                      className={`w-4 h-4 rounded-full ml-2 mt-1 ${p.quantidade_estoque === 0
-                        ? "bg-red-500"
-                        : p.quantidade_estoque <= p.estoque_minimo
+                      className={`w-4 h-4 rounded-full ml-2 mt-1 ${
+                        p.quantidade_estoque === 0
+                          ? "bg-red-500"
+                          : p.quantidade_estoque <= p.estoque_minimo
                           ? "bg-yellow-400"
                           : "bg-green-500"
-                        }`}
+                      }`}
                       title={
                         p.quantidade_estoque === 0
                           ? "Esgotado"
                           : p.quantidade_estoque <= p.estoque_minimo
-                            ? "Estoque baixo"
-                            : "Em estoque"
+                          ? "Estoque baixo"
+                          : "Em estoque"
                       }
                     ></span>
                   </div>
 
-                  <p className="text-xl font-bold text-gray-800">R${Number(p.preco_unitario).toFixed(2)}</p>
+                  <p className="text-xl font-bold text-gray-800">
+                    R${Number(p.preco_unitario).toFixed(2)}
+                  </p>
 
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="flex items-center gap-2 border rounded-xl p-1">
-                      <button onClick={() => alterarQuantidade(p.nome, "menos")} className="p-1 rounded-full hover:bg-pink-100">
-                        <Minus size={16} />
-                      </button>
-                      <span className="w-6 text-center">{quantidades[p.nome] || 1}</span>
-                      <button onClick={() => alterarQuantidade(p.nome, "mais")} className="p-1 rounded-full hover:bg-pink-100">
-                        <Plus size={16} />
-                      </button>
-                    </div>
+                  <div className="mt-3"></div>
 
-                    <Button
-                      onClick={() => adicionarAoCarrinho(p)}
-                      disabled={p.quantidade_estoque === 0}
-                      className={`${p.quantidade_estoque === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-pink-600 hover:bg-pink-500 text-white"
-                        } rounded-xl px-4 py-2 font-semibold`}
-                    >
-                      {p.quantidade_estoque === 0 ? "Indisponível" : "COMPRAR"}
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -314,9 +259,11 @@ export default function ProdutosPage() {
             >
               Anterior
             </Button>
+
             <span className="font-semibold">
               Página {paginaAtual} de {totalPaginas}
             </span>
+
             <Button
               disabled={paginaAtual === totalPaginas}
               onClick={proximaPagina}
