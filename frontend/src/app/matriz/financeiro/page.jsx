@@ -2,9 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import DashboardFinanceiro from '@/components/DashboardFinanceiro/page';
-import Contas from '@/components/contasMatriz/page';
-import Salarios from '@/components/salariosMatriz/page';
-import Vendas from '@/components/vendasFilial/page';
 import Transacoes from '@/components/transacoesFilial/page';
 import Layout from '@/components/layout/layout';
 
@@ -13,7 +10,7 @@ export default function Financeiro() {
   const containerRef = useRef(null);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
-  const items = ['Dashboard', 'Salários', 'Contas', 'Vendas', 'Transações'];
+  const items = ['Dashboard', 'Transações'];
 
   useEffect(() => {
     const container = containerRef.current;
@@ -30,9 +27,6 @@ export default function Financeiro() {
 
  const contentMap = {
   0: <DashboardFinanceiro/>,
-  1: <Salarios/>,
-  2: <Contas/>,
-  3: <Vendas/>,
   4: <Transacoes/>
 }
 
