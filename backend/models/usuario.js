@@ -64,5 +64,18 @@ const obterStatusUsuario = async (id) => {
     }
 };
 
+const updateUsuarioSenha = async (id, novaSenhaHash) => {
+  try {
+    return await update(
+      'usuarios',
+      { senha: novaSenhaHash },
+      `id = ${id}`
+    );
+  } catch (err) {
+    console.error("Erro ao atualizar senha do usuário:", err);
+    throw err;
+  }
+};
 
-export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario};
+
+export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario, updateUsuarioSenha};

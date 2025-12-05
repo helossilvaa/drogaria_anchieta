@@ -8,7 +8,8 @@ import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "../../app/loading";
-import React from "react";  
+import React from "react";
+import { UserContext } from "@/components/context/userContext";
 
 export default function Layout({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -19,47 +20,43 @@ export default function Layout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUsuario= async () => {
+    const fetchUsuario = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return router.push("/");
 
         const decoded = jwtDecode(token);
-
-        // Verifica expiração
         if (decoded.exp < Date.now() / 1000) {
           localStorage.removeItem("token");
           return router.push("/");
         }
 
-        // Verifica departamento permitido
         const allowed = ["diretor geral", "diretor administrativo", "gerente", "caixa"];
         if (!allowed.includes(decoded.departamento.toLowerCase())) {
           localStorage.removeItem("token");
           return router.push("/");
         }
 
-        // Fetch do usuário
         const usuarioRes = await fetch(`${API_URL}/usuarios/${decoded.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!usuarioRes.ok) throw new Error("Usuário não encontrado");
         const usuarioData = await usuarioRes.json();
 
-        // Fetch do funcionário relacionado
-        const funcionarioId = usuarioData.funcionario_id;
-        const funcionarioRes = await fetch(`${API_URL}/funcionarios/${funcionarioId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!funcionarioRes.ok) throw new Error("Funcionário não encontrado");
-        const funcionarioData = await funcionarioRes.json();
+        let funcionarioData = null;
+        if (usuarioData.funcionario_id) {
+          const funcionarioRes = await fetch(`${API_URL}/funcionarios/${usuarioData.funcionario_id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (funcionarioRes.ok) {
+            funcionarioData = await funcionarioRes.json();
+          }
+        }
 
-        // Combina os dados
         setUsuario({
           ...usuarioData,
           funcionario: funcionarioData,
         });
-
       } catch (err) {
         console.error("Erro ao carregar usuário:", err);
         setErro(err.message);
@@ -74,7 +71,7 @@ export default function Layout({ children }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="loading"><Loading/></div>
+        <Loading />
       </div>
     );
   }
@@ -88,48 +85,45 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen p-2">
-      <Sidebar usuario={usuario} className="fixed" />
-      <div className="flex-1 flex flex-col p-6 pt-2 gap-4">
-        {/* Barra superior */}
-        <div className="flex items-center justify-end gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="border rounded-full pl-9 pr-15 py-1 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5"
-            />
-          </div>
-
-          <div className="notificacoes relative cursor-pointer p-2">
-            <PopoverNotificacoes />
-          </div>
-
-          <div className="profile">
-            {usuario && (
-              <ComboboxDemo
-                usuario={usuario}
-                onFotoAtualizada={(novaFoto, isFuncionario = false) => {
-                  if (isFuncionario && usuario.funcionario) {
-                    setUsuario(prev => ({
-                      ...prev,
-                      funcionario: { ...prev.funcionario, foto: novaFoto }
-                    }));
-                  } else {
-                    setUsuario(prev => ({ ...prev, foto: novaFoto }));
-                  }
-                }}
-              />
-            )}
-          </div>
+    <UserContext.Provider value={usuario}>
+      <div className="flex flex-col lg:flex-row min-h-screen p-2 gap-2">
+        {/* Sidebar */}
+        <div className="lg:w-64 flex-shrink-0">
+          <Sidebar usuario={usuario} />
         </div>
 
-       
-        <div className="conteudo bg-gray-50 rounded-2xl p-3 h-full sm:flex justify-center align-center">
-          {children}
+        {/* Conteúdo principal */}
+        <div className="flex-1 flex flex-col p-4 gap-4">
+          {/* Barra superior */}
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-3">
+          
+
+            <div className="flex items-center gap-3 mt-2 sm:mt-0">
+              <PopoverNotificacoes />
+              {usuario && (
+                <ComboboxDemo
+                  usuario={usuario}
+                  onFotoAtualizada={(novaFoto, isFuncionario = false) => {
+                    if (isFuncionario && usuario.funcionario) {
+                      setUsuario(prev => ({
+                        ...prev,
+                        funcionario: { ...prev.funcionario, foto: novaFoto }
+                      }));
+                    } else {
+                      setUsuario(prev => ({ ...prev, foto: novaFoto }));
+                    }
+                  }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Conteúdo */}
+          <div className="conteudo bg-gray-50 rounded-2xl p-3 h-full sm:flex flex-col lg:gap-4">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </UserContext.Provider>
   );
 }

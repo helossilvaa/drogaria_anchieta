@@ -1,6 +1,6 @@
 import express from 'express';
 import { criarFuncionarioController, listarFuncionariosController, obterFuncionarioIdController,
-    deletarFuncionarioController, atualizarFuncionarioController, mudarStatusFuncionarioController} from '../controllers/funcionariosController.js';
+    deletarFuncionarioController, atualizarFuncionarioController, mudarStatusFuncionarioController, obterFuncionariosUnidadeController} from '../controllers/funcionariosController.js';
 
 import authMiddleware from '../middlewares/authMiddleware.js';
 import upload from "../middlewares/upload.js";
@@ -9,7 +9,7 @@ const router = express.Router();
  
 router.post('/', authMiddleware, upload.single("foto"), criarFuncionarioController);
 router.get('/', authMiddleware, listarFuncionariosController);
-router.get('/unidade', authMiddleware);
+router.get('/unidade', authMiddleware, obterFuncionariosUnidadeController);
 router.get('/:id', authMiddleware, obterFuncionarioIdController);
 router.delete('/:id', authMiddleware, deletarFuncionarioController);
 router.patch('/:id', authMiddleware, upload.single("foto"), atualizarFuncionarioController);

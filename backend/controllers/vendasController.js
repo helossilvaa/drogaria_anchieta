@@ -4,7 +4,7 @@ import{
     atualizarVenda,
     criarVenda
 } from "../models/vendas.js";
-
+import { query } from "../config/database.js";
 // Lista todas as vendas
 const listarVendaController = async (req, res) => {
     try {
@@ -97,10 +97,29 @@ const atualizarVendaController = async (req, res) =>{
         res.status(500).json({mensagem: 'Erro ao atualizar'});
     }
 };
+const evolucaoVendasMensalController = async (req, res) => {
+  try {
+    const sql = `
+      SELECT DATE_FORMAT(data, '%Y-%m') AS mes,
+             COALESCE(SUM(total), 0) AS total_vendas
+      FROM vendas
+      GROUP BY mes
+      ORDER BY mes ASC
+    `;
+
+    const dados = await query(sql);
+    res.status(200).json(dados);
+  } catch (error) {
+    console.error("Erro ao gerar evolução mensal de vendas:", error);
+    res.status(500).json({ mensagem: "Erro ao gerar evolução mensal de vendas" });
+  }
+};
+
 
 export{
     criarVendaController,
     listarVendaController,
     obterVendaPorIDController,
-    atualizarVendaController
+    atualizarVendaController,
+    evolucaoVendasMensalController
 };

@@ -47,7 +47,7 @@ const atualizarUnidade = async (id, atualizarUnidade) => {
 //deletar o usuario
 const deletarUnidade = async (id) => {
     try {
-        return await deleteRecord('unidade', `id = '${id}'`);
+        return await deleteRecord('unidade', `id = ${id}`);
     } catch (error) {
         console.error('Erro ao excluir unidade: ', error);
         throw error;

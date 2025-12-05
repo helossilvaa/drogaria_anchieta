@@ -1,4 +1,38 @@
-import { create, readAll, read, update, deleteRecord } from '../config/database.js';
+import { create, update, deleteRecord, readJoin } from '../config/database.js';
+
+// listar todos os funcionários com o nome do departamento
+const listarFuncionarios = async () => {
+  try {
+    const query = `
+      SELECT f.*, d.departamento AS departamentoNome, u.id AS usuarioId
+      FROM funcionarios f
+      LEFT JOIN departamento d ON f.departamento_id = d.id
+      LEFT JOIN usuarios u ON u.funcionario_id = f.id
+    `;
+    return await readJoin(query);
+  } catch (error) {
+    console.error("Erro ao listar funcionários:", error);
+    throw error;
+  }
+};
+
+
+// obter funcionário por ID com departamento
+const obterFuncionarioId = async (id) => {
+  try {
+    const query = `
+      SELECT f.*, d.departamento AS departamentoNome
+      FROM funcionarios f
+      LEFT JOIN departamento d ON f.departamento_id = d.id
+      WHERE f.id = ?
+    `;
+    const result = await readJoin(query, [id]);
+    return result[0] || null;
+  } catch (error) {
+    console.error("Erro ao obter funcionário por ID:", error);
+    throw error;
+  }
+};
 
 // criar funcionário
 const criarFuncionario = async (funcionarioData) => {
@@ -6,26 +40,6 @@ const criarFuncionario = async (funcionarioData) => {
     return await create('funcionarios', funcionarioData);
   } catch (error) {
     console.error('Erro ao criar funcionário:', error);
-    throw error;
-  }
-};
-
-// listar todos
-const listarFuncionarios = async () => {
-  try {
-    return await readAll('funcionarios');
-  } catch (error) {
-    console.error('Erro ao listar funcionários:', error);
-    throw error;
-  }
-};
-
-// obter por ID
-const obterFuncionarioId = async (id) => {
-  try {
-    return await read('funcionarios', `id = ${id}`);
-  } catch (error) {
-    console.error('Erro ao obter funcionário:', error);
     throw error;
   }
 };
@@ -50,21 +64,20 @@ const deletarFuncionario = async (id) => {
   }
 };
 
+// mudar status
 const mudarStatusFuncionario = async (id, novoStatus) => {
   try {
-      const dadosParaAtualizar = { status: novoStatus };
-      const usuarioid = `id = ${id}`;
-      return await update('usuarios', dadosParaAtualizar, usuarioid);
+    return await update('funcionarios', { status: novoStatus }, `id = ${id}`);
   } catch (error) {
-      console.error('Erro ao mudar status do funcionário:', error);
-      throw error;
+    console.error('Erro ao mudar status do funcionário:', error);
+    throw error;
   }
 };
 
 export {
-  criarFuncionario,
   listarFuncionarios,
   obterFuncionarioId,
+  criarFuncionario,
   atualizarFuncionario,
   deletarFuncionario,
   mudarStatusFuncionario
