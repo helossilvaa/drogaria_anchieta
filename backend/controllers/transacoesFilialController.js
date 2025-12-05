@@ -12,7 +12,7 @@ export async function listarSomaSalariosMes(req, res) {
       return res.json({ mensagem: "Nenhum salário pago este mês." });
     }
 
-    res.json(resultado[0]);
+    res.json(resultado[0]); 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro ao somar salários do mês" });
@@ -23,7 +23,7 @@ export async function listarSomaSalariosMes(req, res) {
 export async function listarTransacoes(req, res) {
   try {
 
-    const unidadeId = req.usuarioUnidadeId;;
+    const unidadeId = req.user.unidade_id;
 
     const transacoes = await getTransacoesUnidade(unidadeId);
 
@@ -33,7 +33,7 @@ export async function listarTransacoes(req, res) {
     res.status(500).json({ error: "Erro ao buscar transações" });
   }
 }
-
+ 
 
 export async function listarCategoriasTransacoes(req, res) {
   try {

@@ -1,4 +1,5 @@
 import { Conta } from "../models/contasFilial.js";
+import { create } from "../config/database.js";
 
 export const criarConta = async (req, res) => {
   const { nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, status } = req.body;
@@ -11,9 +12,12 @@ export const criarConta = async (req, res) => {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
 
-  const statusBanco = status === true ? "pendente" : "paga";
+  // status === true  = pendente
+  // status === false = pago
+  const statusBanco = status === true ? "pendente" : "pago";
 
   try {
+    // Verifica duplicidade
     const contasExistentes = await Conta.getAllByUnidade(req.user.unidade_id);
     const lista = Array.isArray(contasExistentes) ? contasExistentes : [];
 
@@ -25,6 +29,7 @@ export const criarConta = async (req, res) => {
       return res.status(409).json({ message: "Já existe uma conta com esse nome nesta unidade." });
     }
 
+    // INSERE A CONTA
     const insertId = await Conta.create({
       nomeConta,
       categoria,
@@ -36,6 +41,28 @@ export const criarConta = async (req, res) => {
       unidade_id: req.user.unidade_id,
     });
 
+    if (statusBanco === "pago") {
+      console.log("🔄 Criando pagamento e lançamento porque a conta já foi criada como paga.");
+
+      await create("pagamentos_contas", {
+        conta_id: insertId,
+        status_pagamento: "pago",
+        data_pagamento: new Date(),
+        valor_pago: valor,
+        unidade_id: req.user.unidade_id
+      });
+
+      await create("transacoes", {
+        data_lancamento: new Date(),
+        tipo_movimento: "SAIDA",
+        valor: valor,
+        descricao: `Pagamento da conta: ${nomeConta}`,
+        unidade_id: req.user.unidade_id,
+        categoria_transacao_id: 6, 
+        origem: "conta"
+      });
+    }
+
     return res.status(201).json({ message: "Conta cadastrada com sucesso!", id: insertId });
 
   } catch (err) {
@@ -43,7 +70,6 @@ export const criarConta = async (req, res) => {
     return res.status(500).json({ message: "Erro ao cadastrar conta." });
   }
 };
-
 
 export const listarConta = async (req, res) => {
   try {
@@ -54,16 +80,17 @@ export const listarConta = async (req, res) => {
     }
 
     let contas = await Conta.getAllByUnidade(unidadeId);
-
+ 
     if (!Array.isArray(contas)) {
       contas = contas ? [contas] : [];
     }
 
-    const contasConvertidas = contas.map((f) => ({
-      ...f,
-      status: f.status === "pendente",
-      conta_pdf: f.conta_pdf ? Buffer.from(f.conta_pdf).toString("base64") : null,
-    }));
+   const contasConvertidas = contas.map((f) => ({
+  ...f,
+  status: f.status_pagamento === "pendente",
+  conta_pdf: f.conta_pdf ? Buffer.from(f.conta_pdf).toString("base64") : null,
+}));
+
 
     return res.status(200).json(contasConvertidas);
 
@@ -73,7 +100,6 @@ export const listarConta = async (req, res) => {
   }
 };
 
-
 export const editarConta = async (req, res) => {
   const { id } = req.params;
   const { nomeConta, categoria, dataPostada, dataVencimento, valor, conta_pdf, status } = req.body;
@@ -82,12 +108,14 @@ export const editarConta = async (req, res) => {
     return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
   }
 
-  const statusBanco = status === true ? "pendente" : "paga";
+  // status true = pendente | false = pago
+  const statusBanco = status === true ? "pendente" : "pago";
 
   try {
     const unidadeId = req.user?.unidade_id;
-    const contasExistentes = await Conta.getAllByUnidade(unidadeId);
 
+    // Evita nomes duplicados
+    const contasExistentes = await Conta.getAllByUnidade(unidadeId);
     const nomeDuplicado = contasExistentes.find(
       (c) =>
         c.nomeConta.toLowerCase().trim() === nomeConta.toLowerCase().trim() &&
@@ -112,6 +140,30 @@ export const editarConta = async (req, res) => {
     }
 
     await Conta.update(id, dadosParaAtualizar);
+
+    // 🔥🔥🔥 SE STATUS = PAGO, LANÇAR NAS TABELAS AUTOMATICAMENTE
+    if (statusBanco === "pago") {
+
+      // Registrar pagamento
+      await create("pagamentos_contas", {
+        conta_id: id,
+        status_pagamento: "pago",
+        data_pagamento: new Date(),
+        valor_pago: valor,
+        unidade_id: unidadeId
+      });
+
+      // Registrar transação de saída
+      await create("transacoes", {
+        data_lancamento: new Date(),
+        tipo_movimento: "SAIDA",
+        valor: valor,
+        descricao: `Pagamento da conta: ${nomeConta}`,
+        unidade_id: unidadeId,
+        categoria_transacao_id: 6,
+        origem: "conta"
+      });
+    }
 
     return res.status(200).json({ message: "Conta atualizada com sucesso!" });
 
@@ -140,7 +192,6 @@ export const excluirConta = async (req, res) => {
   }
 };
 
-
 export const downloadPDF = async (req, res) => {
   const { id } = req.params;
 
@@ -164,3 +215,36 @@ export const downloadPDF = async (req, res) => {
     res.status(500).send("Erro ao carregar PDF");
   }
 };
+
+export const pagarConta = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pagamento = {
+      conta_id: id,
+      status_pagamento: "pago",
+      data_pagamento: new Date(),
+      valor_pago: req.body.valor,
+      unidade_id: req.user.unidade_id
+    };
+
+    await create("pagamentos_contas", pagamento);
+
+    await create("transacoes", {
+      data_lancamento: new Date(),
+      tipo_movimento: "SAIDA",
+      valor: req.body.valor,
+      descricao: "Pagamento de conta",
+      unidade_id: req.user.unidade_id,
+      categoria_transacao_id: 6,
+      origem: "conta"
+    });
+
+    return res.status(200).json({ message: "Conta paga e lançada nas transações!" });
+
+  } catch (error) {
+    console.error("Erro ao pagar conta:", error);
+    return res.status(500).json({ message: "Erro ao pagar conta." });
+  }
+};
+ 

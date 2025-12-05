@@ -31,7 +31,6 @@ export default function Transacoes() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
-
   const API = "http://localhost:8080/api/transacoes";
   const API_CATEGORIA = "http://localhost:8080/api/categoria-transacoes";
 
@@ -55,7 +54,10 @@ export default function Transacoes() {
 
   const fetchCategorias = async () => {
     try {
-      const res = await fetch(API_CATEGORIA);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_CATEGORIA, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       setCategorias(data);
     } catch (e) {
@@ -149,24 +151,71 @@ export default function Transacoes() {
     setAbrirModal(true);
   };
 
+  // === Cálculo de Entradas, Saídas e Saldo ===
+  const totalEntradas = transacoes
+    .filter((t) => t.tipo_movimento === "ENTRADA")
+    .reduce((acc, t) => acc + Number(t.valor), 0);
+
+  const totalSaidas = transacoes
+    .filter((t) => t.tipo_movimento === "SAIDA")
+    .reduce((acc, t) => acc + Number(t.valor), 0);
+
+  const saldo = totalEntradas - totalSaidas;
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
+        <Separator
+          orientation="vertical"
+          className="mr-2 data-[orientation=vertical]:h-4"
+        />
+      </header>
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="  p-4 flex flex-col  ">
+            <span className="text-gray-900 font-semibold">Saldo</span>
+            <span
+              className={`font-bold text-3xl ${
+                saldo >= 0 ? "text-green-700" : "text-red-700"
+              }`}
+            >
+              R${" "}
+              {saldo.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+            <button
+            onClick={abrirNovaTransacao}
+            className="px-4 py-2 bg-blue-600 text-white rounded ml-auto"
+          >
+            + Nova Transação
+          </button>
           </div>
+        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+          <div className="bg-muted/50 aspect-video rounded-xl" >
+          <span className="text-gray-700 font-semibold">Entradas</span>
+            <span className="text-green-700 font-bold text-2xl">
+              R${" "}
+              {totalEntradas.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+          <div className="bg-muted/50 aspect-video rounded-xl" >
+          <span className="text-gray-700 font-semibold">Saídas</span>
+            <span className="text-red-700 font-bold text-2xl">
+              R${" "}
+              {totalSaidas.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+        </div>
 
         {/* ✅ FILTROS (PADRÃO CONTAS) */}
         <div className="flex gap-4 flex-wrap items-center mb-5">
-
           <select
             value={filtroCategoria}
             onChange={(e) => setFiltroCategoria(e.target.value)}
@@ -197,13 +246,6 @@ export default function Transacoes() {
             <option value="ENTRADA">Entrada</option>
             <option value="SAIDA">Saída</option>
           </select>
-
-          <button
-            onClick={abrirNovaTransacao}
-            className="px-4 py-2 bg-blue-600 text-white rounded ml-auto"
-          >
-            + Nova Transação
-          </button>
         </div>
 
         {/* ✅ TABELA */}
@@ -228,9 +270,7 @@ export default function Transacoes() {
                 <td className="p-2">{t.categoria_nome}</td>
                 <td className="p-2">{t.data_lancamento}</td>
                 <td className="p-2">{t.tipo_movimento}</td>
-                <td className="p-2">
-                  R$ {Number(t.valor).toFixed(2)}
-                </td>
+                <td className="p-2">R$ {Number(t.valor).toFixed(2)}</td>
                 <td className="p-2">{t.descricao}</td>
                 <td className="p-2">{t.origem}</td>
 
@@ -283,9 +323,7 @@ export default function Transacoes() {
           ))}
 
           <button
-            onClick={() =>
-              setPaginaAtual((p) => Math.min(totalPaginas, p + 1))
-            }
+            onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
             className="border px-3 py-1 rounded"
           >
             Próxima
@@ -296,7 +334,6 @@ export default function Transacoes() {
         {abrirModal && (
           <div className="fixed inset-0 bg-black/40 flex justify-center items-center p-4 z-50">
             <div className="bg-white rounded-xl p-6 w-full max-w-lg relative">
-
               <h2 className="text-xl font-bold mb-4">
                 {editarId ? "Editar Transação" : "Nova Transação"}
               </h2>
@@ -361,7 +398,6 @@ export default function Transacoes() {
               >
                 ×
               </button>
-
             </div>
           </div>
         )}
@@ -370,10 +406,7 @@ export default function Transacoes() {
         {abrirModalExcluir && (
           <div className="fixed inset-0 bg-black/40 flex justify-center items-center p-4 z-50">
             <div className="bg-white rounded-xl p-6 w-full max-w-md">
-
-              <h2 className="text-xl font-bold mb-4">
-                Confirmar Exclusão
-              </h2>
+              <h2 className="text-xl font-bold mb-4">Confirmar Exclusão</h2>
 
               <div className="flex justify-end gap-4 mt-4">
                 <button
@@ -390,11 +423,11 @@ export default function Transacoes() {
                   Excluir
                 </button>
               </div>
-
             </div>
           </div>
         )}
-      <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+
+        <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
       </div>
     </>
   );

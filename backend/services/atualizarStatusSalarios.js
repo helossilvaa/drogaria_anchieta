@@ -4,10 +4,7 @@ export async function atualizarStatusSalarios() {
   const hoje = new Date();
   const dia = hoje.getDate();
 
-  // =======================
-  // 1️⃣ DIA 5 - MARCA COMO PAGO
-  // =======================
-  if (dia === 5) {
+   if (dia === 5) {
     console.log("✔️ Dia 5: marcando salários como PAGOS");
 
     await query(`

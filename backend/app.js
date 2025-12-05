@@ -18,11 +18,7 @@ import descontosRotas from "./routes/descontosRotas.js";
 import fornecedoresRotas from './routes/fornecedoresRoutes.js';
 import contasFilialRotas from './routes/contasFilialRotas.js';
 import produtosRotas from './routes/produtosRotas.js';
-
-// import salariosRotas from './routes/salariosRotas.js';
-
 import salariosRotas from './routes/salariosFilialRotas.js';
-
 import departamentosRotas from './routes/departamentoRotas.js';
 import franquiaRotas from './routes/franquiasRotas.js';
 import funcionariosRotas from './routes/funcionariosRotas.js';
@@ -33,6 +29,14 @@ import movimentacaoEstoqueRotas from './routes/movimentacaoEstoqueRotas.js';
 import notificacoesRotas from './routes/notificacoesRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
 import UploadRotas from './middlewares/upload.js';
+import vendasFilial from './routes/vendasFilialRotas.js'
+import transacoesRotas from './routes/transacoesFilialRotas.js';
+import {registrarPagamentoMensal} from './services/registrarPagamento.js';
+import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
+import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
+import { pagarContasAutomaticamente } from "./services/pagarConta.js";
+import './services/transacaoVendas.js';
+
 
 dotenv.config();
 
@@ -76,13 +80,9 @@ app.use("/api", descontosRotas);
 app.use('/api', fornecedoresRotas);
 app.use('/api', contasFilialRotas);
 app.use ('/produtos', produtosRotas);
-
-// app.use('/api', salariosRotas);
-
 app.use('/api', salariosRotas);
-// app.use('/api', transacoesRotas);
-// app.use('/api', salariosMatrizRotas);
-
+app.use('/api', transacoesRotas);
+app.use('/api/vendas', vendasFilial);
 app.use('/departamento', departamentosRotas);
 app.use('/unidade', franquiaRotas);
 app.use('/funcionarios', funcionariosRotas);
@@ -94,8 +94,6 @@ app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 
 app.use("/notificacoes", notificacoesRotas);
-
-// app.use('/api', transacoesRotas);
 
 
 app.get('/health', (req, res) => {
@@ -119,7 +117,6 @@ const server = app.listen(porta, () => {
 });
 
 
-
 cron.schedule("0 5 * * *", async () => {
   console.log("Verificando pagamentos do dia 5...");
   await registrarPagamentoMensal();
@@ -129,6 +126,11 @@ cron.schedule("0 5 * * *", async () => {
 cron.schedule("0 7 * * *", async () => {
   console.log("Atualizando status dos salários...");
   await atualizarStatusSalarios();
+});
+
+cron.schedule("0 3 * * *", async () => {
+  console.log("⏱ Executando pagamento automático de contas...");
+  await pagarContasAutomaticamente();
 });
 
 

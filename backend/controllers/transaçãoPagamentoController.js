@@ -16,7 +16,7 @@ export async function transacaoPagamento() {
   if (somaPorUnidade.length === 0) {
     console.log("⚠️ Nenhum salário pago este mês.");
     return;
-  }
+  } 
 
   console.log("Resultado:", somaPorUnidade);
 }

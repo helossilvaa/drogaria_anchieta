@@ -240,6 +240,19 @@ CREATE TABLE contas (
   FOREIGN KEY (unidade_id) REFERENCES unidade (id)
 );
 
+CREATE TABLE pagamentos_contas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conta_id INT NOT NULL,
+    valor_pago DECIMAL(10,2) NOT NULL,
+    data_pagamento DATE NOT NULL,
+    status_pagamento ENUM('pendente','pago') DEFAULT 'pago',
+    unidade_id INT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conta_id) REFERENCES contas(id),
+    FOREIGN KEY (unidade_id) REFERENCES unidade(id)
+);
+
+
 
 CREATE TABLE  salarios (
   id INT AUTO_INCREMENT PRIMARY KEY,

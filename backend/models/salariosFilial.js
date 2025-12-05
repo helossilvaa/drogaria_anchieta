@@ -22,7 +22,6 @@ export const Salario = {
     FROM salarios s
     JOIN funcionarios u ON s.id_funcionario = u.id
     JOIN departamento d ON s.departamento_id = d.id
-    WHERE d.departamento IN ('Gerente', 'Caixa')
   `;
 
   if (unidadeFiltro) {

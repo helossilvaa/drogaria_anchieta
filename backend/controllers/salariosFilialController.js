@@ -16,7 +16,7 @@ function calcularProximoDia5() {
     return new Date(ano, mes + 1, 5);
   }
 
-  return dia5;
+  return dia5; 
 }
 
 export const criarSalario = async (req, res) => {
@@ -59,7 +59,7 @@ export const criarSalario = async (req, res) => {
 
 export const listarSalarios = async (req, res) => {
   try {
-    const unidade_id = req.usuarioUnidadeId;
+    const unidade_id = req.user.unidade_id; 
 
     const salarios = await Salario.getAll(unidade_id);
     return res.status(200).json(salarios);

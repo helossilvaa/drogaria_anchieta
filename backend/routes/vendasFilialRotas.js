@@ -1,18 +1,12 @@
 import express from 'express';
 import {
-    criarVendaController,
-    listarVendaController,
-    atualizarVendaController,
-    obterVendaPorIDController
-} from '../controllers/vendasController.js';
+    listarVendaController
+} from '../controllers/vendasFilialController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', authMiddleware, criarVendaController);
 router.get('/', authMiddleware, listarVendaController);
-router.get('/:id', authMiddleware, obterVendaPorIDController);
-router.put('/:id', authMiddleware, atualizarVendaController);
 
 router.options('/', (req, res) => {
     res.setHeader('Allow', 'POST, GET');

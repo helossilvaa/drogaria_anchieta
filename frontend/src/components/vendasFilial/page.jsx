@@ -16,14 +16,14 @@ export default function Vendas() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
-  const API_URL = "http://localhost:8080/vendas";
+  const API_URL = "http://localhost:8080/api/vendas";
 
   const formatarValor = (valor) =>
     valor !== null && valor !== undefined
       ? Number(valor).toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        })
+        style: "currency",
+        currency: "BRL",
+      })
       : "—";
 
   const getNomeCliente = (id) => {
@@ -49,27 +49,43 @@ export default function Vendas() {
     return p ? p.tipo : "—";
   };
 
-  const getDescontoValor = (id) => {
-    const d = descontos.find((i) => i.id === id);
-    return d ? d.desconto : 0;
+  const getDescontoValor = (desconto_id) => {
+    if (!desconto_id || descontos.length === 0) return 0;
+    const descontoObj = descontos.find((d) => d.id === desconto_id);
+    return descontoObj ? Number(descontoObj.desconto) : 0;
   };
 
+
+
+
   const fetchVendas = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setVendas(Array.isArray(data) ? data : []);
-    } catch {
-      setVendas([]);
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Token não encontrado no localStorage");
+      return;
     }
-  };
+
+    const res = await fetch(API_URL, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    setVendas(Array.isArray(data) ? data : []);
+  } catch {
+    setVendas([]);
+  }
+};
+
 
   const carregarListas = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token não encontrado no localStorage");
+        return;
+      }
+
       const urls = [
         { key: "clientes", url: "http://localhost:8080/api/filiados" },
         { key: "usuarios", url: "http://localhost:8080/usuarios" },
@@ -108,8 +124,8 @@ export default function Vendas() {
   };
 
   const vendasFiltradas = vendas.filter((v) => {
-    const desconto = getDescontoValor(v.desconto_id) || 0;
-    const subtotal = v.total + desconto;
+    const desconto = getDescontoValor(v.desconto_id);
+    const subtotal = Number(v.total) + desconto;
 
     const passaValor = subtotal <= filtroValor; // filtro único
     const passaData = !filtroData || (v.data && v.data.startsWith(filtroData));
@@ -179,8 +195,11 @@ export default function Vendas() {
 
           <tbody>
             {vendasPagina.map((v) => {
-              const desconto = getDescontoValor(v.desconto_id) || 0;
-              const subtotal = v.total + desconto;
+
+              const desconto = getDescontoValor(v.desconto_id);
+              const subtotal = Number(v.total) + desconto;
+
+
 
               return (
                 <tr key={v.id} className="border-t hover:bg-gray-50">
@@ -188,7 +207,7 @@ export default function Vendas() {
                   <td className="p-2">{getNomeUsuario(v.usuario_id)}</td>
                   <td className="p-2">{getNomeUnidade(v.unidade_id)}</td>
                   <td className="p-2">{formatarValor(subtotal)}</td>
-                  <td className="p-2">{formatarValor(desconto)}</td>
+                  <td className="p-2">{formatarValor(getDescontoValor(v.desconto_id))}</td>
                   <td className="p-2">{formatarValor(v.total)}</td>
                   <td className="p-2">{getPagamento(v.tipo_pagamento_id)}</td>
                   <td className="p-2">
@@ -214,9 +233,8 @@ export default function Vendas() {
               <button
                 key={i}
                 onClick={() => mudarPagina(i + 1)}
-                className={`px-3 py-1 border rounded ${
-                  paginaAtual === i + 1 ? "bg-blue-300" : ""
-                }`}
+                className={`px-3 py-1 border rounded ${paginaAtual === i + 1 ? "bg-blue-300" : ""
+                  }`}
               >
                 {i + 1}
               </button>
