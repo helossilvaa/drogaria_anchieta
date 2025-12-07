@@ -1,3 +1,5 @@
+"use client";
+
 import Layout from "@/components/layout/layout";
 import {
   Breadcrumb,
@@ -7,8 +9,32 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 export default function Page() {
+  const [totalFuncionarios, setTotalFuncionarios] = useState(0);
+  const getToken = () => localStorage.getItem("token");
+  const API_URL = "http://localhost:8080";
+
+  useEffect(() => {
+  async function carregarQuantidade() {
+    try {
+      const res = await fetch(`${API_URL}/funcionarios/unidade/quantidade`, {
+        method: "GET",
+        credentials: "include",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      const data = await res.json();
+      setTotalFuncionarios(data.quantidade);
+    } catch (error) {
+      console.error("Erro ao buscar quantidade da unidade:", error);
+    }
+  }
+
+  carregarQuantidade();
+}, []);
+
   return (
     <Layout>
 
@@ -32,7 +58,7 @@ export default function Page() {
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <p className="text-sm text-gray-500">Total de funcionários da unidade</p>
-              <p className="text-2xl font-bold">20</p>
+              <p className="text-2xl font-bold">{totalFuncionarios}</p>
             </CardContent>
           </Card>
         </div>

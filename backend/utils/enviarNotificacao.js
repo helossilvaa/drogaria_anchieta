@@ -1,59 +1,64 @@
-import { create } from "../config/database.js";
-import { NotificationService } from "../services/notificationService.js"; 
+import { NotificationService } from "../services/notificationService.js";
 
 /**
  * Envia uma notificação para matriz, filial ou ambos.
- * * @param {Object} data
- * @param {string} data.tipo        
- * @param {string} data.titulo
- * @param {string} data.mensagem
- * @param {"matriz" | "filial" | "todos"} data.destino
- * @param {number|null} data.usuarioId 
  */
 export const enviarNotificacao = async ({
   tipo,
   titulo,
   mensagem,
   destino,
-  usuarioId = null
+  usuarioId = null,
+  extra_info = null,
+  acao_texto = null,
+  acao_url = null,
+  cor = null
 }) => {
   try {
-    const tipoObj = await NotificationService.getOrCreateType({
-      nome: tipo, 
-      titulo: titulo,
-    });
+    // Busca (ou cria) o tipo
+    const tipoObj = await NotificationService.getOrCreateType({ nome: tipo });
 
     if (!tipoObj || !tipoObj.id) {
-        console.error(`Tipo de notificação "${tipo}" não encontrado/criado.`);
-        throw new Error(`Tipo de notificação inválido: ${tipo}`);
+      throw new Error(`Tipo de notificação inválido: ${tipo}`);
     }
 
-    const notificacao = {
-      tipo_id: tipoObj.id, 
-      titulo,
-      mensagem,
-      destino,
-      usuario_id: usuarioId,
-      data_criacao: new Date()
+    // Título totalmente personalizado com fallback
+    const tituloFinal = titulo || tipoObj.acao_texto_padrao || "Notificação";
+
+    const dataExtras = {
+      titulo: tituloFinal,
+      extra_info,
+      acao_texto,
+      acao_url,
+      cor
     };
-    
+
     if (destino === "filial") {
-        await NotificationService.notifyFilial(tipoObj.id, mensagem);
-    } else if (destino === "matriz") {
-        await NotificationService.notifyMatriz(tipoObj.id, mensagem);
-    } else {
-        if (usuarioId !== null) {
-            await NotificationService.createNotification({
-                usuario_id: usuarioId,
-                tipo_id: tipoObj.id,
-                mensagem: mensagem
-            });
-        } else {
-            console.warn(`Notificação com destino ${destino} não enviada: lógica não implementada.`);
-        }
-    }
+      await NotificationService.notifyFilial(tipoObj.id, mensagem, dataExtras);
+    } 
     
-    console.log(`Notificação enviada (${tipoObj.nome}) para ${destino}.`);
+    else if (destino === "matriz") {
+      await NotificationService.notifyMatriz(tipoObj.id, mensagem, dataExtras);
+    } 
+    
+    else if (destino === "todos") {
+      await NotificationService.notifyMatriz(tipoObj.id, mensagem, dataExtras);
+      await NotificationService.notifyFilial(tipoObj.id, mensagem, dataExtras);
+    } 
+    
+    else if (usuarioId !== null) {
+      await NotificationService.createNotification({
+        usuario_id: usuarioId,
+        tipo_id: tipoObj.id,
+        titulo: tituloFinal,
+        mensagem,
+        extra_info,
+        acao_texto,
+        acao_url,
+        cor
+      });
+    }
+
     return true;
 
   } catch (error) {

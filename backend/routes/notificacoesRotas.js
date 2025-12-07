@@ -6,7 +6,8 @@ import {
   listarNotificacoesPorUnidade,
   marcarNotificacaoComoLida,
   deletarNotificacao,
-  obterNotificacaoPorId
+  obterNotificacaoPorId,
+  marcarTodasComoLidas
 } from "../controllers/notificacoesController.js";
 import authMiddleware from '../middlewares/authMiddleware.js';
 
@@ -19,6 +20,7 @@ router.get("/notificacoes/unidade/:unidade_id",authMiddleware, listarNotificacoe
 router.get("/notificacoes/:id",authMiddleware, obterNotificacaoPorId);
 router.put("/notificacoes/:id/lida",authMiddleware, marcarNotificacaoComoLida);
 router.delete("/notificacoes/:id", authMiddleware, deletarNotificacao);
+router.put("/notificacoes/usuario/:usuario_id/lidas", authMiddleware, marcarTodasComoLidas);
 
 router.options("/", (req, res) => {
   res.setHeader("Allow", "POST, GET");

@@ -39,13 +39,26 @@ export default function ParceriasDescontos() {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
+  useEffect(() => {
+    if (!token || token === "undefined" || token === "null") {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+  }, []);
+
   //Funções de Busca de Dados
   useEffect(() => {
     const fetchParcerias = async () => {
       try {
         const res = await fetch(`${API_URL}/parcerias`, {
-          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}`},
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          toast.error("Sua sessão expirou. Faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
         const data = await res.json();
         setParcerias(data);
       } catch (error) {
@@ -54,32 +67,42 @@ export default function ParceriasDescontos() {
     };
 
     const fetchDescontos = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/descontos`, { 
-          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        });
+      try {
+        const res = await fetch(`${API_URL}/api/descontos`, {
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          toast.error("Sua sessão expirou. Faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
         if (!res.ok) {
-            console.error(`Erro ao carregar descontos: Status HTTP ${res.status}`);
-            try {
-                const errorData = await res.json();
-                console.error("Detalhes do erro:", errorData);
-            } catch (e) {
-                console.warn("Não foi possível ler o JSON do erro de resposta.");
-            }
-            setDescontos([]);
-            return; 
+          console.error(`Erro ao carregar descontos: HTTP ${res.status}`);
+
+          let body;
+          try {
+            body = await res.text();
+          } catch (e) {
+            body = "<sem corpo>";
+          }
+
+          console.error("Detalhes do erro:", body);
+
+          setDescontos([]);
+          return;
         }
 
-        const data = await res.json();
-        console.log("Descontos da API:", data);
-        
-        setDescontos(Array.isArray(data) ? data : []); 
+        const data = await res.json();
+        console.log("Descontos da API:", data);
 
-      } catch (error) {
-        console.error("Erro ao carregar descontos (fetch/json parse):", error);
-        setDescontos([]);
-      }
-    };
+        setDescontos(Array.isArray(data) ? data : []);
+
+      } catch (error) {
+        console.error("Erro ao carregar descontos (fetch/json parse):", error);
+        setDescontos([]);
+      }
+    };
 
     fetchParcerias();
     fetchDescontos();
@@ -114,12 +137,23 @@ export default function ParceriasDescontos() {
         },
         body: JSON.stringify({ parceiro, porcentagem }),
       });
-
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         const resParcerias = await fetch(`${API_URL}/parcerias`, {
-          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          toast.error("Sua sessão expirou. Faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
         const parceriasData = await resParcerias.json();
         setParcerias(parceriasData);
         setAbrirModalParceria(false);
@@ -157,15 +191,27 @@ export default function ParceriasDescontos() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+
         body: JSON.stringify({ parceiro, porcentagem }),
       });
-
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
 
       if (res.ok) {
         const resParcerias = await fetch(`${API_URL}/parcerias`, {
-          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          toast.error("Sua sessão expirou. Faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
         const parceriasData = await resParcerias.json();
         setParcerias(parceriasData);
         setAbrirModalEditarParceria(false);
@@ -196,9 +242,14 @@ export default function ParceriasDescontos() {
     try {
       const res = await fetch(`${API_URL}/parcerias/${parceriaExcluindo.id}`, {
         method: "DELETE",
-        headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
-
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         setParcerias(parcerias.filter(p => p.id !== parceriaExcluindo.id));
@@ -234,13 +285,24 @@ export default function ParceriasDescontos() {
           desconto: valorDesconto,
         }),
       });
-
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
 
       if (res.ok) {
         const resDescontos = await fetch(`${API_URL}/api/descontos`, {
-          headers: {  "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          toast.error("Sua sessão expirou. Faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
         const descontosData = await resDescontos.json();
         setDescontos(descontosData);
         setAbrirModalDesconto(false);
@@ -286,12 +348,23 @@ export default function ParceriasDescontos() {
           desconto: valorDesconto,
         }),
       });
-
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         const resDescontos = await fetch(`${API_URL}/api/descontos`, {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          toast.error("Sua sessão expirou. Faça login novamente.");
+          window.location.href = "/login";
+          return;
+        }
         const descontosData = await resDescontos.json();
         setDescontos(descontosData);
         setAbrirModalEditarDesconto(false);
@@ -323,6 +396,12 @@ export default function ParceriasDescontos() {
         method: "DELETE",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Sua sessão expirou. Faça login novamente.");
+        window.location.href = "/login";
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         setDescontos(descontos.filter(d => d.id !== descontoExcluindo.id));

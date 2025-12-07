@@ -31,26 +31,30 @@ export function CardNotificacao({
   const tempo = formatarTempo(criada_em);
 
   return (
-    <div className="flex gap-3 py-4 border-b">
+    <div className="flex flex-col sm:flex-row gap-3 py-4 border-b">
+
       {/* Ícone */}
-      <div className="text-gray-700">{icon}</div>
+      <div className="text-gray-700 flex-shrink-0">
+        <div className="w-6 h-6 sm:w-7 sm:h-7">
+          {icon}
+        </div>
+      </div>
 
-      <div className="flex-1">
+      {/* Conteúdo */}
+      <div className="flex-1 min-w-0">
 
-        {/* Título */}
-        <span className="font-semibold">{titulo}</span>
+        <span className="font-semibold break-words">{titulo}</span>
 
-        {/* Mensagem */}
-        <p className="text-gray-600 text-sm leading-tight">{mensagem}</p>
+        <p className="text-gray-600 text-sm leading-tight break-words">
+          {mensagem}
+        </p>
 
-        {/* Extra Info */}
         {extraInfo && (
-          <div className="bg-gray-100 px-2 py-1 rounded mt-2 text-xs text-gray-600">
+          <div className="bg-gray-100 px-2 py-1 rounded mt-2 text-xs text-gray-600 break-words">
             {extraInfo}
           </div>
         )}
 
-        {/* Botão de Ação */}
         {acaoTexto && (
           <button
             onClick={acaoOnClick}
@@ -61,8 +65,10 @@ export function CardNotificacao({
         )}
       </div>
 
-      {/* Tempo */}
-      <div className="text-xs text-gray-400 whitespace-nowrap">{tempo}</div>
+      {/* Tempo – vai para baixo no mobile */}
+      <div className="text-xs text-gray-400 whitespace-nowrap sm:text-right sm:self-start">
+        {tempo}
+      </div>
     </div>
   );
 }

@@ -95,7 +95,7 @@ app.use ('/estoqueFilial', estoqueFranquiaRotas);
 app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
-app.use("/notificacoes", notificacoesRotas);
+app.use("/", notificacoesRotas);
 app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
 app.use('/vendasPorFilial', vendasPorFilialRotas);
 app.use('/salariosPorFilial', SalariosPorFilialRotas);

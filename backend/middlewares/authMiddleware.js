@@ -11,6 +11,10 @@ const authMiddleware = async (req, res, next) => {
 
   const [, token] = authHeader.split(' ');
 
+  if (!token || token === "null" || token === "undefined") {
+    return res.status(401).json({ mensagem: 'Token inválido' });
+  }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
@@ -30,8 +34,6 @@ const authMiddleware = async (req, res, next) => {
     let departamento = await read('departamento', `id = ${usuario.departamento_id}`);
     departamento = Array.isArray(departamento) ? departamento[0] : departamento;
 
-
-
     req.user = {
       id: usuario.id,
       funcionario_id: usuario.funcionario_id,
@@ -40,7 +42,6 @@ const authMiddleware = async (req, res, next) => {
       status: usuario.status,
       nome: funcionario?.nome ?? null,
       unidade_id: funcionario?.unidade_id ?? null
-
     };
 
     console.log("DEBUG MIDDLEWARE - req.user:", req.user);
@@ -49,7 +50,12 @@ const authMiddleware = async (req, res, next) => {
 
   } catch (error) {
     console.error('Erro no middleware de autenticação:', error);
-    return res.status(403).json({ mensagem: 'Token inválido' });
+
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ mensagem: "Token expirado" });
+    }
+
+    return res.status(401).json({ mensagem: "Token inválido" });
   }
 };
 

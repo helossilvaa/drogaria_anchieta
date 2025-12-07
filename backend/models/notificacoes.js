@@ -34,4 +34,9 @@ export const Notificacao = {
   delete: async (id) => {
     return await deleteRecord("notificacoes", `id = ${id}`);
   },
+
+  markAllAsRead: async (usuario_id) => {
+  const where = `usuario_id = ${usuario_id} AND lida = 0`;
+  return await update("notificacoes", { lida: 1 }, where);
+},
 };

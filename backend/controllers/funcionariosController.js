@@ -208,6 +208,22 @@ const obterFuncionariosUnidadeController = async (req, res) => {
   }
 };
 
+const listarQuantidadeFuncionariosUnidadeController = async (req, res) => {
+  try {
+    const usuario = req.user;
+    const unidadeId = usuario.unidade_id;
+
+    const funcionarios = await listarFuncionarios();
+    const quantidade = funcionarios.filter(f => f.unidade_id === unidadeId).length;
+
+    res.status(200).json({ quantidade });
+
+  } catch (error) {
+    console.error("Erro ao contar funcionários da unidade:", error);
+    res.status(500).json({ mensagem: "Erro ao contar funcionários da unidade", error });
+  }
+};
+
 
 export {
   listarFuncionariosController,
@@ -216,5 +232,6 @@ export {
   atualizarFuncionarioController,
   deletarFuncionarioController,
   mudarStatusFuncionarioController,
-  obterFuncionariosUnidadeController
+  obterFuncionariosUnidadeController,
+  listarQuantidadeFuncionariosUnidadeController
 };

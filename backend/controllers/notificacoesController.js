@@ -136,3 +136,17 @@ export const deletarNotificacao = async (req, res) => {
     return res.status(500).json({ message: "Erro ao excluir notificação." });
   }
 };
+
+// Marcar TODAS as notificações como lidas para um usuário
+export const marcarTodasComoLidas = async (req, res) => {
+  try {
+    const { usuario_id } = req.params;
+
+    await Notificacao.markAllAsRead(usuario_id);
+
+    return res.status(200).json({ message: "Todas as notificações foram marcadas como lidas!" });
+  } catch (err) {
+    console.error("Erro ao marcar notificações como lidas:", err);
+    return res.status(500).json({ message: "Erro ao atualizar notificações." });
+  }
+};

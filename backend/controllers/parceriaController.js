@@ -77,6 +77,7 @@ export const criarParceria = async (req, res) => {
 
       // Busca todos os Diretores Administrativos (departamento = 3)
       const administradores = await Usuarios.getByDepartamentoWithUnidade(3);
+      console.log("ADMINISTRADORES RETORNADOS:", administradores);
 
       const titulo = "Nova parceria cadastrada";
       const mensagem = `A parceria ${parceiro} foi adicionada.`;
@@ -84,8 +85,8 @@ export const criarParceria = async (req, res) => {
       // Cria notificações individuais
       for (const user of administradores) {
         await Notificacao.create({
-          usuario_id: user.id || user.usuario_id,
-          unidade_id: user.unidade_id ?? 0,
+          usuario_id: user.id,
+          unidade_id: user.unidade_id,
           tipo_id,
           titulo,
           mensagem,
@@ -141,18 +142,19 @@ export const atualizarParceria = async (req, res) => {
       const tipo_id = tipo.id;
 
       const administradores = await Usuarios.getByDepartamentoWithUnidade(3);
+      console.log("ADMINISTRADORES RETORNADOS:", administradores);
 
       const titulo = "Parceria atualizada";
       const mensagem = `A parceria "${parceiro}" foi atualizada.`;
 
       for (const user of administradores) {
         await Notificacao.create({
-          usuario_id: user.id || user.usuario_id,
-          unidade_id: user.unidade_id ?? 0,
+          usuario_id: user.id,
+          unidade_id: user.unidade_id,
           tipo_id,
           titulo,
           mensagem,
-          lida: 0
+          lida: 0,
         });
       }
     } catch (notifyErr) {
@@ -190,18 +192,19 @@ export const excluirParceria = async (req, res) => {
       const tipo_id = tipo.id;
 
       const administradores = await Usuarios.getByDepartamentoWithUnidade(3);
+      console.log("ADMINISTRADORES RETORNADOS:", administradores);
 
       const titulo = "Parceria excluída";
       const mensagem = `A parceria "${parceriaExistente.parceiro}" foi removida.`;
 
       for (const user of administradores) {
         await Notificacao.create({
-          usuario_id: user.id || user.usuario_id,
-          unidade_id: user.unidade_id ?? 0,
+          usuario_id: user.id,
+          unidade_id: user.unidade_id,
           tipo_id,
           titulo,
           mensagem,
-          lida: 0
+          lida: 0,
         });
       }
     } catch (notifyErr) {

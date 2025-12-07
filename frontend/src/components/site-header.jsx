@@ -27,10 +27,8 @@ export function SiteHeader() {
 
   const departamento = usuario?.departamento?.toLowerCase().trim() || null;
 
-  const isClient = typeof window !== "undefined";
-  const pathname = isClient ? window.location.pathname : "";
-  const bloquearNoPDV = pathname.startsWith("/pdv");
-
+  const pathname = typeof window !== "undefined" ? window.location.pathname : null;
+  const bloquearNoPDV = pathname?.startsWith("/pdv");
 
   const mostrarNotificacoes =
     !bloquearNoPDV &&
@@ -54,12 +52,11 @@ export function SiteHeader() {
 
         <SearchForm className="w-full sm:ml-auto sm:w-auto" />
 
-        {!pathname.startsWith("/pdv") && mostrarNotificacoes && (
+        {mostrarNotificacoes && (
           <div className="ml-4">
             <PopoverNotificacoes />
           </div>
         )}
-
       </div>
     </header>
   );

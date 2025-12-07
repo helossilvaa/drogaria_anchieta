@@ -76,19 +76,32 @@ const updateUsuarioSenha = async (id, novaSenhaHash) => {
   }
 };
 
-    
 const getByDepartamentoWithUnidade = async (departamento_id) => {
   try {
-    const tabela = `usuarios u JOIN funcionarios f ON u.funcionario_id = f.id`;
-    const where = `u.departamento_id = ${departamento_id} AND u.status = 'ativo'`;
-    const result = await readAll(tabela, where);
+    const tabela = `
+      usuarios u 
+      JOIN funcionarios f ON f.id = u.funcionario_id
+    `;
+
+    const campos = `
+      u.id AS usuario_id,
+      u.nome,
+      u.departamento_id,
+      f.unidade_id
+    `;
+
+    const where = `
+      u.departamento_id = ${departamento_id} 
+      AND u.status = 'ativo'
+    `;
+
+    const result = await readAll(tabela, where, campos);
+
     return Array.isArray(result) ? result : [];
   } catch (err) {
     console.error("Erro getByDepartamentoWithUnidade:", err);
     throw err;
   }
 };
-
-
 
 export {criarUsuario, listarUsuarios, obterUsuarioId, atualizarUsuario, deletarUsuario, obterStatusUsuario,updateUsuarioSenha, getByDepartamentoWithUnidade};
