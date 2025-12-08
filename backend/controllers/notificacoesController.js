@@ -109,36 +109,41 @@ export const criarNotificacao = async (req, res) => {
 export const criarNotificacaoReposicao = async ({
   usuario_id,
   filial_id,
+  filial_nome,
   produto_nome,
-  quantidade
+  quantidade,
 }) => {
   try {
-
-    // adcioneii
-    const tipo = await NotificacaoTipos.getOrCreateByName("Estoque baixo", {
-      icone: "TriangleAlert",
-      cor: "pink",
-      acao_texto_padrao: "Ver solicitação"
-    });
-
-    // Criar notificação para MATRIZ
+    const agora = new Date();
+    //para a filial
     await Notificacao.create({
       usuario_id,
-      unidade_id: 1,  // matriz sempre recebe
-      tipo_id: tipo.id, // tbm adcioneii
-      titulo: "Solicitação de Reposição",
-      mensagem: `A filial ${filial_id} solicitou ${quantidade} unidades do produto ${produto_nome}.`,
+      unidade_id: filial_id,
+      titulo: "Solicitação enviada",
+      mensagem: `Seu pedido de ${quantidade} unidades de ${produto_nome} foi enviado à matriz.`,
+      tipo_id: 3,
       lida: 0,
-      criada_em: new Date()
+      criada_em: agora,
     });
 
-    console.log("Notificação de reposição criada com sucesso!");
+
+    //para a matriz
+    await Notificacao.create({
+      usuario_id: 1,           
+      unidade_id: 1,           
+      titulo: "Nova solicitação de reposição",
+      mensagem: `A filial ${filial_id} pediu ${quantidade} unidades do produto ${produto_nome}.`,
+      tipo_id: 2,             
+      lida: 0,
+      criada_em: agora,
+    });
+
+    console.log("Notificações criadas com sucesso!");
 
   } catch (err) {
-    console.error("Erro ao criar notificação de reposição:", err);
+    console.error("Erro ao criar notificações de reposição:", err);
   }
 };
-
 export const listarNotificacoes = async (req, res) => {
   try {
     const notificacoes = await Notificacao.getAll();

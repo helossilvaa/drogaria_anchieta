@@ -3,6 +3,7 @@ import {
     criarMovimentacaoController,
     listarMovimentacoesController,
     listarMovimentacoesPorProdutoController,
+    listarSolicitacoesPendentesController,
     obterMovimentacaoPorIdController,
     atualizarMovimentacaoController,
     deletarMovimentacaoController,
@@ -15,6 +16,7 @@ const router = express.Router();
 router.post('/', authMiddleware, criarMovimentacaoController);
 router.get('/', authMiddleware, listarMovimentacoesController);
 router.get('/produto/:id', authMiddleware, listarMovimentacoesPorProdutoController);
+router.get("/solicitacoes/pendentes", authMiddleware, listarSolicitacoesPendentesController);
 router.get('/:id', authMiddleware, obterMovimentacaoPorIdController);
 router.put('/:id', authMiddleware, atualizarMovimentacaoController);
 router.delete('/:id', authMiddleware, deletarMovimentacaoController);
