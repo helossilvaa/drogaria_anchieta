@@ -1,13 +1,47 @@
 import { Notificacao } from "../models/notificacoes.js";
 
-// Criar notificação
+
+// export const criarNotificacao = async (req, res) => {
+//   console.log("Dados recebidos do frontend:", req.body);
+//   try {
+//     const { usuario_id, unidade_id, titulo, mensagem } = req.body;
+//     const camposObrigatorios = { usuario_id, unidade_id, titulo, mensagem };
+
+//     const camposVazios = Object.entries(camposObrigatorios)
+//       .filter(([_, valor]) => !valor || valor === "")
+//       .map(([campo]) => campo);
+
+//     if (camposVazios.length > 0) {
+//       return res.status(400).json({
+//         message: `Preencha todos os campos obrigatórios. Campos vazios: ${camposVazios.join(", ")}`
+//       });
+//     }
+//     const id = await Notificacao.create({
+//       usuario_id,
+//       unidade_id,
+//       titulo,
+//       mensagem,
+//       lida: 0
+//     });
+//     return res.status(201).json({
+//       message: "Notificação criada com sucesso!",
+//       id
+//     });
+
+//   } catch (err) {
+//     console.error("Erro ao criar notificação:", err);
+//     return res.status(500).json({
+//       message: "Erro ao criar notificação.",
+//       erro: err.message
+//     });
+//   }
+// };
+
 export const criarNotificacao = async (req, res) => {
   console.log("Dados recebidos do frontend:", req.body);
-
   try {
-    const { usuario_id, unidade_id, titulo, mensagem } = req.body;
+    const { usuario_id, unidade_id, titulo, mensagem, tipo_nome } = req.body;
 
-    // Campos obrigatórios
     const camposObrigatorios = { usuario_id, unidade_id, titulo, mensagem };
 
     const camposVazios = Object.entries(camposObrigatorios)
@@ -20,12 +54,18 @@ export const criarNotificacao = async (req, res) => {
       });
     }
 
-    // Criar registro
+    // adcionei isso bia- função que obtém ou cria tipo de notificação
+    let tipo = null;
+
+    if (tipo_nome) {
+      tipo = await NotificacaoTipos.getOrCreateByName(tipo_nome);
+    }
     const id = await Notificacao.create({
       usuario_id,
       unidade_id,
       titulo,
       mensagem,
+      tipo_id: tipo ? tipo.id : null, // adcionei tbm
       lida: 0
     });
 
@@ -43,7 +83,62 @@ export const criarNotificacao = async (req, res) => {
   }
 };
 
-// Listar todas as notificações
+// export const criarNotificacaoReposicao = async ({
+//   usuario_id,
+//   filial_id,
+//   produto_nome,
+//   quantidade,
+// }) => {
+//   try {
+//     await Notificacao.create({
+//       usuario_id,
+//       unidade_id: 1, // faz com que a matriz SEMPRE receba solicitações
+//       titulo: "Solicitação de Reposição",
+//       mensagem: `A filial ${filial_id} solicitou ${quantidade} unidades do produto ${produto_nome}.`,
+//       lida: 0,
+//       criada_em: new Date(),
+//     });
+
+//     console.log("Notificação de reposição criada com sucesso!");
+//   } catch (err) {
+//     console.error("Erro ao criar notificação de reposição:", err);
+//   }
+// };
+// ⭐ NOVA FUNÇÃO ADAPTADA
+// Criar notificação automaticamente quando a filial solicita reposição
+export const criarNotificacaoReposicao = async ({
+  usuario_id,
+  filial_id,
+  produto_nome,
+  quantidade
+}) => {
+  try {
+
+    // adcioneii
+    const tipo = await NotificacaoTipos.getOrCreateByName("Estoque baixo", {
+      icone: "TriangleAlert",
+      cor: "pink",
+      acao_texto_padrao: "Ver solicitação"
+    });
+
+    // Criar notificação para MATRIZ
+    await Notificacao.create({
+      usuario_id,
+      unidade_id: 1,  // matriz sempre recebe
+      tipo_id: tipo.id, // tbm adcioneii
+      titulo: "Solicitação de Reposição",
+      mensagem: `A filial ${filial_id} solicitou ${quantidade} unidades do produto ${produto_nome}.`,
+      lida: 0,
+      criada_em: new Date()
+    });
+
+    console.log("Notificação de reposição criada com sucesso!");
+
+  } catch (err) {
+    console.error("Erro ao criar notificação de reposição:", err);
+  }
+};
+
 export const listarNotificacoes = async (req, res) => {
   try {
     const notificacoes = await Notificacao.getAll();
@@ -54,7 +149,6 @@ export const listarNotificacoes = async (req, res) => {
   }
 };
 
-// Listar notificações por usuário
 export const listarNotificacoesPorUsuario = async (req, res) => {
   try {
     const { usuario_id } = req.params;
@@ -68,7 +162,6 @@ export const listarNotificacoesPorUsuario = async (req, res) => {
   }
 };
 
-// Listar notificações por unidade
 export const listarNotificacoesPorUnidade = async (req, res) => {
   try {
     const { unidade_id } = req.params;
@@ -82,7 +175,6 @@ export const listarNotificacoesPorUnidade = async (req, res) => {
   }
 };
 
-// Obter notificação por ID
 export const obterNotificacaoPorId = async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,7 +192,6 @@ export const obterNotificacaoPorId = async (req, res) => {
   }
 };
 
-// Marcar como lida
 export const marcarNotificacaoComoLida = async (req, res) => {
   try {
     const { id } = req.params;
@@ -119,7 +210,6 @@ export const marcarNotificacaoComoLida = async (req, res) => {
   }
 };
 
-// Deletar notificação
 export const deletarNotificacao = async (req, res) => {
   try {
     const { id } = req.params;
@@ -137,7 +227,6 @@ export const deletarNotificacao = async (req, res) => {
   }
 };
 
-// Marcar TODAS as notificações como lidas para um usuário
 export const marcarTodasComoLidas = async (req, res) => {
   try {
     const { usuario_id } = req.params;
