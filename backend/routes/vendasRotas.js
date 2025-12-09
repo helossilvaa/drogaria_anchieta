@@ -16,8 +16,6 @@ router.get("/evolucaomensal", authMiddleware, evolucaoVendasMensalController);
 router.get('/:id', authMiddleware, obterVendaPorIDController);
 router.put('/:id', authMiddleware, atualizarVendaController);
 
-
- 
 router.options('/', (req, res) => {
     res.setHeader('Allow', 'POST, GET');
     res.status(204).send();

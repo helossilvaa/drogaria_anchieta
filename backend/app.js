@@ -38,11 +38,13 @@ import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
 import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
-import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js';
-import enviarLotesRotas from "./routes/enviarLotesRotas.js";
+import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
+// import { listarPagamentosPorSalario } from './controllers/salariosFilialController.js';
 import relatoriosRotas from "./routes/relatoriosRotas.js";
 import salariosFilialRotas from './routes/salariosFilialRotas.js';
-import solicitacoesRotas from './routes/solicitacoesRotas.js'
+import dashboardFinanceiroRotas from "./routes/dashboardFinanceiroRotas.js";
+import enviarLotesRotas from "./routes/enviarLotesRotas.js";
+import solicitacoesRotas from "./routes/solicitacoesRotas.js";
 
 
 
@@ -76,7 +78,6 @@ try {
 
 app.use('/auth', authRotas);
 app.use('/usuarios', usuarioRotas);
-app.use('/vendas', vendasPorFilialRotas);
 app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
@@ -104,6 +105,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
 app.use('/api', reqEstoqueMatrizRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
+app.use("/dashboard-financeiro", dashboardFinanceiroRotas);
 app.use('/salariosfilial', salariosFilialRotas);
 app.use("/solicitacoes", solicitacoesRotas);
 app.use("/estoque/enviar-lote", enviarLotesRotas);
