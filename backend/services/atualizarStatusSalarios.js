@@ -11,7 +11,7 @@ export async function atualizarStatusSalarios() {
       UPDATE salarios
       SET status_pagamento = 'pago'
       WHERE status_pagamento = 'pendente'
-    `);
+    `); 
 
     return;
   }

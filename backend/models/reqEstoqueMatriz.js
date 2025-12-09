@@ -49,3 +49,4 @@ export const Salario = {
     return await deleteRecord("salarios", `id = ${id}`);
   },
 };
+ 

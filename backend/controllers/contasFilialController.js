@@ -46,7 +46,7 @@ export const criarConta = async (req, res) => {
 
       await create("pagamentos_contas", {
         conta_id: insertId,
-        status_pagamento: "pago",
+        status_pagamento: "pago", 
         data_pagamento: new Date(),
         valor_pago: valor,
         unidade_id: req.user.unidade_id
@@ -58,7 +58,7 @@ export const criarConta = async (req, res) => {
         valor: valor,
         descricao: `Pagamento da conta: ${nomeConta}`,
         unidade_id: req.user.unidade_id,
-        categoria_transacao_id: 6, 
+        categoria_transacao_id: 3, 
         origem: "conta"
       });
     }
@@ -160,7 +160,7 @@ export const editarConta = async (req, res) => {
         valor: valor,
         descricao: `Pagamento da conta: ${nomeConta}`,
         unidade_id: unidadeId,
-        categoria_transacao_id: 6,
+        categoria_transacao_id: 3,
         origem: "conta"
       });
     }
@@ -236,7 +236,7 @@ export const pagarConta = async (req, res) => {
       valor: req.body.valor,
       descricao: "Pagamento de conta",
       unidade_id: req.user.unidade_id,
-      categoria_transacao_id: 6,
+      categoria_transacao_id: 3,
       origem: "conta"
     });
 

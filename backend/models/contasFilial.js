@@ -5,7 +5,7 @@ export const Conta = {
   getAllByUnidade: async (unidadeId) => {
     const sql = `
       SELECT 
-        c.id,
+        c.id, 
         c.nomeConta,
         c.categoria,
         c.valor,

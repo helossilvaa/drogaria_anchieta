@@ -34,6 +34,14 @@ import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
+import SalariosPorFilialRotas from './routes/salariosPorFilialRotas.js';
+import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
+import FuncionariosPorFilialRotas from './routes/funcionariosPorFilialRotas.js';
+import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
+import { fecharMesDasFiliais } from './services/fecharMes.js';
+import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
+import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
+
 import './services/transacaoVendas.js';
 import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import relatoriosRotas from "./routes/relatoriosRotas.js";
@@ -97,6 +105,12 @@ app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
+app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
+app.use('/vendasPorFilial', vendasPorFilialRotas);
+app.use('/salariosPorFilial', SalariosPorFilialRotas);
+app.use('/api', reqEstoqueMatrizRotas);
+app.use('/api/transacoes-matriz', transacoesMatrizRotas);
+
 app.use('/salariosfilial', salariosFilialRotas);
 
 
@@ -132,10 +146,21 @@ cron.schedule("0 7 * * *", async () => {
   await atualizarStatusSalarios();
 });
 
+cron.schedule("0 8 30 11 *", gerarDecimoTerceiro); // 13-1
+cron.schedule("0 8 20 12 *", gerarDecimoTerceiro); // 13-2
+
+
 cron.schedule("0 3 * * *", async () => {
   console.log("⏱ Executando pagamento automático de contas...");
   await pagarContasAutomaticamente();
 });
+
+// Cron job: todo dia 1º do mês às 00:05
+cron.schedule("5 0 1 * *", async () => {
+  console.log("Iniciando fechamento de mês automático...");
+  await fecharMesDasFiliais();
+});
+
 
 
 process.on('SIGTERM', () => {

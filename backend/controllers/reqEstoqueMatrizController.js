@@ -23,6 +23,7 @@ export const criarSalario = async (req, res) => {
   try {
     const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
+    // 🔥 BUSCAR UNIDADE AUTOMÁTICA DO FUNCIONÁRIO
     const funcionarios = await query(
       "SELECT unidade_id FROM funcionarios WHERE id = ?",
       [id_funcionario]
@@ -95,7 +96,7 @@ export const editarSalario = async (req, res) => {
     // 🔹 Atualiza salário
     const updated = await Salario.update(id, {
       id_funcionario,
-      unidade_id,           
+      unidade_id,
       departamento_id,
       valor,
       status_pagamento
@@ -165,12 +166,6 @@ export const listarPagamentosPorSalario = async (req, res) => {
       ORDER BY p.data_pagamento DESC`,
       [id]
     );
-    const unidade_id = req.user.unidade_id;
-
-    const salarios = await query(
-      "SELECT * FROM salarios WHERE id_funcionario = ? AND unidade_id = ? ORDER BY data_atualizado DESC",
-      [id_funcionario, unidade_id]
-    );
 
     return res.status(200).json(pagamentos);
   } catch (err) {
@@ -218,16 +213,5 @@ export const gerarDecimoTerceiro = async () => {
     }
   } catch (err) {
     console.error("Erro ao gerar 13º salário:", err);
-  }
-};
-
-export const listarSalariosPorUnidadeController = async (req, res) => {
-  const unidadeId = req.params.id;
-  try {
-    const salarios = await query('SELECT * FROM salarios WHERE unidade_id = ?', [unidadeId]);
-    res.json(salarios);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao buscar salários' });
   }
 };
