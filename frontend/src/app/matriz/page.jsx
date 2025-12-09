@@ -16,8 +16,9 @@ export default function DashboardMatriz() {
   const [franquias, setFranquias] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
   const [estoque, setEstoque] = useState([]);
-  const [totais, setTotais] = useState({ total: 0});
+  const [totais, setTotais] = useState({ total: 0 });
 
+  // Fetch unidades
   useEffect(() => {
     const fetchFranquias = async () => {
       try {
@@ -29,14 +30,13 @@ export default function DashboardMatriz() {
         const data = await res.json();
         setFranquias(data);
       } catch (error) {
-        console.error(error);
         toast.error("Erro ao carregar unidades");
       }
     };
-
     fetchFranquias();
   }, []);
 
+  // Fetch funcionários
   useEffect(() => {
     const fetchFuncionarios = async () => {
       try {
@@ -46,24 +46,17 @@ export default function DashboardMatriz() {
         });
         if (!res.ok) throw new Error("Erro ao carregar funcionários");
         const data = await res.json();
+
         setFuncionarios(data);
-
-        const hoje = new Date();
-        const mesAnterior = new Date();
-        mesAnterior.setMonth(hoje.getMonth() - 1);
-
-        const total = data.length;
-
-        setTotais({ total });
+        setTotais({ total: data.length });
       } catch (error) {
-        console.error(error);
         toast.error("Erro ao carregar funcionários");
       }
     };
-
     fetchFuncionarios();
   }, []);
 
+  // Fetch estoque
   useEffect(() => {
     const fetchEstoque = async () => {
       try {
@@ -75,30 +68,33 @@ export default function DashboardMatriz() {
         const data = await res.json();
         setEstoque(data);
       } catch (error) {
-        console.error(error);
         toast.error("Erro ao carregar estoque");
       }
     };
-
     fetchEstoque();
   }, []);
 
   return (
     <Layout>
       <div className="p-6 space-y-6">
+
+        {/* Cards principais */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Total de Filiais</CardTitle>
             <p className="text-2xl font-bold">{franquias.length}</p>
           </Card>
+
           <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Total de funcionários</CardTitle>
             <p className="text-2xl font-bold">{totais.total}</p>
           </Card>
+
           <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Entradas</CardTitle>
             <p className="text-2xl font-bold">R$200</p>
           </Card>
+
           <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Saídas</CardTitle>
             <p className="text-2xl font-bold">R$200</p>
@@ -137,15 +133,21 @@ export default function DashboardMatriz() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-[1fr_3fr] gap-4">
-          <div className="gap-4">
+        {/* Categorias + Transações + Mapa */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_2fr] gap-4">
+
+          {/* Coluna esquerda */}
+          <div className="space-y-4"> 
             <MaisVendidos />
             <CardTransacoes entradas={200} saidas={200} lucro={7000} percentual="12,2" />
           </div>
+
+          {/* Coluna direita */}
           <MapaUnidades />
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        {/* Espaço extra entre seções */}
+        <div className="pt-4">
           <EvolucaoVendasMensal />
         </div>
       </div>
