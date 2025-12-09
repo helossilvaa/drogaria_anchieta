@@ -35,6 +35,8 @@ import {transacaoPagamento} from './controllers/transaçãoPagamentoController.j
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
 import './services/transacaoVendas.js';
+import relatoriosRotas from "./routes/relatoriosRotas.js";
+
 
 
 dotenv.config();
@@ -67,6 +69,7 @@ try {
 
 app.use('/auth', authRotas);
 app.use('/usuarios', usuarioRotas);
+app.use('/vendas', vendasPorFilialRotas);
 app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
@@ -92,7 +95,6 @@ app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
-
 
 
 app.get('/health', (req, res) => {

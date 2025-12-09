@@ -1,11 +1,12 @@
 import express from 'express';
-import { criarItemVendaController, listarItemVendaController, atualizarItemVendaController, deletarItemVendaController, obterItemVendaPorIDController } from '../controllers/itens_vendaController.js';
+import { criarItemVendaController, listarItemVendaController, atualizarItemVendaController, deletarItemVendaController, obterItemVendaPorIDController, obterTopCategoriasController } from '../controllers/itens_vendaController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/', authMiddleware, criarItemVendaController);
 router.get('/', authMiddleware, listarItemVendaController);
+router.get('/top-categorias', authMiddleware, obterTopCategoriasController);
 router.get('/:id', authMiddleware, obterItemVendaPorIDController);
 router.put('/:id', authMiddleware, atualizarItemVendaController);
 router.delete('/:id', authMiddleware, deletarItemVendaController);

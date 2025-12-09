@@ -162,44 +162,45 @@ export default function Produtos() {
   // merge produtos + estoqueFilial => produtosCompletos
   const mergeProductsWithStock = (produtosRaw, estoqueRaw) => {
     const estoqueMap = new Map();
+
+    // Mapear estoque da filial
     (Array.isArray(estoqueRaw) ? estoqueRaw : []).forEach(row => {
-      const pid = Number(row.produto_id);
-      const qtd = Number(row.quantidade ?? 0);
-      
-      const existing = estoqueMap.get(pid) || { 
-        totalQuantidade: 0, 
-        estoque_minimo: row.estoque_minimo ?? null, 
-        estoque_maximo: row.estoque_maximo ?? null 
+      const pid = String(row.produto_id).trim(); // garante string consistente
+      const quantidade = Number(row.quantidade ?? 0);
+
+      const existing = estoqueMap.get(pid) || {
+        totalQuantidade: 0,
+        estoque_minimo: Number(row.estoque_minimo ?? DEFAULT_ESTOQUE_MINIMO),
+        estoque_maximo: row.estoque_maximo != null ? Number(row.estoque_maximo) : null
       };
-      
-      existing.totalQuantidade += qtd;
-      
-      // Atualiza min/max se for o primeiro valor encontrado
-      if (existing.estoque_minimo === null) {
-        existing.estoque_minimo = Number(row.estoque_minimo ?? DEFAULT_ESTOQUE_MINIMO);
-      }
-      if (existing.estoque_maximo === null) {
-        existing.estoque_maximo = Number(row.estoque_maximo ?? null);
-      }
-      
+
+      existing.totalQuantidade += quantidade;
+
+      // Atualiza min/max se não definido ainda
+      if (existing.estoque_minimo == null) existing.estoque_minimo = Number(row.estoque_minimo ?? DEFAULT_ESTOQUE_MINIMO);
+      if (existing.estoque_maximo == null && row.estoque_maximo != null) existing.estoque_maximo = Number(row.estoque_maximo);
+
       estoqueMap.set(pid, existing);
     });
 
-    const merged = (Array.isArray(produtosRaw) ? produtosRaw : []).map(p => {
-      const pid = Number(p.id);
-      const stockInfo = estoqueMap.get(pid) || { totalQuantidade: 0, estoque_minimo: DEFAULT_ESTOQUE_MINIMO, estoque_maximo: null };
-      
+    // Mesclar produtos com estoque
+    return (Array.isArray(produtosRaw) ? produtosRaw : []).map(p => {
+      const pid = String(p.id).trim();
+      const stockInfo = estoqueMap.get(pid) || {
+        totalQuantidade: 0,
+        estoque_minimo: DEFAULT_ESTOQUE_MINIMO,
+        estoque_maximo: null
+      };
+
       return {
         ...p,
-        // Garante que a quantidade é o somatório do estoque da filial
         quantidade: stockInfo.totalQuantidade,
         estoque_minimo: stockInfo.estoque_minimo,
         estoque_maximo: stockInfo.estoque_maximo,
       };
     });
-
-    return merged;
   };
+
 
   useEffect(() => {
     const merged = mergeProductsWithStock(produtos, estoqueFilial);
@@ -299,50 +300,73 @@ export default function Produtos() {
     }
   };
 
-  // salvar edição de produto (PUT)
-  const handleAtualizarProduto = async () => {
-    if (!produtoEditando) return;
-    const token = localStorage.getItem("token");
-    if (!token) { setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' }); setTimeout(() => setMensagemFeedback(null), 2500); return; }
+  
+ const handleAtualizarProduto = async () => {
+  if (!produtoEditando) return;
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setMensagemFeedback({ type: 'error', text: 'Usuário não autenticado.' });
+    setTimeout(() => setMensagemFeedback(null), 2500);
+    return;
+  }
 
-    // normalizar payload
-    const payload = {
-      registro_anvisa: produtoEditando.registro_anvisa || null,
-      nome: produtoEditando.nome || null,
-      foto: produtoEditando.foto || null,
-      medida_id: produtoEditando.medida_id ?? null,
-      tarja_id: produtoEditando.tarja_id ?? null,
-      categoria_id: produtoEditando.categoria_id ?? null,
-      marca_id: produtoEditando.marca_id ?? null,
-      codigo_barras: produtoEditando.codigo_barras || null,
-      descricao: produtoEditando.descricao || null,
-      preco_unitario: produtoEditando.preco_unitario ?? null,
-      validade: produtoEditando.validade || null,
-      fornecedor_id: produtoEditando.fornecedor_id ?? null,
-      lote_id: produtoEditando.lote_id ?? null,
-      armazenamento: produtoEditando.armazenamento || null,
-    };
-
-    try {
-      const res = await fetch(`${API_URL}/${produtoEditando.id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.mensagem || data.message || "Erro ao atualizar produto");
-      setMensagemFeedback({ type: "success", text: "Produto atualizado com sucesso!" });
-      setTimeout(() => setMensagemFeedback(null), 3000);
-      setIsEditDialogOpen(false);
-      setProdutoEditando(null);
-      await fetchProdutos(token);
-      await fetchEstoqueFilial(token);
-    } catch (err) {
-      console.error("handleAtualizarProduto:", err);
-      setMensagemFeedback({ type: 'error', text: err.message || 'Erro ao atualizar produto' });
-      setTimeout(() => setMensagemFeedback(null), 3000);
-    }
+  const payloadProduto = {
+    registro_anvisa: produtoEditando.registro_anvisa || null,
+    nome: produtoEditando.nome || null,
+    foto: produtoEditando.foto || null,
+    medida_id: produtoEditando.medida_id ?? null,
+    tarja_id: produtoEditando.tarja_id ?? null,
+    categoria_id: produtoEditando.categoria_id ?? null,
+    marca_id: produtoEditando.marca_id ?? null,
+    codigo_barras: produtoEditando.codigo_barras || null,
+    descricao: produtoEditando.descricao || null,
+    preco_unitario: produtoEditando.preco_unitario ?? null,
+    validade: produtoEditando.validade || null,
+    fornecedor_id: produtoEditando.fornecedor_id ?? null,
+    lote_id: produtoEditando.lote_id ?? null,
+    armazenamento: produtoEditando.armazenamento || null,
   };
+
+  try {
+    // Atualiza produto
+    const resProduto = await fetch(`${API_URL}/${produtoEditando.id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payloadProduto),
+    });
+    const dataProduto = await resProduto.json().catch(() => ({}));
+    if (!resProduto.ok) throw new Error(dataProduto.mensagem || dataProduto.message || "Erro ao atualizar produto");
+
+    // 2️⃣ Atualiza estoque da filial
+    const resEstoque = await fetch(`${API_ESTOQUEFILIAL}/${produtoEditando.id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        quantidade: produtoEditando.quantidade ?? 0,
+        estoque_minimo: produtoEditando.estoque_minimo ?? 0,
+        estoque_maximo: produtoEditando.estoque_maximo ?? null,
+      }),
+    });
+    if (!resEstoque.ok) {
+      const dataEstoque = await resEstoque.json().catch(() => ({}));
+      throw new Error(dataEstoque.mensagem || dataEstoque.message || "Erro ao atualizar estoque da filial");
+    }
+
+    // Feedback e atualização local
+    setMensagemFeedback({ type: "success", text: "Produto e estoque atualizados com sucesso!" });
+    setTimeout(() => setMensagemFeedback(null), 3000);
+    setIsEditDialogOpen(false);
+    setProdutoEditando(null);
+
+    await fetchProdutos(token);
+    await fetchEstoqueFilial(token);
+
+  } catch (err) {
+    console.error("handleAtualizarProduto:", err);
+    setMensagemFeedback({ type: 'error', text: err.message || 'Erro ao atualizar produto/estoque' });
+    setTimeout(() => setMensagemFeedback(null), 3000);
+  }
+};
 
   return (
     <Layout>
@@ -375,7 +399,24 @@ export default function Produtos() {
                     {categorias.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome || cat.categoria}</SelectItem>)}
                   </SelectContent>
                 </Select>
-
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <Input
+                    type="number"
+                    placeholder="Quantidade em estoque"
+                    value={produtoEditando.quantidade ?? 0}
+                    onChange={(e) =>
+                      setProdutoEditando({ ...produtoEditando, quantidade: Number(e.target.value) || 0 })
+                    }
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Estoque mínimo"
+                    value={produtoEditando.estoque_minimo ?? 0}
+                    onChange={(e) =>
+                      setProdutoEditando({ ...produtoEditando, estoque_minimo: Number(e.target.value) || 0 })
+                    }
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Input placeholder="Medida ID" value={produtoEditando.medida_id ?? ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, medida_id: Number(e.target.value) || "" })} />
                   <Input placeholder="Marca ID" value={produtoEditando.marca_id ?? ""} onChange={(e) => setProdutoEditando({ ...produtoEditando, marca_id: Number(e.target.value) || "" })} />

@@ -1,5 +1,4 @@
 "use client";
-
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import * as Icons from "lucide-react";
 import { CardNotificacao } from "../CardNotificacao/CardNotificacao.jsx";
