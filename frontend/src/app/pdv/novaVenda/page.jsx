@@ -43,7 +43,7 @@ export default function NovaVendaPage() {
   const [desconto_id, setDescontoId] = useState("");
   const [unidadeTipo, setUnidadeTipo] = useState("");
   const [filiais, setFiliais] = useState([]);
-<<<<<<< HEAD
+
   
   
   
@@ -58,7 +58,7 @@ export default function NovaVendaPage() {
         setFiliais([]); // limpa as filiais quando não for filial
       }
     }, [unidadeTipo]);
-=======
+
 
 
   // Buscar filiais do backend
@@ -72,7 +72,6 @@ export default function NovaVendaPage() {
       setFiliais([]); // limpa as filiais quando não for filial
     }
   }, [unidadeTipo]);
->>>>>>> 8f4d017f3a75b44fb2432c048253931a2fb37a9b
 
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");

@@ -99,6 +99,7 @@ app.use('/funcionarios', funcionariosRotas);
 app.use ('/lotesmatriz', lotesMatrizRotas);
 app.use ('/estoquematriz', estoqueMatrizRotas);
 app.use ('/estoqueFilial', estoqueFranquiaRotas);
+app.use("/vendasPorFilial", vendasPorFilialRotas);
 app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
@@ -109,7 +110,7 @@ app.use("/dashboard-financeiro", dashboardFinanceiroRotas);
 app.use('/salariosfilial', salariosFilialRotas);
 app.use("/solicitacoes", solicitacoesRotas);
 app.use("/estoque/enviar-lote", enviarLotesRotas);
-
+app.use ("/relatorios", relatoriosRotas);
 
 
 app.get('/health', (req, res) => {
