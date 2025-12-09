@@ -1,4 +1,4 @@
-import { criarEstoqueFranquia, listarEstoqueFranquia, obterEstoqueFranquiaPorId, atualizarEstoqueFranquia, deletarEstoqueFranquia } from "../models/estoqueFranquia.js";
+import { criarEstoqueFranquia, listarEstoqueFranquia, obterEstoqueFranquiaPorId, atualizarEstoqueFranquia, deletarEstoqueFranquia, listarProdutosComBaixoEstoque } from "../models/estoqueFranquia.js";
 
 const criarEstoqueFranquiaController = async (req, res) => {
     try {
@@ -74,5 +74,17 @@ const deletarEstoqueFranquiaController = async (req, res) => {
     }
 };
 
+const listarAlertasBaixaQuantidadeController = async (req, res) => {
+    try {
+        const produtos = await listarProdutosComBaixoEstoque(3);
 
-export { criarEstoqueFranquiaController, listarEstoqueFranquiaController, obterEstoqueFranquiaPorIdController, atualizarEstoqueFranquiaController, deletarEstoqueFranquiaController };
+        const alertas = Array.isArray(produtos) ? produtos : [];
+
+        res.status(200).json(alertas);
+    } catch (error) {
+        console.error("Erro ao buscar alertas de estoque:", error);
+        res.status(500).json({ mensagem: "Erro ao buscar alertas de estoque" });
+    }
+};
+
+export { criarEstoqueFranquiaController, listarEstoqueFranquiaController, obterEstoqueFranquiaPorIdController, atualizarEstoqueFranquiaController, deletarEstoqueFranquiaController, listarAlertasBaixaQuantidadeController};

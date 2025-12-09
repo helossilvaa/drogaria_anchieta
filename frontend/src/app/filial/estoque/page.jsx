@@ -1,267 +1,187 @@
-'use client';
-import { useEffect, useState } from "react";
+"use client";
+
 import Layout from "@/components/layout/layout";
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from "@/components/ui/table";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast, Toaster } from "sonner";
+import SolicitacaoModal from "@/components/solicitacaoModal/solicitacaoModal";
+import { Dialog } from "@/components/ui/dialog";
 
-const API_CATEGORIAS = "http://localhost:8080/categorias";
-const API_PRODUTOS = "http://localhost:8080/produtos";
-const API_LOTES = "http://localhost:8080/lotesmatriz/produto";
-const API_ESTOQUE = "http://localhost:8080/estoquematriz";
-const API_MOV = "http://localhost:8080/movimentacoesestoque/produto";
+export default function EstoqueFilialPage() {
+    const API_ESTOQUE_FILIAL = "http://localhost:8080/estoqueFilial";
+    const API_PRODUTOS = "http://localhost:8080/produtos";
 
-export default function Estoque() {
-    const [categorias, setCategorias] = useState([]);
-    const [categoriaSelecionada, setCategoriaSelecionada] = useState("0");
-    const [produtos, setProdutos] = useState([]);
     const [estoque, setEstoque] = useState([]);
-    const [lotes, setLotes] = useState([]);
-    const [movimentacoes, setMovimentacoes] = useState([]);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+    const [produtos, setProdutos] = useState([]);
+    const [estoqueComProdutos, setEstoqueComProdutos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState(null);
+    const [busca, setBusca] = useState("");
+
     const [paginaAtual, setPaginaAtual] = useState(1);
-    const [itensPorPagina] = useState(10);
-    const [loading, setLoading] = useState(false);
+    const itensPorPagina = 9;
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+    const [open, setOpen] = useState(false);
+    const [produtoSelecionado, setProdutoSelecionado] = useState(null);
 
-    async function fetchCategorias() {
+    // --- Carregar produtos ---
+    const carregarProdutos = async () => {
         try {
-            const res = await fetch(API_CATEGORIAS, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setCategorias([{ id: "0", categoria: "Todos" }, ...(Array.isArray(data) ? data : [])]);
-        } catch { }
-    }
-
-    async function fetchProdutos() {
-        try {
+            const token = localStorage.getItem("token");
             const res = await fetch(API_PRODUTOS, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
+            if (!res.ok) throw new Error("Erro ao buscar produtos.");
             const data = await res.json();
-            setProdutos(Array.isArray(data) ? data : []);
-        } catch { }
-    }
+            const lista = Array.isArray(data.produtos) ? data.produtos : Array.isArray(data) ? data : [data];
+            setProdutos(lista);
+        } catch (error) {
+            console.error(error);
+            toast.error("Falha ao carregar produtos.");
+        }
+    };
 
-    async function fetchEstoque() {
+    // --- Carregar estoque ---
+    const carregarEstoque = async () => {
         try {
-            const res = await fetch(API_ESTOQUE, {
-                headers: { Authorization: `Bearer ${token}` }
+            const token = localStorage.getItem("token");
+            const res = await fetch(API_ESTOQUE_FILIAL, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
+            if (!res.ok) throw new Error("Erro ao carregar estoque!");
             const data = await res.json();
             setEstoque(Array.isArray(data) ? data : []);
-        } catch {
-            setEstoque([]);
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao carregar estoque!");
         }
-    }
+    };
 
-    async function fetchLotesById(id) {
-        try {
-            const res = await fetch(`${API_LOTES}/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+    // --- Combinar estoque com produtos para pegar o nome correto ---
+    useEffect(() => {
+        if (estoque.length && produtos.length) {
+            const combinado = estoque.map((item) => {
+                const produto = produtos.find((p) => p.id === item.produto_id);
+                return {
+                    ...item,
+                    nome_produto: produto?.nome || item.nome_produto || "Produto desconhecido",
+                };
             });
-            const data = await res.json();
-            const arr = Array.isArray(data) ? data : data?.lotes ?? data?.data ?? [];
-            setLotes(Array.isArray(arr) ? arr : []);
-        } catch {
-            setLotes([]);
+            setEstoqueComProdutos(combinado);
         }
-    }
-
-    async function fetchMovimentacoesById(id) {
-        try {
-            const res = await fetch(`${API_MOV}/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            const arr = Array.isArray(data) ? data : data?.movimentacoes ?? data?.data ?? [];
-            setMovimentacoes(Array.isArray(arr) ? arr : []);
-        } catch {
-            setMovimentacoes([]);
-        }
-    }
-
-    async function abrirDetalhes(produto) {
-        setProdutoSelecionado(produto);
-        setModalOpen(true);
-        await Promise.all([
-            fetchLotesById(produto.id),
-            fetchMovimentacoesById(produto.id)
-        ]);
-    }
-
-    function getProdutoIdEstoque(item) {
-        return item.produto_id ?? item.produtoId ?? item.id ?? null;
-    }
-
-    const estoqueArray = Array.isArray(estoque) ? estoque : [];
-
-    const produtosComEstoque = produtos.map(p => {
-        const pid = p.id ?? p.produto_id ?? null;
-        const e = estoqueArray.find(es => String(getProdutoIdEstoque(es)) === String(pid));
-        return {
-            ...p,
-            id: pid,
-            quantidade: Number(e?.quantidade ?? 0),
-            lote: e?.lote ?? "—",
-            estoque_minimo: Number(p.estoque_minimo ?? 0),
-            estoque_maximo: Number(p.estoque_maximo ?? 9999)
-        };
-    });
-
-    const filtrados = categoriaSelecionada === "0"
-        ? produtosComEstoque
-        : produtosComEstoque.filter(p => String(p.categoria_id) === categoriaSelecionada);
-
-    const total = filtrados.length;
-    const totalPaginas = Math.ceil(total / itensPorPagina);
-    const inicio = (paginaAtual - 1) * itensPorPagina;
-    const paginados = filtrados.slice(inicio, inicio + itensPorPagina);
-
-    function statusEstoque(item) {
-        if (item.quantidade <= item.estoque_minimo) return <span className="text-red-600 font-semibold">Baixo</span>;
-        if (item.quantidade >= item.estoque_maximo) return <span className="text-blue-600 font-semibold">Alto</span>;
-        return <span className="text-green-600 font-semibold">Normal</span>;
-    }
+    }, [estoque, produtos]);
 
     useEffect(() => {
         setLoading(true);
-        Promise.all([fetchCategorias(), fetchProdutos(), fetchEstoque()])
-            .finally(() => setLoading(false));
+        Promise.all([carregarProdutos(), carregarEstoque()]).finally(() => setLoading(false));
     }, []);
+
+    // --- Abrir modal ---
+    const abrirModal = (produto) => {
+        setProdutoSelecionado(produto);
+        setOpen(true);
+    };
+
+    // --- Filtrar pelo nome ou código ---
+    const estoqueFiltrado = estoqueComProdutos.filter((item) => {
+        const nome = item.nome_produto || "";
+        const codigo = item.codigo_barras || "";
+        return (
+            nome.toLowerCase().includes(busca.toLowerCase()) ||
+            codigo.toLowerCase().includes(busca.toLowerCase())
+        );
+    });
+
+    // --- Paginação ---
+    const totalPaginas = Math.max(1, Math.ceil(estoqueFiltrado.length / itensPorPagina));
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const produtosExibidos = estoqueFiltrado.slice(inicio, fim);
+
+    const paginaAnterior = () => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1);
+    const proximaPagina = () => paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1);
 
     return (
         <Layout>
-            <div className="p-8 space-y-6">
+            <Toaster richColors position="top-right" />
+            <div className="p-6 space-y-6">
+                {/* Campo de busca */}
+                <div className="relative mt-15">
+                    <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+                    </div>
+                    <input type="search" id="search" placeholder="Buscar produto..." className="w-64 border rounded-2xl pl-9 pr-12 py-2 text-black focus:outline-none focus:ring focus:ring-gray-200 sm:pr-5 text-sm shadow-md" value={busca} onChange={(e) => setBusca(e.target.value)} />
+                </div>  
 
-                <div className="flex gap-6 text-[#989898] border-b pb-2 mb-4">
-                    {categorias.map(c => (
-                        <button
-                            key={c.id}
-                            onClick={() => setCategoriaSelecionada(c.id.toString())}
-                            className={categoriaSelecionada === c.id.toString()
-                                ? "text-[#62b7a9] font-semibold"
-                                : "hover:text-[#5e9f94]"}
-                        >
-                            {c.categoria}
-                        </button>
-                    ))}
+                {/* Loader */}
+                {loading && <p className="text-gray-400 mt-6">Carregando produtos...</p>}
+
+                {/* Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                    {!loading &&
+                        produtosExibidos.map((item) => (
+                            <div
+                                key={item.id}
+                                className="p-5 rounded-xl bg-white shadow-md border border-gray-200 hover:shadow-lg hover:scale-[1.01] transition-all"
+                            >
+                                <h2 className="text-xl font-bold text-[#abb1b1] mb-2">{item.nome_produto}</h2>
+                                <p className="text-gray-700">
+                                    <b>Quantidade:</b> {item.quantidade || 0}
+                                </p>
+
+                                <div className="mt-2">
+                                    <span
+                                        className={`text-sm font-bold px-2 py-1 rounded ${item.quantidade <= item.estoque_minimo
+                                            ? "text-[#a8686a] bg-[#e9d2d2]"
+                                            : item.quantidade >= item.estoque_maximo
+                                                ? "text-blue-700 bg-blue-100"
+                                                : "text-[#528575] bg-[#d2e9dd]"
+                                            }`}
+                                    >
+                                        {item.quantidade <= item.estoque_minimo
+                                            ? "Estoque baixo"
+                                            : item.quantidade >= item.estoque_maximo
+                                                ? "Acima do ideal"
+                                                : "Normal"}
+                                    </span>
+                                </div>
+
+                                <Button
+                                    className="mt-4 w-full bg-[#79b0b0] hover:bg-[#5d8080] text-white"
+                                    onClick={() => abrirModal(item)}
+                                >
+                                    Solicitar Reposição
+                                </Button>
+                            </div>
+                        ))}
                 </div>
 
-                <Table className="bg-white rounded-lg shadow-sm">
-                    <TableHeader className="bg-[#a9d6cd]">
-                        <TableRow>
-                            <TableHead>Produto</TableHead>
-                            <TableHead>Qtde</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Lote</TableHead>
-                            <TableHead></TableHead>
-                        </TableRow>
-                    </TableHeader>
+                {!loading && estoqueFiltrado.length === 0 && (
+                    <p className="text-center text-gray-500 mt-8">Nenhum produto encontrado.</p>
+                )}
 
-                    <TableBody>
-                        {loading ? (
-                            <TableRow><TableCell colSpan={5} className="text-center py-6">Carregando...</TableCell></TableRow>
-                        ) : paginados.length === 0 ? (
-                            <TableRow><TableCell colSpan={5} className="text-center py-6">Nenhum item encontrado.</TableCell></TableRow>
-                        ) : (
-                            paginados.map(item => (
-                                <TableRow key={item.id}>
-                                    <TableCell>{item.nome}</TableCell>
-                                    <TableCell>{item.quantidade}</TableCell>
-                                    <TableCell>{statusEstoque(item)}</TableCell>
-                                    <TableCell>{item.lote}</TableCell>
-                                    <TableCell>
-                                        <button
-                                            onClick={() => abrirDetalhes(item)}
-                                            className="text-[#62b7a9] hover:underline text-sm"
-                                        >
-                                            Ver detalhes
-                                        </button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                {/* Paginação */}
+                {estoqueFiltrado.length > 0 && (
+                    <div className="flex justify-center gap-3 mt-6">
+                        <Button disabled={paginaAtual === 1} onClick={paginaAnterior} className="bg-[#79b0b0] hover:bg-[#5d8080]">
+                            Anterior
+                        </Button>
+                        <span className="font-semibold">
+                            Página {paginaAtual} de {totalPaginas}
+                        </span>
+                        <Button disabled={paginaAtual === totalPaginas} onClick={proximaPagina} className="bg-[#79b0b0] hover:bg-[#5d8080] ">
+                            Próxima
+                        </Button>
+                    </div>
+                )}
 
-                <div className="flex justify-between pt-3">
-                    <button
-                        disabled={paginaAtual === 1}
-                        onClick={() => setPaginaAtual(p => p - 1)}
-                        className="px-3 py-1 bg-[#62b7a9] text-white rounded disabled:bg-gray-300"
-                    >
-                        Anterior
-                    </button>
-
-                    <span>Página {paginaAtual} de {totalPaginas}</span>
-
-                    <button
-                        disabled={paginaAtual === totalPaginas}
-                        onClick={() => setPaginaAtual(p => p + 1)}
-                        className="px-3 py-1 bg-[#62b7a9] text-white rounded disabled:bg-gray-300"
-                    >
-                        Próximo
-                    </button>
-                </div>
-
-                <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                    <DialogContent className="max-w-xl">
-                        <DialogHeader>
-                            <DialogTitle>
-                                {produtoSelecionado?.nome}
-                            </DialogTitle>
-                        </DialogHeader>
-
-                        <div className="space-y-4">
-
-                            <div>
-                                <h3 className="font-semibold mb-1">Lotes</h3>
-                                {lotes.length === 0 ? (
-                                    <p className="text-sm text-gray-500">Nenhum lote encontrado.</p>
-                                ) : (
-                                    <ul className="text-sm">
-                                        {lotes.map((l, i) => (
-                                            <li key={i} className="border-b py-1">
-                                                Lote: {l.lote ?? l.id ?? "—"} —
-                                                Validade: {l.validade ?? "—"} —
-                                                Qtde: {l.quantidade ?? 0}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-
-                            <div>
-                                <h3 className="font-semibold mb-1">Movimentações</h3>
-                                {movimentacoes.length === 0 ? (
-                                    <p className="text-sm text-gray-500">Nenhuma movimentação encontrada.</p>
-                                ) : (
-                                    <ul className="text-sm">
-                                        {movimentacoes.map((m, i) => (
-                                            <li key={i} className="border-b py-1">
-                                                {m.tipo} — {m.quantidade} un — {m.data}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-
-                        </div>
-
-                    </DialogContent>
+                {/* Modal */}
+                <Dialog open={open} onOpenChange={setOpen}>
+                    {open && produtoSelecionado && (
+                        <SolicitacaoModal produto={produtoSelecionado} fechar={() => setOpen(false)} />
+                    )}
                 </Dialog>
-
             </div>
         </Layout>
     );

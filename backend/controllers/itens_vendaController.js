@@ -3,7 +3,8 @@ import{
     obterItemVendaPorID,
     atualizarItemVenda,
     deletarItemVenda,
-    criarItemVenda
+    criarItemVenda, 
+    obterTopCategorias
 } from "../models/itens_venda.js";
 
 const criarItemVendaController = async (req, res) => {
@@ -80,10 +81,21 @@ const atualizarItemVendaController = async (req, res) =>{
     }
 };
 
+const obterTopCategoriasController = async (req, res) => {
+    try {
+        const resultado = await obterTopCategorias();
+        res.status(200).json(resultado);
+    } catch (error) {
+        console.error("Erro ao obter top categorias:", error);
+        res.status(500).json({ mensagem: "Erro ao obter top categorias" });
+    }
+};
+
 export{
     criarItemVendaController,
     listarItemVendaController,
     obterItemVendaPorIDController,
     deletarItemVendaController,
-    atualizarItemVendaController
+    atualizarItemVendaController,
+    obterTopCategoriasController
 };

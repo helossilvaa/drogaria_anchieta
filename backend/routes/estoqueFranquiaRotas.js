@@ -1,5 +1,5 @@
 import express from 'express';
-import { criarEstoqueFranquiaController, listarEstoqueFranquiaController, obterEstoqueFranquiaPorIdController, atualizarEstoqueFranquiaController, deletarEstoqueFranquiaController } from '../controllers/estoqueFranquiaController.js';
+import { criarEstoqueFranquiaController, listarEstoqueFranquiaController, obterEstoqueFranquiaPorIdController, atualizarEstoqueFranquiaController, deletarEstoqueFranquiaController, listarAlertasBaixaQuantidadeController } from '../controllers/estoqueFranquiaController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -9,6 +9,7 @@ router.get('/', authMiddleware, listarEstoqueFranquiaController);
 router.get('/:id', authMiddleware, obterEstoqueFranquiaPorIdController);
 router.put('/:id', authMiddleware, atualizarEstoqueFranquiaController);
 router.delete('/:id', authMiddleware, deletarEstoqueFranquiaController);
+router.get('/alertas/baixa-quantidade', authMiddleware, listarAlertasBaixaQuantidadeController);
 
 router.options('/', (req, res) => {
     res.setHeader('Allow', 'POST, GET');

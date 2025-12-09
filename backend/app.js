@@ -73,6 +73,7 @@ try {
 
 app.use('/auth', authRotas);
 app.use('/usuarios', usuarioRotas);
+app.use('/vendas', vendasPorFilialRotas);
 app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
@@ -99,7 +100,6 @@ app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
 app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
-app.use('/vendasPorFilial', vendasPorFilialRotas);
 app.use('/salariosPorFilial', SalariosPorFilialRotas);
 app.use("/", relatoriosRotas);
 
