@@ -39,6 +39,8 @@ import SalariosPorFilialRotas from './routes/salariosPorFilialRotas.js';
 import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import FuncionariosPorFilialRotas from './routes/funcionariosPorFilialRotas.js';
 import './services/transacaoVendas.js';
+import relatoriosRotas from "./routes/relatoriosRotas.js";
+
 
 
 dotenv.config();
@@ -99,6 +101,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
 app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
 app.use('/salariosPorFilial', SalariosPorFilialRotas);
+app.use("/", relatoriosRotas);
 
 
 app.get('/health', (req, res) => {
