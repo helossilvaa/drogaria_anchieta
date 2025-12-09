@@ -104,6 +104,7 @@ app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
 app.use('/api', reqEstoqueMatrizRotas);
+app.use ('/relatorios', relatoriosRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
 app.use("/dashboard-financeiro", dashboardFinanceiroRotas);
 app.use('/salariosfilial', salariosFilialRotas);
