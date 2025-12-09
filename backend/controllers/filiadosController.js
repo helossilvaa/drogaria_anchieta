@@ -94,19 +94,30 @@ export const atualizarFiliado = async (req, res) => {
   const dados = req.body;
 
   try {
+    // Busca o usuário original
+    const original = await Filiado.getByCPF(dados.cpf);
+    
+    // Se está editando mas o CPF pertence ao mesmo usuário → OK
+    // Convertendo para Number para evitar a comparação falsa
     if (dados.cpf) {
-      const usuarioExistente = await Filiado.getByCPF(dados.cpf);
-      if (usuarioExistente && usuarioExistente.id !== id) {
-        return res.status(400).json({ message: "Já existe um usuário com este CPF." });
+      const existente = await Filiado.getByCPF(dados.cpf);
+
+      if (existente && Number(existente.id) !== Number(id)) {
+        return res.status(400).json({
+          message: "Já existe um usuário com este CPF."
+        });
       }
     }
 
+    // Atualiza
     const atualizado = await Filiado.update(id, dados);
+
     if (atualizado === 0) {
       return res.status(404).json({ message: "Usuário não encontrado." });
     }
 
     return res.status(200).json({ message: "Usuário atualizado com sucesso!" });
+
   } catch (err) {
     console.error("Erro ao atualizar:", err);
     return res.status(500).json({ message: "Erro ao atualizar usuário." });
