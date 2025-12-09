@@ -45,6 +45,7 @@ export default function NovaVendaPage() {
   const [filiais, setFiliais] = useState([]);
   
   
+  
     // Buscar filiais do backend
     useEffect(() => {
       if (unidadeTipo === "filial") {
