@@ -191,7 +191,7 @@ export default function TableFuncionarios() {
             </PopoverContent>
           </Popover>
 
-          {/* AlertDialog de confirmação de exclusão */}
+       
           <AlertDialog
             open={deleteDialog.open && deleteDialog.id === item.id}
             onOpenChange={(open) => setDeleteDialog({ open, id: item.id })}

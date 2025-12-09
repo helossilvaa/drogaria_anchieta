@@ -28,7 +28,6 @@ import estoqueFranquiaRotas from './routes/estoqueFranquiaRotas.js';
 import movimentacaoEstoqueRotas from './routes/movimentacaoEstoqueRotas.js';
 import notificacoesRotas from './routes/notificacoesRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
-import UploadRotas from './middlewares/upload.js';
 import vendasFilial from './routes/vendasFilialRotas.js'
 import transacoesRotas from './routes/transacoesFilialRotas.js';
 import {registrarPagamentoMensal} from './services/registrarPagamento.js';
@@ -43,6 +42,10 @@ import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
 import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
 
+import './services/transacaoVendas.js';
+import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
+import relatoriosRotas from "./routes/relatoriosRotas.js";
+import salariosFilialRotas from './routes/salariosFilialRotas.js';
 
 
 
@@ -76,6 +79,7 @@ try {
 
 app.use('/auth', authRotas);
 app.use('/usuarios', usuarioRotas);
+app.use('/vendas', vendasPorFilialRotas);
 app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
@@ -107,6 +111,7 @@ app.use('/salariosPorFilial', SalariosPorFilialRotas);
 app.use('/api', reqEstoqueMatrizRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
 
+app.use('/salariosfilial', salariosFilialRotas);
 
 
 app.get('/health', (req, res) => {

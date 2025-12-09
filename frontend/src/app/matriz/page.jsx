@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-toastify";
 import RankingUnidades from "@/components/rankingUnidades/rankingUnidades";
 import EvolucaoVendasMensal from "@/components/evolucaoVendas/evolucaoVendas";
+import { MaisVendidos } from "@/components/categoriasMaisVendidas/categoriasgrafico";
+import MapaUnidades from "@/components/mapaFranquias/mapaFranquias";
+import CardTransacoes from "@/components/transacoesDashboard/transacoes";
+
 
 const API_URL = "http://localhost:8080";
 
@@ -34,17 +38,20 @@ export default function DashboardMatriz() {
   return (
     <Layout>
       <div className="p-6 space-y-6">
-        {/* Cards de métricas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="flex flex-col justify-between p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Total de Filiais</CardTitle>
             <p className="text-2xl font-bold">{franquias.length}</p>
           </Card>
-          <Card className="flex flex-col justify-between p-4">
+          <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
+            <CardTitle>Total de funcionários</CardTitle>
+            <p className="text-2xl font-bold">R$200</p>
+          </Card>
+          <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Entradas</CardTitle>
             <p className="text-2xl font-bold">R$200</p>
           </Card>
-          <Card className="flex flex-col justify-between p-4">
+          <Card className="flex flex-col justify-between p-4 bg-teal-800 text-white">
             <CardTitle>Saídas</CardTitle>
             <p className="text-2xl font-bold">R$200</p>
           </Card>
@@ -82,17 +89,22 @@ export default function DashboardMatriz() {
           </Card>
         </div>
 
-        {/* Gráfico de evolução de vendas ocupa toda largura */}
-        <div className="grid grid-cols-1 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Evolução de Vendas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EvolucaoVendasMensal />
-            </CardContent>
-          </Card>
+        
+        <div className="grid grid-cols-[1fr_3fr] gap-4">
+          <div className="gap-4">
+          <MaisVendidos/>
+          <CardTransacoes entradas={200} saidas={200} lucro={7000} percentual="12,2" />
+          </div>
+          <MapaUnidades/>
         </div>
+        
+        <div className="grid grid-cols-1 gap-4">
+          <EvolucaoVendasMensal />
+            
+              
+        </div>
+        
+        
       </div>
     </Layout>
   );

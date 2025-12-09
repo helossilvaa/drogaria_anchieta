@@ -41,7 +41,21 @@ export default function NovaVendaPage() {
   const [itensCarrinho, setItensCarrinho] = useState([])
   const [carrinho, setCarrinho] = useState([]);
   const [desconto_id, setDescontoId] = useState("");
-
+  const [unidadeTipo, setUnidadeTipo] = useState(""); // matriz ou filial
+  const [filiais, setFiliais] = useState([]);
+  
+  
+    // Buscar filiais do backend
+    useEffect(() => {
+      if (unidadeTipo === "filial") {
+        fetch("/api/unidades?tipo=franquia") // seu endpoint para pegar filiais
+          .then((res) => res.json())
+          .then((data) => setFiliais(data))
+          .catch((err) => console.error(err));
+      } else {
+        setFiliais([]); // limpa as filiais quando não for filial
+      }
+    }, [unidadeTipo]);
 
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");
@@ -49,6 +63,8 @@ export default function NovaVendaPage() {
       setCarrinho(JSON.parse(carrinhoSalvo));
     }
   }, []);
+
+  
 
   const removerProduto = (id) => {
     setListaVenda(prev => prev.filter(p => p.id !== id));
@@ -103,21 +119,31 @@ export default function NovaVendaPage() {
     setMostrarNota(false); 
   };
  
-  // Buscar cliente
   async function buscarCliente() {
     setErroCliente("");
     setCliente(null);
     setLoadingCliente(true);
+  
     try {
-      const res = await fetch(`http://localhost:8080/api/filiados/cpf/${cpfCliente}`);
+      const token = localStorage.getItem("token");
+  
+      const res = await fetch(`http://localhost:8080/api/filiados/cpf/${cpfCliente}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+  
       if (!res.ok) {
         setErroCliente("Usuário não encontrado.");
         toast.error("Usuário não encontrado.");
         return;
       }
+  
       const data = await res.json();
       setCliente(data);
       setClienteId(data.id);
+  
     } catch (error) {
       setErroCliente("Erro ao buscar cliente.");
       toast.error("Erro ao buscar cliente.");
@@ -125,6 +151,7 @@ export default function NovaVendaPage() {
       setLoadingCliente(false);
     }
   }
+  
 
   // Salvar venda no banco de dados
   async function salvarVenda() {

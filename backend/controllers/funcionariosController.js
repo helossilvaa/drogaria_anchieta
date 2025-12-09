@@ -4,7 +4,8 @@ import {
   obterFuncionarioId,
   atualizarFuncionario,
   deletarFuncionario,
-  mudarStatusFuncionario
+  mudarStatusFuncionario, 
+  funcionarioDestaqueMes 
 } from '../models/funcionarios.js';
 
 
@@ -224,6 +225,44 @@ const listarQuantidadeFuncionariosUnidadeController = async (req, res) => {
   }
 };
 
+const funcionarioDestaqueController = async (req, res) => {
+  try {
+    const unidadeId = req.user.unidade_id;
+
+    if (!unidadeId) {
+      return res.status(400).json({ mensagem: "Usuário não possui unidade vinculada" });
+    }
+
+    const destaque = await funcionarioDestaqueMes(unidadeId);
+
+    if (!destaque) {
+      return res.status(404).json({ mensagem: "Nenhuma venda registrada este mês" });
+    }
+
+    res.status(200).json(destaque);
+
+  } catch (error) {
+    console.error("Erro ao buscar destaque:", error);
+    res.status(500).json({ mensagem: "Erro ao buscar destaque", error });
+  }
+};
+
+
+const obterFuncionariosFilialController = async (req, res) => {
+  try {
+    const { unidadeId } = req.params; 
+    if (!unidadeId) return res.status(400).json({ mensagem: "ID da unidade obrigatório" });
+
+    const funcionarios = await listarFuncionarios();
+    const funcionariosDaUnidade = funcionarios.filter(f => f.unidade_id === Number(unidadeId));
+
+    res.status(200).json(funcionariosDaUnidade);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensagem: "Erro ao listar funcionários da filial" });
+  }
+};
+
 
 export {
   listarFuncionariosController,
@@ -233,5 +272,7 @@ export {
   deletarFuncionarioController,
   mudarStatusFuncionarioController,
   obterFuncionariosUnidadeController,
-  listarQuantidadeFuncionariosUnidadeController
+  listarQuantidadeFuncionariosUnidadeController,
+  funcionarioDestaqueController,
+  obterFuncionariosFilialController
 };

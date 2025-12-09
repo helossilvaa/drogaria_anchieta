@@ -1,4 +1,4 @@
-import { create, deleteRecord, read, readAll, update } from "../config/database.js";
+import { create, deleteRecord, read, readAll, update, query } from "../config/database.js";
 
 const criarEstoqueFranquia = async (estoqueFranquiaData) => {
     try {
@@ -46,4 +46,21 @@ const deletarEstoqueFranquia = async (id) => {
     }
 };
 
-export { criarEstoqueFranquia, listarEstoqueFranquia, obterEstoqueFranquiaPorId, atualizarEstoqueFranquia, deletarEstoqueFranquia };
+const listarProdutosComBaixoEstoque = async (limite = 3) => {
+    try {
+        const sql = `
+            SELECT ef.produto_id, p.nome AS produto_nome, ef.quantidade, ef.estoque_minimo
+            FROM estoque_franquia ef
+            JOIN produtos p ON ef.produto_id = p.id
+            ORDER BY ef.quantidade ASC
+            LIMIT ?
+        `;
+        const resultados = await query(sql, [limite]);
+        return resultados;
+    } catch (error) {
+        console.error('Erro ao listar produtos com baixo estoque:', error);
+        throw error;
+    }
+};
+
+export { criarEstoqueFranquia, listarEstoqueFranquia, obterEstoqueFranquiaPorId, atualizarEstoqueFranquia, deletarEstoqueFranquia, listarProdutosComBaixoEstoque };

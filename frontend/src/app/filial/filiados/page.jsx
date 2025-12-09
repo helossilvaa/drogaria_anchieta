@@ -70,7 +70,7 @@ export default function Filiados() {
       const data = await res.json();
       setUsuarios(data);
     } catch (error) {
-      console.error("Erro ao carregar usuários:", error);
+      toast.error("Erro ao carregar usuários:", error);
     }
   };
 
@@ -83,7 +83,7 @@ export default function Filiados() {
       const data = await res.json();
       setTiposDescontos(data);
     } catch (error) {
-      console.error("Erro ao carregar tipos de descontos:", error);
+      toast.error("Erro ao carregar tipos de descontos:", error);
     }
   };
 
@@ -201,7 +201,7 @@ export default function Filiados() {
         throw new Error(erroMsg);
       }
 
-      alert("Usuário cadastrado com sucesso!");
+      toast.success("Usuário cadastrado com sucesso!");
       setAbrirModal(false);
       setNovoUsuario({
         nome: "",

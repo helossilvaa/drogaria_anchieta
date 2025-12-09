@@ -1,21 +1,18 @@
 import { query } from "../config/database.js";
 
 export const VendasPorFilial = {
-  listarPorUnidade: async (unidadeId) => {
+  totalVendasHoje: async (unidadeId) => {
     const sql = `
-      SELECT v.id, v.total, v.data, v.tipo_pagamento_id, d.desconto AS desconto_valor
-      FROM vendas v
-      LEFT JOIN descontos d ON v.desconto_id = d.id
-      WHERE v.unidade_id = ?
-      ORDER BY v.data DESC
+      SELECT SUM(total) AS total_vendas
+      FROM vendas
+      WHERE unidade_id = ? AND DATE(data) = CURDATE()
     `;
     try {
-      return await query(sql, [unidadeId]);
+      const [resultado] = await query(sql, [unidadeId]);
+      return resultado?.total_vendas || 0;
     } catch (err) {
-      console.error("Erro ao listar vendas da filial:", err);
+      console.error("Erro ao calcular total de vendas hoje:", err);
       throw err;
     }
   },
 };
-export { VendasPorFilial };
-
