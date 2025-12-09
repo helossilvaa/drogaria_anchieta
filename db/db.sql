@@ -1126,19 +1126,19 @@ INSERT INTO descontos (tipodesconto_id, nome, desconto) VALUES
    (2, "CUPOM45", 0.45), 
    (2, "CUPOM5", 0.50); 
  
-insert into vendas (id, cliente_id, usuario_id, tipo_pagamento_id, desconto_id, total, desconto_valor) values
-('1', '1', '1', '2', '3', '1', '83.20', '20.80'),
-('2', '1', '1', '2', '3', '1', '84.00', '21.00'),
-('3', '3', '1', '2', '3', '7', '72.00', '8.00'),
-('4', '3', '1', '2', '3', '8', '6.60', '15.40'),
-('5', '1', '1', '2', '3', '1', '20.25', '24.75');
+insert into vendas (cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, desconto_valor) values
+('1', '1', '2', '3', '1', '83.20', '20.80'),
+('1', '1', '2', '3', '1', '84.00', '21.00'),
+('3', '1', '2', '3', '7', '72.00', '8.00'),
+('3', '1', '2', '3', '8', '6.60', '15.40'),
+('1', '1', '2', '3', '1', '20.25', '24.75');
 
 insert into itens_venda (venda_id, produto_id, lote_id, quantidade, preco_unitario, subtotal) values
-('1', '1', '1', NULL, '8', '13.00', '104.00'),
-('2', '2', '4', NULL, '3', '35.00', '105.00'),
-('3', '3', '103', NULL, '1', '80.00', '80.00'),
-('4', '4', '39', NULL, '1', '22.00', '22.00'),
-('5', '5', '32', NULL, '1', '45.00', '45.00');
+('1', '1', NULL, '8', '13.00', '104.00'),
+('2', '4', NULL, '3', '35.00', '105.00'),
+('3', '103', NULL, '1', '80.00', '80.00'),
+('4', '39', NULL, '1', '22.00', '22.00'),
+('5', '32', NULL, '1', '45.00', '45.00');
  
 INSERT INTO parcerias (parceiro, porcentagem) VALUES 
     ("MedSênior", 0.13), 
