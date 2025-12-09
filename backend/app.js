@@ -34,6 +34,7 @@ import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
+import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
 import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';

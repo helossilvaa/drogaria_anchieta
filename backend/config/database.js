@@ -2,7 +2,7 @@ import mysql from "mysql2/promise";
 import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
-    host: '127.0.0.1',
+    host: 'localhost',
     user: 'root',
     database: 'drogaria',
     password: '',
@@ -68,6 +68,7 @@ async function create(table, data) {
     // Obtém uma conexão com o banco de dados
     const connection = await getConnection();
     try {
+      console.log("CREATE() RECEBEU TABELA:", table);
         // Obtém as chaves do objeto 'data' e as junta em uma string separada por vírgulas
         const columns = Object.keys(data).join(', ');
  
@@ -76,6 +77,8 @@ async function create(table, data) {
  
         // Monta a query SQL para inserção dos dados na tabela especificada
         const sql = `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
+
+        console.log(" SQL GERADO:", sql);
  
         // Obtém os valores do objeto 'data' para serem usados na query
         const values = Object.values(data).map(value => (value === undefined ? null : value));
@@ -84,7 +87,7 @@ async function create(table, data) {
         const [result] = await connection.execute(sql, values);
  
         // Retorna o ID do registro inserido
-        return result.insertId;
+        return result; 
     } finally {
         // Libera a conexão com o banco de dados
         connection.release();
