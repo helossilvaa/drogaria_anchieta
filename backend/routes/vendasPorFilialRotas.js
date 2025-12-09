@@ -1,5 +1,5 @@
 import express from 'express';
-import { totalVendasHoje } from '../controllers/vendasPorFilial.js';
+import { totalVendasHoje } from '../controllers/vendasPorFilialController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();

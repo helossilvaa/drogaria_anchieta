@@ -44,6 +44,21 @@ export default function NovaVendaPage() {
   const [unidadeTipo, setUnidadeTipo] = useState("");
   const [filiais, setFiliais] = useState([]);
 
+  
+  
+  
+    // Buscar filiais do backend
+    useEffect(() => {
+      if (unidadeTipo === "filial") {
+        fetch("/api/unidades?tipo=franquia") // seu endpoint para pegar filiais
+          .then((res) => res.json())
+          .then((data) => setFiliais(data))
+          .catch((err) => console.error(err));
+      } else {
+        setFiliais([]); // limpa as filiais quando não for filial
+      }
+    }, [unidadeTipo]);
+
 
   // Buscar filiais do backend
   useEffect(() => {
