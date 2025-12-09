@@ -1,4 +1,4 @@
-import { create, deleteRecord, read, readAll, update } from "../config/database.js";
+import { create, deleteRecord, read, readAll, update, readJoin } from "../config/database.js";
 
 const criarItemVenda = async (itemVendaData) => {
     try {
@@ -46,4 +46,17 @@ const deletarItemVenda = async (id) => {
     }
 };
 
-export{criarItemVenda, atualizarItemVenda, listarItemVenda, deletarItemVenda, obterItemVendaPorID};
+const obterTopCategorias = async () => {
+    const query = `
+        SELECT c.nome AS categoria, SUM(iv.quantidade) AS total
+        FROM itemVenda iv
+        JOIN produto p ON p.id = iv.produto_id
+        JOIN categoria c ON c.id = p.categoria_id
+        GROUP BY c.nome
+        ORDER BY total DESC
+        LIMIT 3;
+    `;
+    return await readJoin(query);
+};
+
+export{criarItemVenda, atualizarItemVenda, listarItemVenda, deletarItemVenda, obterItemVendaPorID, obterTopCategorias};
