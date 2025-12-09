@@ -245,13 +245,15 @@ CREATE TABLE contas (
  
 CREATE TABLE pagamentos_contas ( 
     id INT AUTO_INCREMENT PRIMARY KEY, 
-    conta_id INT NOT NULL, 
+    conta_id INT NULL, 
     valor_pago DECIMAL(10,2) NOT NULL, 
     data_pagamento DATE NOT NULL, 
     status_pagamento ENUM('pendente','pago') DEFAULT 'pago', 
     unidade_id INT NOT NULL, 
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-    FOREIGN KEY (conta_id) REFERENCES contas(id), 
+    FOREIGN KEY (conta_id) REFERENCES contas(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
     FOREIGN KEY (unidade_id) REFERENCES unidade(id) 
 ); 
  
@@ -269,22 +271,32 @@ CREATE TABLE  salarios (
   FOREIGN KEY (departamento_id) REFERENCES departamento(id), 
   FOREIGN KEY (unidade_id) REFERENCES unidade(id) 
 ); 
+
+ALTER TABLE salarios
+ADD COLUMN tipo ENUM('normal', '13-1', '13-2') DEFAULT 'normal';
+
  
 CREATE TABLE pagamentos_salarios ( 
   id INT AUTO_INCREMENT PRIMARY KEY, 
-  id_salario INT NOT NULL, 
+  id_salario INT NULL,  -- Agora permite ficar NULL para histórico
   id_funcionario INT NOT NULL, 
   unidade_id INT NOT NULL, 
   departamento_id INT NOT NULL, 
   valor DECIMAL(10,2) NOT NULL, 
   status_pagamento ENUM('pago', 'pendente'), 
   data_pagamento DATE NOT NULL, 
-  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-  FOREIGN KEY (id_salario) REFERENCES salarios(id), 
-  FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id), 
-  FOREIGN KEY (departamento_id) REFERENCES departamento(id), 
-  FOREIGN KEY (unidade_id) REFERENCES unidade(id) 
-); 
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  tipo ENUM('normal', '13-1', '13-2') DEFAULT 'normal',
+  
+  FOREIGN KEY (id_salario) REFERENCES salarios(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+    
+  FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id),
+  FOREIGN KEY (departamento_id) REFERENCES departamento(id),
+  FOREIGN KEY (unidade_id) REFERENCES unidade(id)
+);
+
  
  
 CREATE TABLE tiporelatorio ( 
@@ -392,6 +404,41 @@ CREATE TABLE notificacoes (
     FOREIGN KEY (unidade_id) REFERENCES unidade(id), 
     FOREIGN KEY (tipo_id) REFERENCES notificacao_tipos(id) 
 ); 
+
+CREATE TABLE requisicoes_estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estoque_matriz_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_requisitada INT NOT NULL,
+    valor_unitario DECIMAL(10, 2) NOT NULL,
+    valor_total DECIMAL(10, 2) NOT NULL,
+    data_requisicao DATE NOT NULL,
+    fornecedor_id INT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    
+    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
+    FOREIGN KEY (produto_id) REFERENCES produtos(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
+);
+
+
+CREATE TABLE transacoes_matriz (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    unidade_id INT NOT NULL,   -- id da filial
+    ano INT NOT NULL,
+    mes INT NOT NULL,
+    entradas DECIMAL(15,2) NOT NULL,
+    saidas DECIMAL(15,2) NOT NULL,
+    lucro_liquido DECIMAL(15,2) NOT NULL,
+    data_transferencia DATETIME DEFAULT CURRENT_TIMESTAMP,
+    tipo_movimento ENUM('ENTRADA', 'SAIDA') NOT NULL, 
+    categoria_transacao_id INT NOT NULL,  
+    FOREIGN KEY (categoria_transacao_id) REFERENCES categoria_transacoes(id),
+    FOREIGN KEY (unidade_id) REFERENCES unidade(id)
+);
+
+
+
  
 INSERT INTO tipos_pagamento (tipo) VALUES  
 ('debito'), ('credito'), ('pix'); 
@@ -1078,7 +1125,8 @@ INSERT INTO categoria_transacoes (categoria_transacao, tipo, descricao)
 VALUES  
   ('Salários', 'Despesa', 'Pagamento de salários'), 
   ('Vendas', 'Receita', 'Receita de vendas'), 
-  ('Contas', 'Despesa', 'Pagamentos de contas da unidade'); 
+  ('Contas', 'Despesa', 'Pagamentos de contas da unidade'),
+  ('Trasferência', 'Receita', 'Tranferência de lucro para matriz');
  
 insert into notificacao_tipos (nome, icone, cor, acao_texto_padrao) values 
 ('Adicionado', 'Plus', 'pink', NULL), 

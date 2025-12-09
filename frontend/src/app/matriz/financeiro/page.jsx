@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import DashboardFinanceiro from '@/components/DashboardFinanceiro/page';
-import Transacoes from '@/components/transacoesFilial/page';
+import DashboardFinanceiro from '@/components/dashboardFinanceiro/page';
+import Estoque from '@/components/estoqueMatriz/page';
+import Transacoes from '@/components/transacoesMatriz/page';
 import Layout from '@/components/layout/layout';
 
 export default function Financeiro() {
@@ -10,8 +11,8 @@ export default function Financeiro() {
   const containerRef = useRef(null);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
-  const items = ['Dashboard', 'Transações'];
-
+  const items = ['Dashboard', 'Estoque', 'Transações'];
+ 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -27,7 +28,8 @@ export default function Financeiro() {
 
  const contentMap = {
   0: <DashboardFinanceiro/>,
-  4: <Transacoes/>
+  1: <Estoque/>,
+  2: <Transacoes/>
 }
 
   return (
