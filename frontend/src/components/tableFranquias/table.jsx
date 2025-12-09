@@ -37,11 +37,11 @@ const StatusBadge = ({ status }) => {
 const Avatar = ({ nome }) => {
   const initials = nome
     ? nome
-      .trim()
-      .split(/\s+/) // Divide por espaços
-      .slice(0, 2) // Pega primeiras duas palavras
-      .map((n) => n[0]?.toUpperCase()) // Pega primeira letra e deixa maiúscula
-      .join("")
+        .trim()
+        .split(/\s+/) // Divide por espaços
+        .slice(0, 2) // Pega primeiras duas palavras
+        .map((n) => n[0]?.toUpperCase()) // Pega primeira letra e deixa maiúscula
+        .join("")
     : "";
   return (
     <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-sm font-bold text-black">
@@ -196,12 +196,13 @@ export default function TableFranquias() {
           </Popover>
 
           {/* AlertDialog para confirmar exclusão */}
+          {/* AlertDialog para deletar */}
           <AlertDialog
             open={deleteDialog.open && deleteDialog.id === item.id}
             onOpenChange={(open) => setDeleteDialog({ open, id: item.id })}
           >
             <AlertDialogTrigger asChild>
-              <div /> {/* Trigger vazio porque já abrimos via CommandItem */}
+              <div />
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
