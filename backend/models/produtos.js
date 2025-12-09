@@ -3,7 +3,7 @@ import { create, readAll, read, update, deleteRecord } from "../config/database.
 
 const obterProdutoPorCodigoBarras = async (codigo_barras) => {
     try {
-        return await read('produtos', `codigo_barras = "${codigo_barras}"`);
+        return await read('produtos', `codigo_barras = ${codigo_barras}`);
     } catch (error) {
         console.error('Erro ao obter produto por código de barras: ', error);
         throw error;

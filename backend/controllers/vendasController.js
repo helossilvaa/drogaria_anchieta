@@ -1,8 +1,9 @@
-import{
+import {
     listarVenda,
     obterVendaPorID,
     atualizarVenda,
-    criarVenda
+    criarVenda,
+    listarItensPorVenda
 } from "../models/vendas.js";
 
 import { criarItemVenda } from "../models/vendasItens.js";
@@ -16,8 +17,8 @@ const criarVendaController = async (req, res) => {
             usuario_id,
             unidade_id,
             tipo_pagamento_id,
-            desconto_id,     // opcional
-            desconto_valor,  // ⭐ AGORA VEM DO FRONTEND
+            desconto_id,  
+            desconto_valor,  
             total,
             data,
             itens
@@ -29,20 +30,20 @@ const criarVendaController = async (req, res) => {
             unidade_id,
             tipo_pagamento_id,
             desconto_id,
-            desconto_valor,     // ⭐ SALVANDO NO BANCO
+            desconto_valor,     
             total,
             data
         };
 
         const novaVenda = await criarVenda(vendaData);
-
+        console.log(" novaVenda:", novaVenda);
+        console.log("Itens recebidos:", itens);
         for (const item of itens) {
             await criarItemVenda({
                 venda_id: novaVenda.insertId,
                 produto_id: item.produto_id,
                 quantidade: item.quantidade,
-                preco: item.preco,
-                subtotal: item.subtotal
+                preco_unitario: item.valor
             });
         }
 
@@ -57,55 +58,65 @@ const criarVendaController = async (req, res) => {
     }
 };
 
-
 const listarVendaController = async (req, res) => {
     try {
-        const Venda = await listarVenda();
-        res.status(200).json(Venda);
-    }catch (error) {
-        console.error('Erro ao listar vendas: ', error);
-        res.status(500).json({mensagem: 'Erro ao listar vendas'});
+        const vendas = await listarVenda();
+
+        for (const venda of vendas) {
+            venda.itens = await listarItensPorVenda(venda.id);
+        }
+
+        res.status(200).json(vendas);
+    } catch (error) {
+        console.error("Erro ao listar vendas:", error);
+        res.status(500).json({ mensagem: "Erro ao listar vendas" });
     }
 };
 
 const obterVendaPorIDController = async (req, res) => {
-    try{
-        const {id} = req.params;
-        const Venda = await obterVendaPorID(id);
+    try {
+        const { id } = req.params;
 
-        if (!Venda){
-            return res.status(404).json({mensagem: 'Venda não encontrada'});
+        const venda = await obterVendaPorID(id);
+        if (!venda) {
+            return res.status(404).json({ mensagem: "Venda não encontrada" });
         }
 
-        res.status(200).json(Venda);
-    }catch (error){
-        console.error ('Erro ao obter venda por ID: ', error);
-        res.status(500).json({mensagem:'Erro ao obter venda'});
+        const itens = await listarItensPorVenda(id);
+
+        return res.status(200).json({
+            ...venda,
+            itens
+        });
+
+    } catch (error) {
+        console.error("Erro ao obter venda por ID:", error);
+        res.status(500).json({ mensagem: "Erro ao obter venda" });
     }
 };
 
-
-const atualizarVendaController = async (req, res) =>{
-    try{
-        const {id} = req.params;
-        const {cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data} = req.body;
+const atualizarVendaController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data } = req.body;
 
         const VendaExistir = await obterVendaPorID(id);
-        if (!VendaExistir){
-            return res.status(404).json({mensagem: 'Venda não encontrada'});
+        if (!VendaExistir) {
+            return res.status(404).json({ mensagem: 'Venda não encontrada' });
         }
-        const VendaData = {id, cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data};
+        const VendaData = { id, cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, data };
 
-        await atualizarVenda (id, VendaData);
-        res.status(200).json({mensagem:'Venda atualizada'});
-    }catch (error) {
+        await atualizarVenda(id, VendaData);
+        res.status(200).json({ mensagem: 'Venda atualizada' });
+    } catch (error) {
         console.error('Erro ao atualizar: ', error);
-        res.status(500).json({mensagem: 'Erro ao atualizar'});
+        res.status(500).json({ mensagem: 'Erro ao atualizar' });
     }
 };
+
 const evolucaoVendasMensalController = async (req, res) => {
-  try {
-    const sql = `
+    try {
+        const sql = `
       SELECT DATE_FORMAT(data, '%Y-%m') AS mes,
              COALESCE(SUM(total), 0) AS total_vendas
       FROM vendas
@@ -113,16 +124,15 @@ const evolucaoVendasMensalController = async (req, res) => {
       ORDER BY mes ASC
     `;
 
-    const dados = await query(sql);
-    res.status(200).json(dados);
-  } catch (error) {
-    console.error("Erro ao gerar evolução mensal de vendas:", error);
-    res.status(500).json({ mensagem: "Erro ao gerar evolução mensal de vendas" });
-  }
+        const dados = await query(sql);
+        res.status(200).json(dados);
+    } catch (error) {
+        console.error("Erro ao gerar evolução mensal de vendas:", error);
+        res.status(500).json({ mensagem: "Erro ao gerar evolução mensal de vendas" });
+    }
 };
 
-
-export{
+export {
     criarVendaController,
     listarVendaController,
     obterVendaPorIDController,

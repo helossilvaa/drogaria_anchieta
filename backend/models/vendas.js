@@ -1,4 +1,4 @@
-import { create, read, readAll, update } from "../config/database.js";
+import { create, read, readAll, update, query } from "../config/database.js";
  
 const criarVenda = async (vendaData) => {
     try {
@@ -36,5 +36,15 @@ const atualizarVenda = async (id, vendaData) => {
     }
 };
 
+const listarItensPorVenda = async (venda_id) => {
+  const sql = `
+    SELECT iv.*, p.nome, p.foto
+    FROM itens_venda iv
+    JOIN produtos p ON p.id = iv.produto_id
+    WHERE iv.venda_id = ?
+  `;
+
+  return await query(sql, [venda_id]);
+};
  
-export { criarVenda, listarVenda, obterVendaPorID, atualizarVenda };
+export { criarVenda, listarVenda, obterVendaPorID, atualizarVenda, listarItensPorVenda };

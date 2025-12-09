@@ -5,7 +5,7 @@ import{
     deletarItemVenda,
     criarItemVenda, 
     obterTopCategorias
-} from "../models/itens_venda.js";
+} from "../models/vendasItens.js";
 
 const criarItemVendaController = async (req, res) => {
     try{
