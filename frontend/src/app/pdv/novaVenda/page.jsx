@@ -41,8 +41,10 @@ export default function NovaVendaPage() {
   const [itensCarrinho, setItensCarrinho] = useState([])
   const [carrinho, setCarrinho] = useState([]);
   const [desconto_id, setDescontoId] = useState("");
-  const [unidadeTipo, setUnidadeTipo] = useState(""); // matriz ou filial
+  const [unidadeTipo, setUnidadeTipo] = useState("");
   const [filiais, setFiliais] = useState([]);
+
+  
   
   
     // Buscar filiais do backend
@@ -57,6 +59,19 @@ export default function NovaVendaPage() {
       }
     }, [unidadeTipo]);
 
+
+  // Buscar filiais do backend
+  useEffect(() => {
+    if (unidadeTipo === "filial") {
+      fetch("/api/unidades?tipo=franquia")
+        .then((res) => res.json())
+        .then((data) => setFiliais(data))
+        .catch((err) => console.error(err));
+    } else {
+      setFiliais([]); // limpa as filiais quando não for filial
+    }
+  }, [unidadeTipo]);
+
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");
     if (carrinhoSalvo) {
@@ -64,7 +79,7 @@ export default function NovaVendaPage() {
     }
   }, []);
 
-  
+
 
   const removerProduto = (id) => {
     setListaVenda(prev => prev.filter(p => p.id !== id));
@@ -86,11 +101,9 @@ export default function NovaVendaPage() {
     setCpfCliente("");
     setErroCliente("");
 
-    setFiliados([]);
     setItensCarrinho([]);
     setCarrinho([]);
     setListaVenda([]);
-    setProdutos("");
     setNomeProduto("");
     setCodigoBarras("");
 
@@ -108,42 +121,42 @@ export default function NovaVendaPage() {
   };
 
   const tiposPagamento = {
-        1: "PIX",
-        2: "CRÉDITO",
-        3: "DÉBITO",
-      };
+    1: "PIX",
+    2: "CRÉDITO",
+    3: "DÉBITO",
+  };
 
   // Função para fechar o dialog e limpar
   const fecharDialog = () => {
     resetCampos();
-    setMostrarNota(false); 
+    setMostrarNota(false);
   };
- 
+
   async function buscarCliente() {
     setErroCliente("");
     setCliente(null);
     setLoadingCliente(true);
-  
+
     try {
       const token = localStorage.getItem("token");
-  
+
       const res = await fetch(`http://localhost:8080/api/filiados/cpf/${cpfCliente}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         }
       });
-  
+
       if (!res.ok) {
         setErroCliente("Usuário não encontrado.");
         toast.error("Usuário não encontrado.");
         return;
       }
-  
+
       const data = await res.json();
       setCliente(data);
       setClienteId(data.id);
-  
+
     } catch (error) {
       setErroCliente("Erro ao buscar cliente.");
       toast.error("Erro ao buscar cliente.");
@@ -151,7 +164,7 @@ export default function NovaVendaPage() {
       setLoadingCliente(false);
     }
   }
-  
+
 
   // Salvar venda no banco de dados
   async function salvarVenda() {
@@ -159,18 +172,26 @@ export default function NovaVendaPage() {
       setOpen(true);
       setIsLoading(true);
       setPagamentoFeito(false);
+
       const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
       const token = localStorage.getItem("token");
+
       if (!usuarioLogado?.id) {
-        console.error("Usuário não encontrado no localStorage");
         toast.error("Usuário não encontrado!");
         setOpen(false);
         return;
       }
+
       if (!cliente_id || !unidade_id || !tipo_pagamento_id) {
-        toast.error("Preencha cliente, unidade, forma de pagamento e desconto!");
+        toast.error("Preencha todos os dados!");
         return;
       }
+
+      const itensCarrinho = listaVenda.map(item => ({
+        produto_id: item.id,
+        quantidade: item.quantidade,
+        valor: item.preco
+      }));
 
       const venda = {
         cliente_id: Number(cliente_id),
@@ -178,11 +199,12 @@ export default function NovaVendaPage() {
         unidade_id: Number(unidade_id),
         tipo_pagamento_id: Number(tipo_pagamento_id),
         desconto_id: desconto_id ? Number(desconto_id) : null,
-        desconto_valor: Number(desconto), 
+        desconto_valor: Number(desconto),
         total: subtotalGeral - desconto,
         data,
         itens: itensCarrinho
       };
+
       const resposta = await fetch("http://localhost:8080/vendas", {
         method: "POST",
         headers: {
@@ -191,37 +213,58 @@ export default function NovaVendaPage() {
         },
         body: JSON.stringify(venda),
       });
-      if (!resposta.ok) {
-        throw new Error("Erro ao salvar venda: " + resposta.status);
-      }
-      const resultado = await resposta.json();
-      console.log("Venda criada no backend:", resultado);
 
-    
-    
-      // Simula processamento de pagamento
-      setTimeout(() => {
-        setIsLoading(false);
-        setPagamentoFeito(true);
-      }, 2000);
-    } catch (error) {
-      console.error("Erro ao registrar venda:", error);
-      toast.error("Erro ao registrar venda. Veja o console.");
+      if (!resposta.ok) {
+        const erro = await resposta.text();
+        console.error("Erro real da API:", erro);
+        throw new Error("Erro ao salvar venda: " + erro);
+      }
+
+      const resultado = await resposta.json();
+      console.log("Venda criada:", resultado);
+
+      setIsLoading(false);
+      setPagamentoFeito(true);
+
+      // Recarrega produtos após fechar a venda
+      try {
+        await fetchProdutos();
+        console.log("Produtos recarregados após venda");
+      } catch (erroProd) {
+        console.warn("Falha ao recarregar produtos:", erroProd);
+      }
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao registrar venda.");
       setOpen(false);
     }
   }
 
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    console.log(token);
+
     fetch(API_URL, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(res => res.json())
-      .then(data => setFiliados(data))
-      .catch(() => mostrarAlerta("Erro ao carregar filiados.", "erro"));
+      .then(async (res) => {
+        console.log("STATUS:", res.status);
+        const texto = await res.text();
+        console.log("RESPOSTA BRUTA:", texto);
+
+        try {
+          return JSON.parse(texto);
+        } catch {
+          console.log("Não é JSON!");
+          return null;
+        }
+      })
+      .then(data => {
+        console.log("FILIADOS:", data);
+        setFiliados(Array.isArray(data) ? data : data?.content || []);
+      })
+      .catch(err => console.error("Erro ao carregar filiados:", err));
   }, []);
   const fetchProdutos = async () => {
     const token = localStorage.getItem("token");
@@ -235,7 +278,7 @@ export default function NovaVendaPage() {
     }
     setUserToken(token);
     setIsLoading(true);
-    
+
     // Produtos
     try {
       const res = await fetch(`${API_PRODUTOS}`, {
@@ -259,7 +302,7 @@ export default function NovaVendaPage() {
         quantidade: 1,
       }));
       setProdutos(produtosComQuantidade);
-    }  catch (err) {
+    } catch (err) {
       console.error("Erro ao buscar produtos:", err);
       toast.error(err.message || "Erro ao carregar produtos.");
     } finally {
@@ -303,20 +346,25 @@ export default function NovaVendaPage() {
     // DESCONTO POR CPF (FILIADO)
     if (cpfLimpo.length === 11) {
       if (subtotalGeral >= 100) {
-        const existe = filiados.find(f => f.cpf.replace(/\D/g, "") === cpfLimpo);
+        // limpa o cpf do banco e o cpf digitado para comparar corretamente
+        const existe = filiados.find(f => {
+          const cpfFiliado = (f.cpf || "").toString().replace(/\D/g, "");
+          return cpfFiliado === cpfLimpo;
+        });
 
         if (!existe) {
-           toast.error("CPF não encontrado no sistema de filiados.");
+          toast.error("CPF não encontrado no sistema de filiados.");
           setDesconto(0);
-          return; 
+          return;
         }
 
         valorDesconto = subtotalGeral * 0.2;
+        setDescontoId(existe.id);
         toast.success("Desconto de 20% aplicado para filiado!");
       } else {
         toast.error("Compra deve ser maior que R$100 para aplicar desconto por CPF.");
         setDesconto(0);
-        return; 
+        return;
       }
     }
 
@@ -334,18 +382,30 @@ export default function NovaVendaPage() {
 
         const cupomData = await res.json();
 
-        const descontoCupom = Array.isArray(cupomData)
-          ? Number(cupomData[0].desconto)
-          : Number(cupomData.desconto);
+        // 🔥 Correção: garantir que encontrou o cupom digitado
+        const cupomCorreto = Array.isArray(cupomData)
+          ? cupomData.find(c => c.nome === codigoNormalizado)
+          : cupomData;
+
+        if (!cupomCorreto) {
+          toast.error("Cupom não encontrado.");
+          setDesconto(0);
+          return;
+        }
+
+        const descontoCupom = Number(cupomCorreto.desconto);
 
         valorDesconto = subtotalGeral * descontoCupom;
+        setDescontoId(cupomCorreto.id); 
 
-        toast.success(`Desconto de ${descontoCupom * 100}% aplicado pelo cupom!`);
+        toast.success(
+          `Desconto de ${(descontoCupom * 100).toFixed(0)}% aplicado pelo cupom!`
+        );
 
       } catch (err) {
         toast.error(err.message || "Cupom inválido.");
         setDesconto(0);
-        return; 
+        return;
       }
     }
 
@@ -373,13 +433,14 @@ export default function NovaVendaPage() {
         }
 
         valorDesconto = subtotalGeral * porcentagemNumerica;
+        setDescontoId(convenioData.id);
         toast.success(`Desconto de ${(porcentagemNumerica * 100).toFixed(0)}% aplicado através do convênio!`);
 
       } catch (err) {
         console.error("ERRO CONVÊNIO:", err);
         toast.error(err.message || "Código ou Convênio inválido.");
         setDesconto(0);
-        return; 
+        return;
       }
     }
     setDesconto(valorDesconto);
@@ -522,17 +583,28 @@ export default function NovaVendaPage() {
   };
   // Buscar produto
   const buscarProdutoPorNome = (nome) => {
-    const code = String(nome ?? nomeProduto ?? "").trim();
-    if (!code) {
+    const termo = String(nome ?? nomeProduto ?? "").trim().toLowerCase();
+
+    console.log("PRODUTOS DA API:", produtos);
+    console.log("BUSCANDO POR:", termo);
+
+    if (!termo) {
       toast.error("Digite um nome válido.");
       return;
     }
-    const produtoEncontrado = produtos.find(p => String(p.nome) === code);
+
+    // 🔍 Buscar por nome
+    const produtoEncontrado = produtos.find(p =>
+      p.nome.toLowerCase().includes(termo)
+    );
+
     if (!produtoEncontrado) {
       toast.error("Produto não encontrado!");
       return;
     }
+
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
+
     if (existeNoCarrinho) {
       setListaVenda(prev =>
         prev.map(p =>
@@ -544,23 +616,40 @@ export default function NovaVendaPage() {
     } else {
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
+
     setNomeProduto("");
     toast.success("Produto adicionado à venda!");
   };
 
-// Buscas produto por codigo de barras
+  // Buscas produto por codigo de barras
   const buscarProdutoPorCodigo = (codigo) => {
-    const code = String(codigo ?? codigoBarras ?? "").trim();
-    if (!code) {
-      toast.error("Digite um código de barras válido.");
+    const termo = String(codigo ?? nomeProduto ?? "").trim();
+
+    console.log("PRODUTOS DA API:", produtos);
+    console.log("BUSCANDO CÓDIGO:", termo);
+
+    if (!termo) {
+      toast.error("Digite um código válido.");
       return;
     }
-    const produtoEncontrado = produtos.find(p => String(p.codigo_barras) === code);
+
+    // Normalizar apenas números para comparação
+    const normalizar = (valor) => String(valor ?? "").trim().replace(/\D/g, "");
+
+    const termoNormalizado = normalizar(termo);
+
+    // 🔍 Buscar por código de barras
+    const produtoEncontrado = produtos.find(p =>
+      normalizar(p.codigo_barras).includes(termoNormalizado)
+    );
+
     if (!produtoEncontrado) {
       toast.error("Produto não encontrado!");
       return;
     }
+
     const existeNoCarrinho = listaVenda.find(p => p.id === produtoEncontrado.id);
+
     if (existeNoCarrinho) {
       setListaVenda(prev =>
         prev.map(p =>
@@ -572,9 +661,11 @@ export default function NovaVendaPage() {
     } else {
       setListaVenda(prev => [...prev, { ...produtoEncontrado, quantidade: 1 }]);
     }
-    setCodigoBarras("");
+
+    setNomeProduto("");
     toast.success("Produto adicionado à venda!");
   };
+
   const handleFinalizar = async () => {
     setOpen(true);
     setIsLoading(true);
@@ -588,7 +679,7 @@ export default function NovaVendaPage() {
         const vendaCriada = await salvarVenda();
         console.log("Venda criada no backend:", vendaCriada);
         toast.success("Venda registrada com sucesso.");
-      } catch (erro) {  
+      } catch (erro) {
         console.error("Erro ao registrar venda:", erro);
         toast.error("Erro ao salvar a venda.");
       }
@@ -599,7 +690,7 @@ export default function NovaVendaPage() {
 
   return (
     <Layout>
-      
+
       <div className="min-h-screen flex items-center justify-center py-10 relative">
         {alerta && (
           <div
@@ -753,7 +844,7 @@ export default function NovaVendaPage() {
                         </td>
                       </tr>
                     ))}
-                    
+
                   </tbody>
                 </table>
                 {totalPaginas > 1 && (
@@ -780,11 +871,11 @@ export default function NovaVendaPage() {
               </CardContent>
             </Card>
           </div>
-          
+
           <Card className="border-pink-100">
             <CardContent className="p-6">
               <div className="space-y-6">
-{/* IDENTIFICAÇÃO DO CLIENTE */}
+                {/* IDENTIFICAÇÃO DO CLIENTE */}
                 <div className="bg-white p-4 rounded-xl shadow border border-pink-200 space-y-3">
                   <h2 className="text-lg font-semibold text-pink-600">Identificação do Cliente</h2>
 
@@ -820,7 +911,7 @@ export default function NovaVendaPage() {
                   )}
                 </div>
 
-               
+
                 <div>
                   <p className="text-gray-500 mb-1">Subtotal</p>
                   <p className="font-medium text-gray-700">
@@ -829,7 +920,7 @@ export default function NovaVendaPage() {
                   <Separator className="my-1" />
                 </div>
 
-{/* DESCONTO */}
+                {/* DESCONTO */}
                 <div>
                   <p className="text-gray-500 mb-1">Desconto</p>
 
@@ -862,9 +953,9 @@ export default function NovaVendaPage() {
 
                 <div className="flex flex-col md:flex-row gap-4 mt-4">
 
-{/* Bloco completo: Unidade + Pagamento */}
+                  {/* Bloco completo: Unidade + Pagamento */}
                   <div className="flex flex-col md:flex-row gap-6 mt-4">
-{/* Seleção de Unidade */}
+                    {/* Seleção de Unidade */}
                     <div className="space-y-2 w-full">
                       <label className="text-gray-600 font-medium text-sm">Unidade</label>
 
@@ -892,7 +983,7 @@ export default function NovaVendaPage() {
                       </Select>
                     </div>
 
-{/* Forma de Pagamento */}
+                    {/* Forma de Pagamento */}
                     <div className="space-y-2 w-full">
                       <label className="text-gray-600 font-medium text-sm">Pagamento</label>
 
@@ -954,7 +1045,7 @@ export default function NovaVendaPage() {
 
               </div>
 
-{/* Cadastrar novo filiado */}
+              {/* Cadastrar novo filiado */}
               <div className="mt-6 text-center">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -1246,10 +1337,6 @@ export default function NovaVendaPage() {
           </Card>
         </div>
       </div>
-
-
     </Layout>
   );
 }
-
-

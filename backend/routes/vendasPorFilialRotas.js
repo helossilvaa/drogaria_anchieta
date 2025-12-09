@@ -4,7 +4,6 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/unidade/:id', authMiddleware, listarVendasPorUnidade);
 router.get("/vendas-hoje", authMiddleware, totalVendasHoje);
 router.get("/evolucaomensal/unidade/:id", authMiddleware, evolucaoVendasMensalFilialController);
 
