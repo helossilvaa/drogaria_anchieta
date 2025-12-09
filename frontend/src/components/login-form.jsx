@@ -21,6 +21,7 @@ export function LoginForm() {
     setLoading(true);
     setErro("");
 
+    //fetch do login
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -39,7 +40,7 @@ export function LoginForm() {
         toast.success("Login realizado com sucesso!");
         
         const departamento = data.usuario?.departamento;
-
+        //redirecionamento pras páginas de acordo com o departamento
         setTimeout(() => {
           if (departamento === "diretor geral") router.push("/matriz");
           else if (departamento === "diretor administrativo") router.push("/filial");
@@ -69,7 +70,7 @@ export function LoginForm() {
           <h2 className="bg-white w-50 p-4 rounded-l-full font-bold text-center">LOGIN</h2>
         </div>
       </div>
-
+    {/* formulario de login */}
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 md:p-10">
         <Image
           src="/logo.png"

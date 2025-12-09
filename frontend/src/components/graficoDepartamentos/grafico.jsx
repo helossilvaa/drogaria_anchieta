@@ -58,7 +58,7 @@ export default function FuncionariosPorDepartamento() {
 
     fetchData()
   }, [])
-
+//cores do gráfico
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA336A", "#8884D8"]
 
   return (

@@ -40,3 +40,27 @@ export const totalVendasHoje = async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar total de vendas hoje" });
   }
 };
+
+export const evolucaoVendasMensalFilialController = async (req, res) => {
+  try {
+    const { id } = req.params; 
+
+    const sql = `
+      SELECT 
+        DATE_FORMAT(data, '%Y-%m') AS mes,
+        COALESCE(SUM(total), 0) AS total_vendas
+      FROM vendas
+      WHERE unidade_id = ?
+      GROUP BY mes
+      ORDER BY mes ASC
+    `;
+
+    const dados = await query(sql, [id]);
+
+    res.status(200).json(dados);
+
+  } catch (error) {
+    console.error("Erro ao gerar evolução mensal da filial:", error);
+    res.status(500).json({ mensagem: "Erro ao gerar evolução mensal da filial" });
+  }
+};

@@ -20,6 +20,7 @@ import DropdownCidades from "../dropdownCidades/cidades"; // Dropdown de cidades
 import { PatternFormat } from "react-number-format"; // Input com máscara
 import { CalendarioConfig } from "../calendarioConfig/calendario"; // Calendário customizado
 import { useUser } from "@/components/context/userContext"; // Contexto do usuário logado
+import { toast } from 'react-toastify';
 
 export default function DialogNovoFuncionario() {
   const API_URL = "http://localhost:8080";
@@ -90,7 +91,7 @@ export default function DialogNovoFuncionario() {
       const token = localStorage.getItem('token');
 
       if (!unidadeId) {
-        alert("Unidade inválida!");
+        toast.error("Unidade inválida!");
         setIsSubmitting(false);
         return;
       }
@@ -127,7 +128,7 @@ export default function DialogNovoFuncionario() {
 
       if (!res.ok) throw new Error("Erro ao criar usuário");
 
-      alert("Usuário criado com sucesso!");
+      toast.success("Usuário criado com sucesso!");
 
       // Limpa formulário
       setNome(""); setEmail(""); setTelefone(""); setCpf("");

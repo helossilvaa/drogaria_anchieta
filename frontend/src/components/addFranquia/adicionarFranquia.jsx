@@ -15,6 +15,7 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import DropdownEstados from '@/components/dropdownEstados/dropdownEstados';
 import { PatternFormat } from "react-number-format";
+import { toast } from 'react-toastify';
 
 export default function DialogFranquia() {
   const [nome, setNome] = useState("");
@@ -31,6 +32,7 @@ export default function DialogFranquia() {
 
   const API_URL = 'http://localhost:8080';
 
+  //api para buscar endereço a partir do cep
   const buscarCep = async (valor) => {
     const onlyNumbers = valor.replace(/\D/g, "");
     if (onlyNumbers.length !== 8) return;
@@ -50,7 +52,7 @@ export default function DialogFranquia() {
     setIsSubmitting(true);
 
     const token = localStorage.getItem("token");
-
+    //handle dos dados enviados para a criação 
     const dados = {
       nome,
       cnpj,
@@ -78,24 +80,15 @@ export default function DialogFranquia() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Unidade criada com sucesso!");
-        // Limpar campos
-        setNome("");
-        setCnpj("");
-        setEmail("");
-        setTelefone("");
-        setEstado("");
-        setCidade("");
-        setRua("");
-        setNumero("");
-        setCep("");
-        setDataAbertura("");
+        toast.success("Unidade criada com sucesso!");
+        setNome(""); setCnpj(""); setEmail(""); setTelefone("");
+        setEstado(""); setCidade(""); setRua(""); setNumero(""); setCep(""); setDataAbertura("");
       } else {
-        alert("Erro: " + data.mensagem);
+        toast.error("Erro: " + data.mensagem);
       }
     } catch (error) {
       console.error("Erro ao criar unidade:", error);
-      alert("Erro ao criar unidade! Veja o console.");
+      toast.error("Erro ao criar unidade! Veja o console.");
     } finally {
       setIsSubmitting(false);
     }
@@ -103,16 +96,14 @@ export default function DialogFranquia() {
 
   return (
     <Dialog>
-      {/* Botão que abre o modal */}
       <DialogTrigger asChild>
-        <Button variant="verde" size="lg" className="flex">
+        <Button variant="verde" size="lg" className="flex w-auto">
           <Plus size={16} className="mr-2" />
           Nova Franquia
         </Button>
       </DialogTrigger>
 
-      {/* Conteúdo do modal */}
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="w-full max-w-[600px] sm:max-w-[600px] max-h-[90vh] overflow-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Adicionar nova franquia</DialogTitle>
@@ -120,21 +111,14 @@ export default function DialogFranquia() {
               Preencha os dados da nova unidade e clique em salvar.
             </DialogDescription>
           </DialogHeader>
+{/* formulário de informações pra criar franquia */}
+          <div className="grid gap-4 mt-3">
 
-          <div className="grid gap-4">
-
-            {/* Nome + CNPJ */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Nome</Label>
-                <Input
-                  placeholder="Nome da unidade"
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  required
-                />
+                <Input placeholder="Nome da unidade" value={nome} onChange={e => setNome(e.target.value)} required />
               </div>
-
               <div className="grid gap-2">
                 <Label>CNPJ</Label>
                 <PatternFormat
@@ -149,18 +133,11 @@ export default function DialogFranquia() {
               </div>
             </div>
 
-            {/* Email + Telefone */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Email</Label>
-                <Input
-                  placeholder="Email da unidade"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
+                <Input placeholder="Email da unidade" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
-
               <div className="grid gap-2">
                 <Label>Telefone</Label>
                 <PatternFormat
@@ -176,49 +153,29 @@ export default function DialogFranquia() {
               </div>
             </div>
 
-            {/* Estado + Cidade */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Estado</Label>
                 <DropdownEstados value={estado} onChange={setEstado} />
               </div>
-
               <div className="grid gap-2">
                 <Label>Cidade</Label>
-                <Input
-                  placeholder="Cidade"
-                  value={cidade}
-                  onChange={e => setCidade(e.target.value)}
-                  required
-                />
+                <Input placeholder="Cidade" value={cidade} onChange={e => setCidade(e.target.value)} required />
               </div>
             </div>
 
-            {/* Rua + Número */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Rua</Label>
-                <Input
-                  placeholder="Nome da rua"
-                  value={rua}
-                  onChange={e => setRua(e.target.value)}
-                  required
-                />
+                <Input placeholder="Nome da rua" value={rua} onChange={e => setRua(e.target.value)} required />
               </div>
-
               <div className="grid gap-2">
                 <Label>Número</Label>
-                <Input
-                  placeholder="Número"
-                  value={numero}
-                  onChange={e => setNumero(e.target.value)}
-                  required
-                />
+                <Input placeholder="Número" value={numero} onChange={e => setNumero(e.target.value)} required />
               </div>
             </div>
 
-            {/* CEP + Data de abertura */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>CEP</Label>
                 <PatternFormat
@@ -226,33 +183,24 @@ export default function DialogFranquia() {
                   mask="_"
                   value={cep}
                   customInput={Input}
-                  onValueChange={(v) => {
-                    setCep(v.value);
-                    buscarCep(v.value);
-                  }}
+                  onValueChange={(v) => { setCep(v.value); buscarCep(v.value); }}
                   placeholder="00000-000"
                   required
                 />
               </div>
-
               <div className="grid gap-2">
                 <Label>Data de abertura</Label>
-                <Input
-                  type="date"
-                  value={data_abertura}
-                  onChange={e => setDataAbertura(e.target.value)}
-                  required
-                />
+                <Input type="date" value={data_abertura} onChange={e => setDataAbertura(e.target.value)} required />
               </div>
             </div>
 
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-4 flex flex-col sm:flex-row sm:justify-end gap-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
+              <Button variant="outline" className="w-full sm:w-auto">Cancelar</Button>
             </DialogClose>
-            <Button type="submit" variant="verde">
+            <Button type="submit" variant="verde" className="w-full sm:w-auto">
               {isSubmitting ? "Salvando..." : "Criar unidade"}
             </Button>
           </DialogFooter>

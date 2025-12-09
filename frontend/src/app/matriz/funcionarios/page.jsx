@@ -14,14 +14,14 @@ export default function FuncionariosMatriz() {
 
   const [funcionarios, setFuncionarios] = useState([]);
 
-  // Métricas principais da página
+  // Métricas da página
   const [totais, setTotais] = useState({
     total: 0,
     ativos: 0,
     inativos: 0,
   });
 
-  // Busca todos os funcionários da matriz
+  // Fetch principal
   const fetchDadosMatriz = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -33,29 +33,21 @@ export default function FuncionariosMatriz() {
       const data = await res.json();
       setFuncionarios(data);
 
-      // Total geral
       const total = data.length;
-
-      // Quantidade de ativos
       const ativos = data.filter((f) => f.status === "ativo").length;
-
-      // Quantidade de inativos
       const inativos = data.filter((f) => f.status !== "ativo").length;
 
-      // Atualiza métricas
       setTotais({ total, ativos, inativos });
-
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
     }
   };
 
-  // Carregar dados ao abrir a página
   useEffect(() => {
     fetchDadosMatriz();
   }, []);
 
-  // Cards que aparecem no topo (todos com growth = 0 para evitar NaN)
+  // Cards principais
   const metricas = [
     { title: "Total de Funcionários", amount: totais.total, growth: 0 },
     { title: "Ativos", amount: totais.ativos, growth: 0 },
@@ -64,49 +56,78 @@ export default function FuncionariosMatriz() {
 
   return (
     <Layout>
-      <div className="w-full p-5">
+      {/* Container geral*/}
+      <div className="w-full p-3 sm:p-5 overflow-x-hidden">
 
-        {/* Título + botão de adicionar funcionário */}
-        <div className="flex justify-between items-center mb-6">
+        {/* Header*/}
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
           <h1 className="text-2xl font-bold">Funcionários</h1>
-          <DialogNovoFuncionario onCriado={fetchDadosMatriz} />
+          <div className="w-full sm:w-auto">
+            <DialogNovoFuncionario onCriado={fetchDadosMatriz} />
+          </div>
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
 
-          {/* Navegação entre abas */}
-          <TabsList className="flex flex-wrap">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="novo">Funcionários</TabsTrigger>
+          {/* Tabs responsivos */}
+          <TabsList className="flex flex-wrap gap-2 sm:gap-4">
+            <TabsTrigger className="flex-1 sm:flex-none" value="dashboard">
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger className="flex-1 sm:flex-none" value="novo">
+              Funcionários
+            </TabsTrigger>
           </TabsList>
 
-          {/* Aba Dashboard */}
+          {/* DASHBOARD */}
           <TabsContent value="dashboard" className="mt-6">
 
-            {/* Cards principais (responsivos) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {/* Cards */}
+            <div className="
+              grid 
+              grid-cols-1
+              sm:grid-cols-2
+              lg:grid-cols-3
+              gap-4
+              sm:gap-6
+              mb-6
+            ">
               {metricas.map((m) => (
                 <CardDashboard
                   key={m.title}
                   title={m.title}
                   amount={m.amount}
-                  growth={m.growth} // evita NaN
+                  growth={m.growth}
                   description={m.title}
                 />
               ))}
             </div>
 
-            {/* Gráficos lado a lado no desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <FuncionariosPorDepartamento />
-              <FuncionariosPorStatus />
+            {/* Gráficos com responsividade forte */}
+            <div className="
+              grid
+              grid-cols-1
+              lg:grid-cols-2
+              gap-4
+              sm:gap-6
+              mb-6
+            ">
+              <div className="w-full min-w-0">
+                <FuncionariosPorDepartamento />
+              </div>
+
+              <div className="w-full min-w-0">
+                <FuncionariosPorStatus />
+              </div>
             </div>
 
           </TabsContent>
 
-          {/* Aba tabela completa */}
+          {/* TABELA */}
           <TabsContent value="novo" className="mt-6">
-            <TableFuncionarios funcionarios={funcionarios} />
+            <div className="w-full overflow-x-auto rounded-lg">
+              <TableFuncionarios funcionarios={funcionarios} />
+            </div>
           </TabsContent>
 
         </Tabs>

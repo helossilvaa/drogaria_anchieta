@@ -103,6 +103,8 @@ const atualizarVendaController = async (req, res) =>{
         res.status(500).json({mensagem: 'Erro ao atualizar'});
     }
 };
+
+//evolucao geral de vendas de todas as redes
 const evolucaoVendasMensalController = async (req, res) => {
   try {
     const sql = `
