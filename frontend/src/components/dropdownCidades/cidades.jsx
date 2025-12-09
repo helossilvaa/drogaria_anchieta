@@ -12,7 +12,7 @@ export default function DropdownCidades({ estadoSigla, value, onChange }) {
 
   useEffect(() => {
     if (!estadoSigla) return;
-
+    //puxando via API os estados e cidades do Brasil
     setLoading(true);
     fetch(
       `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoSigla}/distritos`
@@ -34,7 +34,7 @@ export default function DropdownCidades({ estadoSigla, value, onChange }) {
 
   return (
     <DropdownMenu>
-      
+      {/* dropdown com as cidades */}
       <DropdownMenuTrigger asChild>
         <button
           type="button"

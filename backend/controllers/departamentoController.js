@@ -1,5 +1,6 @@
 import { criarDepartamento, atualizarDepartamento, deletarDepartamento, listarDepartamento, obterDepartamentoId } from "../models/departamento.js";
 
+//criar departamento 
 const criarDepartamentoController = async (req, res) => {
     try {
         const {
@@ -18,7 +19,7 @@ const criarDepartamentoController = async (req, res) => {
         res.status(500).json({mensagem: 'Erro ao criar departamento'})
     }
 };
-
+// listar departamentos
 const listarDepartamentoController = async (req, res) => {
     try {
         const departamentos = await listarDepartamento();
@@ -30,6 +31,7 @@ const listarDepartamentoController = async (req, res) => {
     }
 };
 
+//atualizar departamento
 const atualizarDepartamentoController = async (req, res) => {
 
     try {
@@ -57,6 +59,7 @@ const atualizarDepartamentoController = async (req, res) => {
     }
 };
 
+//deletar departamento
 const deletarDepartamentoController = async (req, res) => {
     try {
 
@@ -74,7 +77,7 @@ const deletarDepartamentoController = async (req, res) => {
         res.status(500).json({mensagem: 'Erro ao deletar departamento!'});
     }
 };
-
+//obter um departamento
 const obterDepartamentoIdController = async (req, res) => {
     try {
         const departamentoId = await obterdepartamentoId(req.params.id);

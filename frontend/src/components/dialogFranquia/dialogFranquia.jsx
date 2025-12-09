@@ -168,7 +168,7 @@ export default function DialogFranquia({ open, onOpenChange, unidade, onUpdated 
                     <DialogTitle>Editar Unidade</DialogTitle>
                 </DialogHeader>
 
-                <div className="grid grid-cols-2 gap-4 mt-3">
+                <div className="grid grid-cols-2 gap-4 mt-3 **overflow-y-auto max-h-[70vh]** pr-2">
                     {/* Nome */}
                     <div className="col-span-2 flex flex-col">
                         <Label className="mb-2">Nome da Unidade</Label>

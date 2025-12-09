@@ -8,7 +8,8 @@ import { ChartPieLegend } from "@/components/graficoPizzaComLegenda/grafico";
 export default function Page() {
   const [totalFuncionarios, setTotalFuncionarios] = useState(0);
   const [alertasEstoque, setAlertasEstoque] = useState([]);
-  const [totalProdutosVendidos, setTotalProdutosVendidos] = useState(0);
+  const [totalVendasHoje, setTotalVendasHoje] = useState(0); // valor em R$
+  const [totalProdutosVendidosHoje, setTotalProdutosVendidosHoje] = useState(0); // quantidade de produtos
   const getToken = () => localStorage.getItem("token");
   const API_URL = "http://localhost:8080";
 
@@ -33,7 +34,7 @@ export default function Page() {
         const res = await fetch(`${API_URL}/estoqueFilial/alertas/baixa-quantidade`, {
           method: "GET",
           credentials: "include",
-          headers: { Authorization: `Bearer ${getToken()}` }
+          headers: { Authorization: `Bearer ${getToken()}` },
         });
 
         const data = await res.json();
@@ -43,36 +44,38 @@ export default function Page() {
       }
     }
 
-    async function carregarTotalVendasHoje() {
+    async function carregarTotais() {
       try {
+        // Buscar total de vendas e produtos vendidos em um único endpoint
         const res = await fetch(`${API_URL}/vendas/vendas-hoje`, {
           method: "GET",
           credentials: "include",
           headers: { Authorization: `Bearer ${getToken()}` },
         });
+
         const data = await res.json();
-        setTotalProdutosVendidos(data.total);
+        setTotalVendasHoje(data.totalVendas); // valor em R$
+        setTotalProdutosVendidosHoje(data.totalProdutosVendidos); // quantidade de produtos
       } catch (error) {
-        console.error("Erro ao buscar total de produtos vendidos hoje:", error);
+        console.error("Erro ao buscar totais:", error);
       }
     }
 
-    carregarAlertas();
     carregarQuantidade();
-    carregarTotalVendasHoje();
+    carregarAlertas();
+    carregarTotais();
   }, []);
 
   return (
     <Layout>
-
-      {/*Status principais de vendas e funcionários*/}
       <main className="flex flex-1 flex-col gap-4 p-4">
+        {/* Status principais de vendas e funcionários */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <p className="text-sm text-gray-500">Vendas de hoje</p>
               <p className="text-2xl font-bold">
-                R${Number(totalProdutosVendidos).toFixed(2)}
+                R${Number(totalVendasHoje).toFixed(2)}
               </p>
             </CardContent>
           </Card>
@@ -80,7 +83,7 @@ export default function Page() {
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <p className="text-sm text-gray-500">Total de produtos vendidos hoje</p>
-              <p className="text-2xl font-bold">{totalProdutosVendidos}</p>
+              <p className="text-2xl font-bold">{totalProdutosVendidosHoje}</p>
             </CardContent>
           </Card>
 
@@ -92,7 +95,7 @@ export default function Page() {
           </Card>
         </div>
 
-        {/*Cards dos produtos mais vendidos*/}
+        {/* Cards dos produtos mais vendidos */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="p-4 rounded-xl shadow-sm col-span-2">
             <CardContent>
@@ -101,7 +104,7 @@ export default function Page() {
             </CardContent>
           </Card>
 
-          {/*Seção de gráfico para as categorias de produtos mais vendidos*/}
+          {/* Seção de gráfico para as categorias de produtos mais vendidos */}
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <h2 className="font-semibold mb-4">Top categorias</h2>
@@ -110,7 +113,7 @@ export default function Page() {
           </Card>
         </div>
 
-        {/*Parte de quantidades de vendas por dia*/}
+        {/* Parte de quantidades de vendas por dia */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="p-4 rounded-xl shadow-sm col-span-2">
             <CardContent>
@@ -118,7 +121,8 @@ export default function Page() {
               <div className="w-full h-48 bg-gray-100 rounded-xl" />
             </CardContent>
           </Card>
-          {/*Alertas de estoque*/}
+
+          {/* Alertas de estoque */}
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
               <h2 className="font-semibold mb-4">Alertas de estoque</h2>
@@ -127,10 +131,11 @@ export default function Page() {
                   alertasEstoque.map((item, index) => (
                     <div
                       key={index}
-                      className={`p-3 border rounded-xl ${item.quantidade <= item.estoque_minimo
-                        ? "bg-red-300 border-red-700"
-                        : "bg-red-100 border-red-300"
-                        }`}
+                      className={`p-3 border rounded-xl ${
+                        item.quantidade <= item.estoque_minimo
+                          ? "bg-red-300 border-red-700"
+                          : "bg-red-100 border-red-300"
+                      }`}
                     >
                       {item.produto_nome ?? `Produto ${item.produto_id}`} — Estoque: {item.quantidade}
                     </div>
@@ -141,7 +146,6 @@ export default function Page() {
               </div>
             </CardContent>
           </Card>
-
         </div>
       </main>
     </Layout>

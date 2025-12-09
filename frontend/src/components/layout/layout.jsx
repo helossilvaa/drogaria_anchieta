@@ -20,6 +20,8 @@ export default function Layout({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
+
+    //fetch do usuario e funcionário, verificando o departamento o qual pertence e fazendo a verificação do 403, caso nao seja permitido 
     const fetchUsuario = async () => {
       try {
         const token = localStorage.getItem("token");

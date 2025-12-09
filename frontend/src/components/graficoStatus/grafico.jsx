@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import {useState, useEffect} from "react"
 import { Pie, PieChart, Cell, Label } from "recharts"
 
 import {
@@ -17,12 +17,13 @@ import {
 } from "@/components/ui/chart"
 
 export default function FuncionariosPorStatus() {
-  const [chartData, setChartData] = React.useState([])
+  const [chartData, setChartData] = useState([])
 
   const API_URL = "http://localhost:8080"
   const statusList = ["ativo", "inativo", "licença", "atestado", "férias"]
 
-  React.useEffect(() => {
+  //fetch dos funcionários e filtragem dos status
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token")
@@ -44,7 +45,7 @@ export default function FuncionariosPorStatus() {
 
     fetchData()
   }, [])
-
+  //cores do grafico
   const COLORS = ["#00C49F", "#00976aff", "#1c967bff", "#004234ff", "#AA336A"]
 
   return (

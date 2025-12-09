@@ -183,6 +183,7 @@ const mudarStatusFuncionarioController = async (req, res) => {
   }
 };
 
+//obter os funcionários de uma unidade (aq ele pega pelo req.user, pegando assim pelo usuário logado)
 
 const obterFuncionariosUnidadeController = async (req, res) => {
   try {
@@ -209,6 +210,8 @@ const obterFuncionariosUnidadeController = async (req, res) => {
   }
 };
 
+//pegar quantidade de funcionários da unidade
+
 const listarQuantidadeFuncionariosUnidadeController = async (req, res) => {
   try {
     const usuario = req.user;
@@ -225,6 +228,7 @@ const listarQuantidadeFuncionariosUnidadeController = async (req, res) => {
   }
 };
 
+// funcionário que mais se destacou (em vendas) da unidade 
 const funcionarioDestaqueController = async (req, res) => {
   try {
     const unidadeId = req.user.unidade_id;
@@ -247,7 +251,7 @@ const funcionarioDestaqueController = async (req, res) => {
   }
 };
 
-
+// funcionarios de uma unidade (neste, ele pega pelo id da unidade igual )
 const obterFuncionariosFilialController = async (req, res) => {
   try {
     const { unidadeId } = req.params; 

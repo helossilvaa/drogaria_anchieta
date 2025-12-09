@@ -34,7 +34,7 @@ import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
-// import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
+import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
 import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
@@ -99,6 +99,7 @@ app.use('/funcionarios', funcionariosRotas);
 app.use ('/lotesmatriz', lotesMatrizRotas);
 app.use ('/estoquematriz', estoqueMatrizRotas);
 app.use ('/estoqueFilial', estoqueFranquiaRotas);
+app.use("/vendasPorFilial", vendasPorFilialRotas);
 app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
@@ -110,7 +111,7 @@ app.use("/dashboard-financeiro", dashboardFinanceiroRotas);
 app.use('/salariosfilial', salariosFilialRotas);
 app.use("/solicitacoes", solicitacoesRotas);
 app.use("/estoque/enviar-lote", enviarLotesRotas);
-
+app.use ("/relatorios", relatoriosRotas);
 
 
 app.get('/health', (req, res) => {
