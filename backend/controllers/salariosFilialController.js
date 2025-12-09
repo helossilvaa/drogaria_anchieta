@@ -23,7 +23,6 @@ export const criarSalario = async (req, res) => {
   try {
     const { id_funcionario, departamento_id, valor, status_pagamento } = req.body;
 
-    // 🔥 BUSCAR UNIDADE AUTOMÁTICA DO FUNCIONÁRIO
     const funcionarios = await query(
       "SELECT unidade_id FROM funcionarios WHERE id = ?",
       [id_funcionario]
@@ -96,7 +95,7 @@ const unidade_id = funcionarios[0].unidade_id;
 
     const updated = await Salario.update(id, {
       id_funcionario,
-      unidade_id,           // <-- unidade automática também no editar
+      unidade_id,           
       departamento_id,
       valor,
       status_pagamento,
@@ -129,10 +128,9 @@ export const listarSalariosPorFuncionario = async (req, res) => {
   const { id_funcionario } = req.params;
 
   try {
-    // Pega a unidade do usuário autenticado (opcional)
+
     const unidade_id = req.user.unidade_id;
 
-    // Busca salários do funcionário
     const salarios = await query(
       "SELECT * FROM salarios WHERE id_funcionario = ? AND unidade_id = ? ORDER BY data_atualizado DESC",
       [id_funcionario, unidade_id]
@@ -142,5 +140,16 @@ export const listarSalariosPorFuncionario = async (req, res) => {
   } catch (err) {
     console.error("Erro ao listar salários do funcionário:", err);
     return res.status(500).json({ message: "Erro ao listar salários do funcionário." });
+  }
+};
+
+export const listarSalariosPorUnidadeController = async (req, res) => {
+  const unidadeId = req.params.id;
+  try {
+    const salarios = await query('SELECT * FROM salarios WHERE unidade_id = ?', [unidadeId]);
+    res.json(salarios);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar salários' });
   }
 };

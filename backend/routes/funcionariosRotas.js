@@ -18,7 +18,7 @@ router.get('/:id', authMiddleware, obterFuncionarioIdController);
 router.delete('/:id', authMiddleware, deletarFuncionarioController);
 router.patch('/:id', authMiddleware, upload.single("foto"), atualizarFuncionarioController);
 router.put('/:id/status', authMiddleware, mudarStatusFuncionarioController);
-router.get("/:unidadeId", authMiddleware, obterFuncionariosFilialController);
+router.get("/unidade/:unidadeId", authMiddleware, obterFuncionariosFilialController);
 
 
 router.options('/:id/status', (req, res) => {

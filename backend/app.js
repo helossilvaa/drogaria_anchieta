@@ -35,7 +35,9 @@ import {transacaoPagamento} from './controllers/transaçãoPagamentoController.j
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
 import './services/transacaoVendas.js';
+import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import relatoriosRotas from "./routes/relatoriosRotas.js";
+import salariosFilialRotas from './routes/salariosFilialRotas.js';
 
 
 
@@ -95,6 +97,7 @@ app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
+app.use('/salariosfilial', salariosFilialRotas);
 
 
 app.get('/health', (req, res) => {
