@@ -34,18 +34,14 @@ import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
-import SalariosPorFilialRotas from './routes/salariosPorFilialRotas.js';
-import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
-import FuncionariosPorFilialRotas from './routes/funcionariosPorFilialRotas.js';
 import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
 import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
 import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
-
-import './services/transacaoVendas.js';
-import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
+// import { listarPagamentosPorSalario } from './controllers/salariosFilialController.js';
 import relatoriosRotas from "./routes/relatoriosRotas.js";
 import salariosFilialRotas from './routes/salariosFilialRotas.js';
+import dashboardFinanceiroRotas from "./routes/dashboardFinanceiroRotas.js";
 
 
 
@@ -79,7 +75,6 @@ try {
 
 app.use('/auth', authRotas);
 app.use('/usuarios', usuarioRotas);
-app.use('/vendas', vendasPorFilialRotas);
 app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
@@ -105,12 +100,9 @@ app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
-app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
-app.use('/vendasPorFilial', vendasPorFilialRotas);
-app.use('/salariosPorFilial', SalariosPorFilialRotas);
 app.use('/api', reqEstoqueMatrizRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
-
+app.use("/dashboard-financeiro", dashboardFinanceiroRotas);
 app.use('/salariosfilial', salariosFilialRotas);
 
 
