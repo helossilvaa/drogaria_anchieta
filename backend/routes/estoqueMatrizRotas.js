@@ -1,5 +1,5 @@
 import express from 'express';
-import { criarEstoqueMatrizController, listarEstoqueMatrizController, obterEstoqueMatrizPorIDController, atualizarEstoqueMatrizController, deletarEstoqueMatrizController } from '../controllers/estoqueMatrizController.js';
+import { criarEstoqueMatrizController, listarEstoqueMatrizController, obterEstoqueMatrizPorIDController, obterEstoquePorProdutoController,  atualizarEstoqueMatrizController, deletarEstoqueMatrizController } from '../controllers/estoqueMatrizController.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -7,6 +7,8 @@ const router = express.Router();
 router.post('/', authMiddleware, criarEstoqueMatrizController)
 router.get('/', authMiddleware, listarEstoqueMatrizController);
 router.get('/:id', authMiddleware, obterEstoqueMatrizPorIDController);
+// Buscar estoque da matriz por ID do produto
+router.get('/produto/:produtoId', authMiddleware, obterEstoquePorProdutoController);
 router.put('/:id', authMiddleware, atualizarEstoqueMatrizController);
 router.delete('/:id', authMiddleware, deletarEstoqueMatrizController);
 

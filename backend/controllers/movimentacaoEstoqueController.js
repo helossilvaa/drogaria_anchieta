@@ -55,13 +55,13 @@ const listarMovimentacoesPorProdutoController = async (req, res) => {
 };
 
 const listarSolicitacoesPendentesController = async (req, res) => {
-  try {
-    const solicitacoes = await listarMovimentacoes(`tipo_movimento = 'solicitacao'`);
-    return res.status(200).json(solicitacoes);
-  } catch (error) {
-    console.error("Erro ao listar solicitações:", error);
-    res.status(500).json({ mensagem: "Erro ao listar solicitações pendentes" });
-  }
+    try {
+        const solicitacoes = await listarMovimentacoes(`tipo_movimento = 'solicitacao'`);
+        return res.status(200).json(solicitacoes);
+    } catch (error) {
+        console.error("Erro ao listar solicitações:", error);
+        res.status(500).json({ mensagem: "Erro ao listar solicitações pendentes" });
+    }
 };
 
 const obterMovimentacaoPorIdController = async (req, res) => {
@@ -157,8 +157,6 @@ const solicitarReposicaoController = async (req, res) => {
             return res.status(404).json({ mensagem: "Produto não encontrado!" });
         }
 
-        const produto_nome = produto.nome || "Produto desconhecido";
-
         // Criar movimentação
         const movimentacaoData = {
             produto_id,
@@ -177,7 +175,7 @@ const solicitarReposicaoController = async (req, res) => {
                 usuario_id: usuarioId,
                 unidade_id: filialId,
                 titulo: "Solicitação enviada",
-                mensagem: `Seu pedido de ${qty} unidades de ${produto_nome} foi enviado à matriz.`,
+                mensagem: `Seu pedido de ${qty} unidades de ${produto.nome} foi enviado à matriz.`,
                 tipo_id: 3,
                 lida: 0,
                 criada_em: new Date()
@@ -186,22 +184,32 @@ const solicitarReposicaoController = async (req, res) => {
             console.warn("Falha ao criar notificação para a filial:", notifErr);
         }
 
-        // Notificação para todos os gestores da matriz
+        // Notificação para gestores da matriz
         try {
-            const gestores = await read("usuarios", "unidade_id = 1 AND departamento LIKE '%gestor%'");
-            for (const g of gestores) {
-                await Notificacao.create({
-                    usuario_id: g.id,
-                    unidade_id: 1,
-                    titulo: "Nova solicitação de reposição",
-                    mensagem: `A filial ${filialId} solicitou ${qty} unidades de ${produto_nome}.`,
-                    tipo_id: 2,
-                    lida: 0,
-                    criada_em: new Date(),
-                    extra_info: JSON.stringify({ produto_id, quantidade: qty, filialId }),
-                    acao_texto: "Ver detalhes"
-                });
+            // Busca um único gestor
+            const gestor = await read("usuarios", `departamento_id = 4`);
+
+            // Transforma em array para manter compatibilidade
+            const gestores = gestor ? [gestor] : [];
+
+            if (gestores.length > 0) {
+                for (const g of gestores) {
+                    await Notificacao.create({
+                        usuario_id: g.id,
+                        unidade_id: 1, // matriz
+                        titulo: "Nova solicitação de reposição",
+                        mensagem: `A filial ${filialId} solicitou ${qty} unidades de ${produto.nome}.`,
+                        tipo_id: 2,
+                        lida: 0,
+                        criada_em: new Date(),
+                        extra_info: JSON.stringify({ produto_id, quantidade: qty, filialId }),
+                        acao_texto: "Ver detalhes"
+                    });
+                }
+            } else {
+                console.warn("Nenhum gestor encontrado no departamento 4.");
             }
+
         } catch (notifErr) {
             console.warn("Falha ao criar notificação para a matriz:", notifErr);
         }
@@ -217,6 +225,70 @@ const solicitarReposicaoController = async (req, res) => {
     }
 };
 
+const enviarLoteController = async (req, res) => {
+    try {
+        const { produto_id, filial_id, quantidade } = req.body;
+
+        // Estoque da matriz
+        const estoqueMatriz = await read(
+            "estoque_matriz",
+            `produto_id = ${produto_id}`
+        );
+
+        if (!estoqueMatriz) {
+            return res.status(400).json({ mensagem: "Produto não existe no estoque da matriz." });
+        }
+
+        if (estoqueMatriz.quantidade < quantidade) {
+            return res.status(400).json({ mensagem: "Quantidade insuficiente na matriz." });
+        }
+
+        // Atualiza quantidade da matriz
+        await update(
+            "estoque_matriz",
+            { quantidade: estoqueMatriz.quantidade - quantidade },
+            `produto_id = ${produto_id}`
+        );
+
+        // Estoque da filial
+        const estoqueFilial = await read(
+            "estoque_franquia",
+            `produto_id = ${produto_id} AND unidade_id = ${filial_id}`
+        );
+
+        if (estoqueFilial) {
+            await update(
+                "estoque_franquia",
+                { quantidade: estoqueFilial.quantidade + quantidade },
+                `produto_id = ${produto_id} AND unidade_id = ${filial_id}`
+            );
+        } else {
+            await create("estoque_franquia", {
+                produto_id,
+                unidade_id: filial_id,
+                quantidade
+            });
+        }
+
+        // Registrar movimentação
+        await criarMovimentacao({
+            produto_id,
+            unidade_id: filial_id,
+            tipo_movimento: "envio",
+            quantidade,
+            data_movimentacao: new Date(),
+            usuario_id: req.user.id
+        });
+
+        return res.json({ mensagem: "Lote enviado com sucesso!" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro ao enviar lote." });
+    }
+};
+
+
 
 
 export {
@@ -228,4 +300,5 @@ export {
     atualizarMovimentacaoController,
     deletarMovimentacaoController,
     solicitarReposicaoController,
+    enviarLoteController
 };

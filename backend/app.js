@@ -38,10 +38,11 @@ import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
 import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
 import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
-import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
-
+import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js';
+import enviarLotesRotas from "./routes/enviarLotesRotas.js";
 import relatoriosRotas from "./routes/relatoriosRotas.js";
 import salariosFilialRotas from './routes/salariosFilialRotas.js';
+import solicitacoesRotas from './routes/solicitacoesRotas.js'
 
 
 
@@ -104,6 +105,9 @@ app.use("/", notificacoesRotas);
 app.use('/api', reqEstoqueMatrizRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
 app.use('/salariosfilial', salariosFilialRotas);
+app.use("/solicitacoes", solicitacoesRotas);
+app.use("/estoque/enviar-lote", enviarLotesRotas);
+
 
 
 app.get('/health', (req, res) => {

@@ -358,7 +358,21 @@ CREATE TABLE movimentacoes_estoque (
     FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id), 
     FOREIGN KEY (unidade_id) REFERENCES unidade(id), 
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) 
-); 
+);
+
+ALTER TABLE movimentacoes_estoque 
+ADD COLUMN status_movimentacao VARCHAR(20) DEFAULT 'pendente',
+ADD COLUMN origem VARCHAR(20) DEFAULT 'solicitacao';
+
+CREATE TABLE solicitacoes_estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    filial_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_solicitada INT NOT NULL,
+    status ENUM('pendente','enviado','cancelado') DEFAULT 'pendente',
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atendimento TIMESTAMP NULL
+);
  
 CREATE TABLE categoria_transacoes ( 
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
@@ -388,6 +402,23 @@ CREATE TABLE notificacao_tipos (
     acao_texto_padrao VARCHAR(100), 
     extra_info_padrao VARCHAR(255) 
 ); 
+
+CREATE TABLE requisicoes_estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estoque_matriz_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_requisitada INT NOT NULL,
+    valor_unitario DECIMAL(10, 2) NOT NULL,
+    valor_total DECIMAL(10, 2) NOT NULL,
+    data_requisicao DATE NOT NULL,
+    fornecedor_id INT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    
+    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
+    FOREIGN KEY (produto_id) REFERENCES produtos(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
+);
+
   
 CREATE TABLE notificacoes ( 
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -407,21 +438,6 @@ CREATE TABLE notificacoes (
     FOREIGN KEY (tipo_id) REFERENCES notificacao_tipos(id) 
 ); 
 
-CREATE TABLE requisicoes_estoque (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    estoque_matriz_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade_requisitada INT NOT NULL,
-    valor_unitario DECIMAL(10, 2) NOT NULL,
-    valor_total DECIMAL(10, 2) NOT NULL,
-    data_requisicao DATE NOT NULL,
-    fornecedor_id INT NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    
-    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
-    FOREIGN KEY (produto_id) REFERENCES produtos(id),
-    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
-);
 
 
 CREATE TABLE transacoes_matriz (

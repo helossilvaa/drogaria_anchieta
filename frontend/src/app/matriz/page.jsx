@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import RankingUnidades from "@/components/rankingUnidades/rankingUnidades";
 import EvolucaoVendasMensal from "@/components/evolucaoVendas/evolucaoVendas";
 import { MaisVendidos } from "@/components/categoriasMaisVendidas/categoriasgrafico";
-import MapaUnidades from "@/components/mapaFranquias/mapaFranquias";
+// import MapaUnidades from "@/components/mapaFranquias/mapaFranquias";
 import CardTransacoes from "@/components/transacoesDashboard/transacoes";
 
 const API_URL = "http://localhost:8080";
@@ -143,7 +143,7 @@ export default function DashboardMatriz() {
           </div>
 
           {/* Coluna direita */}
-          <MapaUnidades />
+          {/* <MapaUnidades /> */}
         </div>
 
         {/* Espaço extra entre seções */}
