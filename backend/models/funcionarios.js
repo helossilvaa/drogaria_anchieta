@@ -100,11 +100,46 @@ const mudarStatusFuncionario = async (id, novoStatus) => {
   }
 };
 
+const funcionarioDestaqueMes = async (unidadeId) => {
+  try {
+    const query = `
+      SELECT 
+        f.id,
+        f.nome,
+        f.foto,
+        d.departamento AS departamentoNome,
+        COUNT(v.id) AS total_vendas
+      FROM funcionarios f
+      LEFT JOIN vendas v 
+        ON f.id = v.usuario_id
+        AND MONTH(v.data) = MONTH(CURRENT_DATE())
+        AND YEAR(v.data) = YEAR(CURRENT_DATE())
+      LEFT JOIN departamento d 
+        ON f.departamento_id = d.id
+      WHERE f.unidade_id = ?
+      GROUP BY f.id
+      ORDER BY total_vendas DESC
+      LIMIT 1
+    `;
+
+    const resultado = await readJoin(query, [unidadeId]);
+    return resultado[0] || null;
+
+  } catch (error) {
+    console.error("Erro ao buscar funcionário destaque da unidade:", error);
+    throw error;
+  }
+};
+
+
+
+
 export {
   listarFuncionarios,
   obterFuncionarioId,
   criarFuncionario,
   atualizarFuncionario,
   deletarFuncionario,
-  mudarStatusFuncionario
+  mudarStatusFuncionario,
+  funcionarioDestaqueMes
 };

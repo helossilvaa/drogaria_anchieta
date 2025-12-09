@@ -4,27 +4,28 @@ import { useState, useEffect } from "react";
 import {
   Dialog, DialogTrigger, DialogContent, DialogHeader,
   DialogTitle, DialogFooter, DialogClose
-} from "../ui/dialog";
+} from "../ui/dialog"; // Componente de modal
 
 import {
   Select, SelectTrigger, SelectContent,
   SelectItem, SelectValue
-} from "../ui/select";
+} from "../ui/select"; // Dropdown estilizado
 
-import { Button } from "@/components/ui/button";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Plus } from "lucide-react";
-import DropdownEstados from "@/components/dropdownEstados/dropdownEstados";
-import DropdownCidades from "../dropdownCidades/cidades";
-import { PatternFormat } from "react-number-format";
-import { CalendarioConfig } from "../calendarioConfig/calendario";
-import { useUser } from "@/components/context/userContext";
+import { Button } from "@/components/ui/button"; // Botão estilizado
+import { Label } from "../ui/label"; // Label do input
+import { Input } from "../ui/input"; // Input estilizado
+import { Plus } from "lucide-react"; // Ícone de +
+import DropdownEstados from "@/components/dropdownEstados/dropdownEstados"; // Dropdown de estados
+import DropdownCidades from "../dropdownCidades/cidades"; // Dropdown de cidades
+import { PatternFormat } from "react-number-format"; // Input com máscara
+import { CalendarioConfig } from "../calendarioConfig/calendario"; // Calendário customizado
+import { useUser } from "@/components/context/userContext"; // Contexto do usuário logado
 
 export default function DialogNovoFuncionario() {
   const API_URL = "http://localhost:8080";
-  const usuario = useUser();
+  const usuario = useUser(); // Usuário logado
 
+  // Estados do formulário
   const [nome, setNome] = useState("");
   const [foto, setFoto] = useState(null);
   const [email, setEmail] = useState("");
@@ -43,16 +44,17 @@ export default function DialogNovoFuncionario() {
   const [unidades, setUnidades] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Determina se é diretor geral
   const isDiretorGeral = usuario?.funcionario?.departamentoNome?.toLowerCase() === "diretor geral";
 
-  // Preenche unidade automaticamente se for diretor administrativo
+  // Preenche automaticamente a unidade para não-diretores gerais
   useEffect(() => {
     if (!isDiretorGeral && usuario?.funcionario?.unidade_id) {
       setUnidadeId(usuario.funcionario.unidade_id);
     }
   }, [usuario, isDiretorGeral]);
 
-  // Carrega departamentos e unidades
+  // Carrega departamentos e unidades da API
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
     Promise.all([
@@ -64,10 +66,10 @@ export default function DialogNovoFuncionario() {
     });
   }, []);
 
-  // Busca CEP
+  // Busca endereço pelo CEP usando API ViaCEP
   const buscarCep = async (valor) => {
     const onlyNumbers = valor.replace(/\D/g, "");
-    if (onlyNumbers.length !== 8) return;
+    if (onlyNumbers.length !== 8) return; // CEP inválido
 
     const res = await fetch(`https://viacep.com.br/ws/${onlyNumbers}/json/`);
     const data = await res.json();
@@ -79,7 +81,7 @@ export default function DialogNovoFuncionario() {
     }
   };
 
-  // Submit
+  // Envio do formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -95,6 +97,7 @@ export default function DialogNovoFuncionario() {
 
       const formData = new FormData();
 
+      // Dados principais
       const dados = {
         nome,
         email,
@@ -113,6 +116,7 @@ export default function DialogNovoFuncionario() {
 
       formData.append("data", JSON.stringify(dados));
 
+      // Foto do funcionário
       if (foto) formData.append("foto", foto);
 
       const res = await fetch(`${API_URL}/funcionarios`, {
@@ -137,36 +141,40 @@ export default function DialogNovoFuncionario() {
 
   return (
     <Dialog>
+      {/* Botão que abre o modal */}
       <DialogTrigger asChild>
-        <Button variant="verde" size="lg" className="flex">
+        <Button variant="verde" size="lg" className="flex items-center justify-center">
           <Plus size={16} className="mr-2" />
           Adicionar novo funcionário
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="!max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>Adicionar novo funcionário</DialogTitle>
-        </DialogHeader>
+      {/* Conteúdo do modal */}
+      <DialogContent className="!max-w-[950px] w-full max-h-[90vh] flex flex-col">
+  <DialogHeader>
+    <DialogTitle>Adicionar novo funcionário</DialogTitle>
+  </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
+  {/* Corpo do formulário com scroll */}
+  <div className="overflow-y-auto pr-2 flex-1">
+    <form onSubmit={handleSubmit} className="grid gap-4">
 
-          {/* FOTO E NOME */}
-          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 items-center">
-            <div className="flex justify-center sm:justify-start">
-              <label htmlFor="foto-input" className="w-24 h-24 rounded-full border border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden">
-                {foto ? (
-                  <img src={URL.createObjectURL(foto)} alt="Preview" className="w-full h-full object-cover" />
-                ) : <span className="text-sm text-gray-500">Escolher</span>}
-              </label>
-              <input id="foto-input" type="file" accept="image/*" className="hidden" onChange={(e) => setFoto(e.target.files[0])} />
-            </div>
+      {/* FOTO E NOME */}
+      <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 items-center">
+        <div className="flex justify-center sm:justify-start">
+          <label htmlFor="foto-input" className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden">
+            {foto ? (
+              <img src={URL.createObjectURL(foto)} alt="Preview" className="w-full h-full object-cover" />
+            ) : <span className="text-sm sm:text-base text-gray-500">Escolher</span>}
+          </label>
+          <input id="foto-input" type="file" accept="image/*" className="hidden" onChange={(e) => setFoto(e.target.files[0])} />
+        </div>
 
-            <div className="grid gap-2 w-full">
-              <Label>Nome</Label>
-              <Input placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} required className="w-full" />
-            </div>
-          </div>
+        <div className="grid gap-2 w-full">
+          <Label>Nome</Label>
+          <Input placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} required className="w-full" />
+        </div>
+      </div>
 
           {/* TELEFONE, CPF, DATA NASCIMENTO, EMAIL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -286,13 +294,15 @@ export default function DialogNovoFuncionario() {
             </div>
           </div>
 
-          <DialogFooter>
+          {/* FOOTER */}
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 justify-end">
             <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
             <Button type="submit" variant="verde" disabled={isSubmitting}>
               {isSubmitting ? "Salvando..." : "Criar usuário"}
             </Button>
           </DialogFooter>
         </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -36,7 +36,6 @@ router.put('/:id/gerente', authMiddleware, atribuirGerenteAdmController);
 
 
 
-
 // Rotas OPTIONS
 router.options('/', (req, res) => {
     res.setHeader('Allow', 'POST, GET, OPTIONS');

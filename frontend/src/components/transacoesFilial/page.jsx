@@ -39,6 +39,25 @@ export default function Transacoes() {
     fetchCategorias();
   }, []);
 
+  const normalizeTransacoes = (lista) => {
+    // Normaliza cada transação para garantir categoria e id (evita nulls)
+    // Ajuste: Categoria "Contas" = id 3 (conforme seu banco mostrado)
+    return lista.map((t) => ({
+      ...t,
+      // Se categoria_nome for falsy, colocar "Contas"
+      categoria_nome: t.categoria_nome || "Contas",
+      // Se id da categoria for null/undefined, preencher com 3
+      categoria_transacao_id:
+        t.categoria_transacao_id === null || t.categoria_transacao_id === undefined
+          ? 3
+          : t.categoria_transacao_id,
+      // Garantir valor numérico (algumas entradas podem vir como string ou null)
+      valor: t.valor === null || t.valor === undefined ? 0 : Number(t.valor),
+      // Garantir origem como string vazia se for null
+      origem: t.origem || "",
+    }));
+  };
+
   const fetchTransacoes = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -46,7 +65,10 @@ export default function Transacoes() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setTransacoes(data);
+
+      // Normalizar aqui para evitar que o front filtre/remova transações automáticas
+      const ajustadas = normalizeTransacoes(Array.isArray(data) ? data : []);
+      setTransacoes(ajustadas);
     } catch (e) {
       console.error(e);
     }
@@ -59,7 +81,7 @@ export default function Transacoes() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setCategorias(data);
+      setCategorias(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
     }
@@ -130,8 +152,11 @@ export default function Transacoes() {
     }
   };
 
-  // ✅ FILTRO IGUAL AO DE CONTAS
+  // === APLICA FILTROS ===
+  // Usamos `transacoes` que já foi normalizada no fetch
   const filtradas = transacoes.filter((t) => {
+    // filtroCategoria vem como string (valor do <select>), categoria_transacao_id pode ser number
+    // Usamos == aqui pro caso de comparação string/number (intencional)
     return (
       (!filtroCategoria || t.categoria_transacao_id == filtroCategoria) &&
       (!filtroOrigem ||
@@ -143,7 +168,7 @@ export default function Transacoes() {
   const indexUltimo = paginaAtual * itensPorPagina;
   const indexPrimeiro = indexUltimo - itensPorPagina;
   const paginadas = filtradas.slice(indexPrimeiro, indexUltimo);
-  const totalPaginas = Math.ceil(filtradas.length / itensPorPagina);
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / itensPorPagina));
 
   const abrirNovaTransacao = () => {
     setNovaTransacao(estadoInicial);
@@ -152,13 +177,14 @@ export default function Transacoes() {
   };
 
   // === Cálculo de Entradas, Saídas e Saldo ===
+  // Usar `transacoes` (normalizadas) para cálculo dos totais
   const totalEntradas = transacoes
     .filter((t) => t.tipo_movimento === "ENTRADA")
-    .reduce((acc, t) => acc + Number(t.valor), 0);
+    .reduce((acc, t) => acc + Number(t.valor || 0), 0);
 
   const totalSaidas = transacoes
     .filter((t) => t.tipo_movimento === "SAIDA")
-    .reduce((acc, t) => acc + Number(t.valor), 0);
+    .reduce((acc, t) => acc + Number(t.valor || 0), 0);
 
   const saldo = totalEntradas - totalSaidas;
 
@@ -171,29 +197,29 @@ export default function Transacoes() {
         />
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="  p-4 flex flex-col  ">
-            <span className="text-gray-900 font-semibold">Saldo</span>
-            <span
-              className={`font-bold text-3xl ${
-                saldo >= 0 ? "text-green-700" : "text-red-700"
-              }`}
-            >
-              R${" "}
-              {saldo.toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </span>
-            <button
+        <div className="p-4 flex flex-col">
+          <span className="text-gray-900 font-semibold">Saldo</span>
+          <span
+            className={`font-bold text-3xl ${
+              saldo >= 0 ? "text-green-700" : "text-red-700"
+            }`}
+          >
+            R${" "}
+            {saldo.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </span>
+          <button
             onClick={abrirNovaTransacao}
             className="px-4 py-2 bg-blue-600 text-white rounded ml-auto"
           >
             + Nova Transação
           </button>
-          </div>
+        </div>
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          <div className="bg-muted/50 aspect-video rounded-xl" >
-          <span className="text-gray-700 font-semibold">Entradas</span>
+          <div className="bg-muted/50 aspect-video rounded-xl">
+            <span className="text-gray-700 font-semibold">Entradas</span>
             <span className="text-green-700 font-bold text-2xl">
               R${" "}
               {totalEntradas.toLocaleString("pt-BR", {
@@ -202,8 +228,8 @@ export default function Transacoes() {
               })}
             </span>
           </div>
-          <div className="bg-muted/50 aspect-video rounded-xl" >
-          <span className="text-gray-700 font-semibold">Saídas</span>
+          <div className="bg-muted/50 aspect-video rounded-xl">
+            <span className="text-gray-700 font-semibold">Saídas</span>
             <span className="text-red-700 font-bold text-2xl">
               R${" "}
               {totalSaidas.toLocaleString("pt-BR", {
@@ -265,9 +291,10 @@ export default function Transacoes() {
 
           <tbody>
             {paginadas.map((t) => (
-              <tr key={t.id} className="border-t">
+              <tr key={`${t.id}-${t.descricao || ""}`} className="border-t">
                 <td className="p-2">{t.id}</td>
-                <td className="p-2">{t.categoria_nome}</td>
+                {/* Garantir exibição mesmo quando veio null */}
+                <td className="p-2">{t.categoria_nome || "Contas"}</td>
                 <td className="p-2">{t.data_lancamento}</td>
                 <td className="p-2">{t.tipo_movimento}</td>
                 <td className="p-2">R$ {Number(t.valor).toFixed(2)}</td>
@@ -279,7 +306,16 @@ export default function Transacoes() {
                     className="text-blue-600"
                     onClick={() => {
                       setEditarId(t.id);
-                      setNovaTransacao(t);
+                      // Garantir que o objeto de edição contenha os campos corretos
+                      setNovaTransacao({
+                        data_lancamento: t.data_lancamento || "",
+                        tipo_movimento: t.tipo_movimento || "",
+                        valor: t.valor || 0,
+                        descricao: t.descricao || "",
+                        unidade_id: t.unidade_id || "",
+                        categoria_transacao_id: t.categoria_transacao_id || 3,
+                        origem: t.origem || "",
+                      });
                       setAbrirModal(true);
                     }}
                   >
@@ -306,6 +342,7 @@ export default function Transacoes() {
           <button
             onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
             className="border px-3 py-1 rounded"
+            disabled={paginaAtual === 1}
           >
             Anterior
           </button>
@@ -325,6 +362,7 @@ export default function Transacoes() {
           <button
             onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
             className="border px-3 py-1 rounded"
+            disabled={paginaAtual === totalPaginas}
           >
             Próxima
           </button>

@@ -1,42 +1,5 @@
 import { Notificacao } from "../models/notificacoes.js";
 
-
-// export const criarNotificacao = async (req, res) => {
-//   console.log("Dados recebidos do frontend:", req.body);
-//   try {
-//     const { usuario_id, unidade_id, titulo, mensagem } = req.body;
-//     const camposObrigatorios = { usuario_id, unidade_id, titulo, mensagem };
-
-//     const camposVazios = Object.entries(camposObrigatorios)
-//       .filter(([_, valor]) => !valor || valor === "")
-//       .map(([campo]) => campo);
-
-//     if (camposVazios.length > 0) {
-//       return res.status(400).json({
-//         message: `Preencha todos os campos obrigatórios. Campos vazios: ${camposVazios.join(", ")}`
-//       });
-//     }
-//     const id = await Notificacao.create({
-//       usuario_id,
-//       unidade_id,
-//       titulo,
-//       mensagem,
-//       lida: 0
-//     });
-//     return res.status(201).json({
-//       message: "Notificação criada com sucesso!",
-//       id
-//     });
-
-//   } catch (err) {
-//     console.error("Erro ao criar notificação:", err);
-//     return res.status(500).json({
-//       message: "Erro ao criar notificação.",
-//       erro: err.message
-//     });
-//   }
-// };
-
 export const criarNotificacao = async (req, res) => {
   console.log("Dados recebidos do frontend:", req.body);
   try {
@@ -83,28 +46,6 @@ export const criarNotificacao = async (req, res) => {
   }
 };
 
-// export const criarNotificacaoReposicao = async ({
-//   usuario_id,
-//   filial_id,
-//   produto_nome,
-//   quantidade,
-// }) => {
-//   try {
-//     await Notificacao.create({
-//       usuario_id,
-//       unidade_id: 1, // faz com que a matriz SEMPRE receba solicitações
-//       titulo: "Solicitação de Reposição",
-//       mensagem: `A filial ${filial_id} solicitou ${quantidade} unidades do produto ${produto_nome}.`,
-//       lida: 0,
-//       criada_em: new Date(),
-//     });
-
-//     console.log("Notificação de reposição criada com sucesso!");
-//   } catch (err) {
-//     console.error("Erro ao criar notificação de reposição:", err);
-//   }
-// };
-// ⭐ NOVA FUNÇÃO ADAPTADA
 // Criar notificação automaticamente quando a filial solicita reposição
 export const criarNotificacaoReposicao = async ({
   usuario_id,

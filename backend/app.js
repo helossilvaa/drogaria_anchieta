@@ -28,18 +28,23 @@ import estoqueFranquiaRotas from './routes/estoqueFranquiaRotas.js';
 import movimentacaoEstoqueRotas from './routes/movimentacaoEstoqueRotas.js';
 import notificacoesRotas from './routes/notificacoesRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
-import UploadRotas from './middlewares/upload.js';
 import vendasFilial from './routes/vendasFilialRotas.js'
 import transacoesRotas from './routes/transacoesFilialRotas.js';
 import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
-import SalariosPorFilialRotas from './routes/salariosPorFilialRotas.js';
 import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
-import FuncionariosPorFilialRotas from './routes/funcionariosPorFilialRotas.js';
-import './services/transacaoVendas.js';
+import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
+import { fecharMesDasFiliais } from './services/fecharMes.js';
+import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
+import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
+// import { listarPagamentosPorSalario } from './controllers/salariosFilialController.js';
 import relatoriosRotas from "./routes/relatoriosRotas.js";
+import salariosFilialRotas from './routes/salariosFilialRotas.js';
+import dashboardFinanceiroRotas from "./routes/dashboardFinanceiroRotas.js";
+import enviarLotesRotas from "./routes/enviarLotesRotas.js";
+import solicitacoesRotas from "./routes/solicitacoesRotas.js";
 
 
 
@@ -73,7 +78,6 @@ try {
 
 app.use('/auth', authRotas);
 app.use('/usuarios', usuarioRotas);
-app.use('/vendas', vendasPorFilialRotas);
 app.use('/vendas', vendasRotas);
 app.use('/pagamento', tipoPagamentoRotas);
 app.use('/itens', itens_vendaRotas);
@@ -99,9 +103,13 @@ app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
-app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
-app.use('/salariosPorFilial', SalariosPorFilialRotas);
-app.use("/", relatoriosRotas);
+app.use('/api', reqEstoqueMatrizRotas);
+app.use('/api/transacoes-matriz', transacoesMatrizRotas);
+app.use("/dashboard-financeiro", dashboardFinanceiroRotas);
+app.use('/salariosfilial', salariosFilialRotas);
+app.use("/solicitacoes", solicitacoesRotas);
+app.use("/estoque/enviar-lote", enviarLotesRotas);
+
 
 
 app.get('/health', (req, res) => {
@@ -136,10 +144,21 @@ cron.schedule("0 7 * * *", async () => {
   await atualizarStatusSalarios();
 });
 
+cron.schedule("0 8 30 11 *", gerarDecimoTerceiro); // 13-1
+cron.schedule("0 8 20 12 *", gerarDecimoTerceiro); // 13-2
+
+
 cron.schedule("0 3 * * *", async () => {
   console.log("⏱ Executando pagamento automático de contas...");
   await pagarContasAutomaticamente();
 });
+
+// Cron job: todo dia 1º do mês às 00:05
+cron.schedule("5 0 1 * *", async () => {
+  console.log("Iniciando fechamento de mês automático...");
+  await fecharMesDasFiliais();
+});
+
 
 
 process.on('SIGTERM', () => {

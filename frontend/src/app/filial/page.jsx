@@ -110,8 +110,14 @@ export default function Page() {
           </Card>
         </div>
 
-
+        {/*Parte de quantidades de vendas por dia*/}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="p-4 rounded-xl shadow-sm col-span-2">
+            <CardContent>
+              <h2 className="font-semibold mb-4">Horários de mais vendas</h2>
+              <div className="w-full h-48 bg-gray-100 rounded-xl" />
+            </CardContent>
+          </Card>
           {/*Alertas de estoque*/}
           <Card className="p-4 rounded-xl shadow-sm">
             <CardContent>
@@ -135,13 +141,7 @@ export default function Page() {
               </div>
             </CardContent>
           </Card>
-          {/*Parte de quantidades de vendas por dia*/}
-          <Card className="p-4 rounded-xl shadow-sm">
-            <CardContent>
-              <h2 className="font-semibold mb-4">Horários de mais vendas</h2>
-              <div className="w-full h-48 bg-gray-100 rounded-xl" />
-            </CardContent>
-          </Card>
+
         </div>
       </main>
     </Layout>

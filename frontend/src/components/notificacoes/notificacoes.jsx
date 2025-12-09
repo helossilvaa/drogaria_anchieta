@@ -115,9 +115,19 @@ function renderNotification(n) {
       acaoTexto={n.acao_texto}
       cor={n.cor || "pink"}
       criada_em={n.criada_em}
+
+      // 👉 Aqui adicionamos a ação ao clicar no botão da notificação
+      acaoOnClick={() => {
+        // salva o ID da solicitação no localStorage para a página de estoque usar
+        localStorage.setItem("solicitacao_estoque_id", n.id);
+
+        // redireciona para a página de estoque da matriz
+        window.location.href = "/estoque";
+      }}
     />
   );
 }
+
 
   const grupos = agruparPorDataReal(notificacoes);
 

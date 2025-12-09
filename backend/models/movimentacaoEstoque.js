@@ -1,5 +1,7 @@
 import { create, readAll, read, update, deleteRecord } from "../config/database.js";
 
+
+
 const criarMovimentacao = async (movimentacaoData) => {
     try {
         return await create("movimentacoes_estoque", movimentacaoData);

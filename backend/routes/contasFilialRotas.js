@@ -11,3 +11,4 @@ router.delete('/conta/:id', authMiddleware, excluirConta);
 router.put('/conta/pagar/:id', authMiddleware, pagarConta);
 
 export default router;
+ 

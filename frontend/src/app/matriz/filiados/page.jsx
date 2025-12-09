@@ -196,7 +196,9 @@ export default function Filiados() {
           const texto = await res.text();
           erroMsg = texto || erroMsg;
         }
-        throw new toast.error(erroMsg);
+        toast.error(erroMsg);
+        throw new Error(erroMsg);
+
       }
 
       toast.success("Usuário cadastrado com sucesso!");
@@ -217,8 +219,7 @@ export default function Filiados() {
       });
       fetchUsuarios();
     } catch (error) {
-      toast.error("Erro ao cadastrar usuário:", err);
-      toast.error(err.message || "Erro ao cadastrar usuário.");
+      toast.error(error.message || "Erro ao cadastrar usuário.");
     }
   };
 
@@ -248,29 +249,45 @@ export default function Filiados() {
 
   // Salvar edição
   const salvarEdicao = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+
+  try {
+    const res = await fetch(`${API_URL}/${usuarioSelecionado.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(novoUsuario),
+    });
+
+    // apenas UMA leitura do body
+    const bodyText = await res.text();
+    let bodyJson = null;
+
     try {
-      const res = await fetch(`${API_URL}/${usuarioSelecionado.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(novoUsuario),
-      });
+      bodyJson = JSON.parse(bodyText);
+    } catch {}
 
-      if (!res.ok) {
-        const erro = await res.json();
-        throw new toast.error(erro.message || "Erro ao editar usuário");
-      }
+    if (!res.ok) {
+      const mensagem =
+        bodyJson?.message ||
+        bodyJson?.mensagem ||
+        bodyText ||
+        "Erro ao editar usuário";
 
-      toast.success("Usuário atualizado com sucesso!");
-      setAbrirModalEditar(false);
-      fetchUsuarios();
-    } catch (error) {
-      toast.error(error.message);
+      toast.error(mensagem);
+      throw new Error(mensagem);
     }
-  };
+
+    toast.success("Usuário atualizado com sucesso!");
+    setAbrirModalEditar(false);
+    fetchUsuarios();
+
+  } catch (error) {
+    toast.error(error.message || "Erro ao editar usuário.");
+  }
+};
 
   // Confirmar exclusão
   const confirmarExclusao = async () => {
@@ -281,8 +298,8 @@ export default function Filiados() {
       });
 
       if (!res.ok) {
-        const erro = await res.json();
-        throw new toast.error(erro.message || "Erro ao excluir usuário");
+        toast.error("Erro ao excluir usuário");
+        throw new Error("Erro ao excluir usuário");
       }
 
       toast.success("Usuário excluído com sucesso!");
@@ -501,108 +518,108 @@ export default function Filiados() {
             <>
               {/* TABELA */}
               {/* TABELA — IGUAL À DA IMAGEM */}
-<div className="mt-6 overflow-x-auto">
-  <table className="w-full border-collapse text-sm rounded-lg overflow-hidden shadow-sm">
-    <thead>
-      <tr className="bg-[#245757] text-white">
-        <th className="p-3 text-left">Nome</th>
-        <th className="p-3 text-left">E-mail</th>
-        <th className="p-3 text-left">Telefone</th>
-        <th className="p-3 text-left">CPF</th>
-        <th className="p-3 text-left">Data de nascimento</th>
-        <th className="p-3 text-left">CEP</th>
-        <th className="p-3 text-left">Cidade</th>
-        <th className="p-3 text-left">Estado</th>
-        <th className="p-3 text-left">Bairro</th>
-        <th className="p-3 text-left">Logradouro</th>
-        <th className="p-3 text-left">Número</th>
-        <th className="p-3 text-left">Tipo de Desconto</th>
-        <th className="p-3 text-center">Ações</th>
-      </tr>
-    </thead>
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full border-collapse text-sm rounded-lg overflow-hidden shadow-sm">
+                  <thead>
+                    <tr className="bg-[#245757] text-white">
+                      <th className="p-3 text-left">Nome</th>
+                      <th className="p-3 text-left">E-mail</th>
+                      <th className="p-3 text-left">Telefone</th>
+                      <th className="p-3 text-left">CPF</th>
+                      <th className="p-3 text-left">Data de nascimento</th>
+                      <th className="p-3 text-left">CEP</th>
+                      <th className="p-3 text-left">Cidade</th>
+                      <th className="p-3 text-left">Estado</th>
+                      <th className="p-3 text-left">Bairro</th>
+                      <th className="p-3 text-left">Logradouro</th>
+                      <th className="p-3 text-left">Número</th>
+                      <th className="p-3 text-left">Tipo de Desconto</th>
+                      <th className="p-3 text-center">Ações</th>
+                    </tr>
+                  </thead>
 
-    <tbody>
-      {usuariosPagina.map((u) => (
-        <tr
-          key={u.id}
-          className="border-b hover:bg-gray-100 transition"
-        >
-          <td className="p-3 font-medium">{u.nome}</td>
-          <td className="p-3">{u.email}</td>
-          <td className="p-3">{u.telefone}</td>
-          <td className="p-3">{u.cpf}</td>
-          <td className="p-3">
-            {new Date(u.data_nascimento).toLocaleDateString()}
-          </td>
-          <td className="p-3">{u.cep}</td>
-          <td className="p-3">{u.cidade}</td>
-          <td className="p-3">{u.estado}</td>
-          <td className="p-3">{u.bairro}</td>
-          <td className="p-3">{u.logradouro}</td>
-          <td className="p-3">{u.numero}</td>
-          <td className="p-3">{u.tipodesconto}</td>
+                  <tbody>
+                    {usuariosPagina.map((u) => (
+                      <tr
+                        key={u.id}
+                        className="border-b hover:bg-gray-100 transition"
+                      >
+                        <td className="p-3 font-medium">{u.nome}</td>
+                        <td className="p-3">{u.email}</td>
+                        <td className="p-3">{u.telefone}</td>
+                        <td className="p-3">{u.cpf}</td>
+                        <td className="p-3">
+                          {new Date(u.data_nascimento).toLocaleDateString()}
+                        </td>
+                        <td className="p-3">{u.cep}</td>
+                        <td className="p-3">{u.cidade}</td>
+                        <td className="p-3">{u.estado}</td>
+                        <td className="p-3">{u.bairro}</td>
+                        <td className="p-3">{u.logradouro}</td>
+                        <td className="p-3">{u.numero}</td>
+                        <td className="p-3">{u.tipodesconto}</td>
 
-          <td className="p-3 flex items-center justify-center gap-4">
-            <button onClick={() => abrirEdicao(u)} title="Editar">
-              <svg
-                className="w-6 h-6 text-[#245757]"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
-                />
-              </svg>
-            </button>
+                        <td className="p-3 flex items-center justify-center gap-4">
+                          <button onClick={() => abrirEdicao(u)} title="Editar">
+                            <svg
+                              className="w-6 h-6 text-[#245757]"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+                              />
+                            </svg>
+                          </button>
 
-            <button onClick={() => abrirExclusao(u)} title="Excluir">
-              <svg
-                className="w-6 h-6 text-[#245757]"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+                          <button onClick={() => abrirExclusao(u)} title="Excluir">
+                            <svg
+                              className="w-6 h-6 text-[#245757]"
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {/* Paginação */}
-            {usuariosFiltrados.length > itensPorPagina && (
-              <div className="flex justify-center items-center gap-2 mt-4 select-none">
-                <button
-                  onClick={() => mudarPagina(paginaAtual - 1)}
-                  disabled={paginaAtual === 1}
-                  className="px-4 py-2 rounded-full border border-green-900 text-[#245757] hover:bg-gray-100 hover:text-[#245757] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                  ← Anterior
-                </button>
-                <div className="px-4 py-2 rounded-full text-white bg-[#245757]">
-                  {paginaAtual}
+              {usuariosFiltrados.length > itensPorPagina && (
+                <div className="flex justify-center items-center gap-2 mt-4 select-none">
+                  <button
+                    onClick={() => mudarPagina(paginaAtual - 1)}
+                    disabled={paginaAtual === 1}
+                    className="px-4 py-2 rounded-full border border-green-900 text-[#245757] hover:bg-gray-100 hover:text-[#245757] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    ← Anterior
+                  </button>
+                  <div className="px-4 py-2 rounded-full text-white bg-[#245757]">
+                    {paginaAtual}
+                  </div>
+                  <button
+                    onClick={() => mudarPagina(paginaAtual + 1)}
+                    disabled={paginaAtual === totalPaginas}
+                    className="px-4 py-2 rounded-full border border-green-900 text-[#245757] hover:bg-gray-100 hover:text-[#245757] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    Próxima →
+                  </button>
                 </div>
-                <button
-                  onClick={() => mudarPagina(paginaAtual + 1)}
-                  disabled={paginaAtual === totalPaginas}
-                  className="px-4 py-2 rounded-full border border-green-900 text-[#245757] hover:bg-gray-100 hover:text-[#245757] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                  Próxima →
-                </button>
-              </div>
-            )}
+              )}
             </>
           ) : (
             <p className="text-center text-gray-500 mt-6 text-lg">

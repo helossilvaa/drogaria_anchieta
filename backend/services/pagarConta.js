@@ -29,7 +29,7 @@ export async function pagarContasAutomaticamente() {
       );
 
       // Lançar transação de saída
-      await query(
+      await query( 
         `INSERT INTO transacoes 
          (data_lancamento, tipo_movimento, valor, descricao, unidade_id, categoria_transacao_id, origem)
          VALUES (CURRENT_TIMESTAMP, 'SAIDA', ?, ?, ?, ?, 'contas')`,
@@ -37,7 +37,7 @@ export async function pagarContasAutomaticamente() {
           conta.valor,
           `Pagamento automático da conta: ${conta.nomeConta}`,
           conta.unidade_id,
-          6 
+          3 
         ]
       );
     }
