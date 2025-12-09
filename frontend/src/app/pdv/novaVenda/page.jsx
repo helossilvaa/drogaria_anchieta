@@ -60,7 +60,6 @@ export default function NovaVendaPage() {
     }, [unidadeTipo]);
 
 
-
   // Buscar filiais do backend
   useEffect(() => {
     if (unidadeTipo === "filial") {
