@@ -44,8 +44,6 @@ const authMiddleware = async (req, res, next) => {
       unidade_id: funcionario?.unidade_id ?? null
     };
 
-    console.log("DEBUG MIDDLEWARE - req.user:", req.user);
-
     next();
 
   } catch (error) {

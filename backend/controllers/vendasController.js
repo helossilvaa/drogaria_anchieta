@@ -17,7 +17,7 @@ const criarVendaController = async (req, res) => {
             usuario_id,
             unidade_id,
             tipo_pagamento_id,
-            desconto_id,  
+            desconto_id,     
             desconto_valor,  
             total,
             data,
@@ -132,10 +132,23 @@ const evolucaoVendasMensalController = async (req, res) => {
     }
 };
 
-export {
+
+const listarVendasPorUnidade = async (req, res) => {
+  const unidadeId = req.params.id;
+  try {
+    const vendas = await query('SELECT * FROM vendas WHERE unidade_id = ?', [unidadeId]);
+    res.json(vendas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar vendas' });
+  }
+};
+
+export{
     criarVendaController,
     listarVendaController,
     obterVendaPorIDController,
     atualizarVendaController,
-    evolucaoVendasMensalController
+    evolucaoVendasMensalController,
+    listarVendasPorUnidade
 };

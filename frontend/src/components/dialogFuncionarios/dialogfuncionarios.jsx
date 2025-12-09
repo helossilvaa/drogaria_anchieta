@@ -76,7 +76,7 @@ export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) 
     setFormValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // PATCH geral dos dados do funcionário (exceto status)
+
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token || !funcionario) return;
@@ -127,7 +127,7 @@ export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) 
     }
   };
 
-  // PUT apenas para alterar o status
+
   const handleStatusChange = async (novoStatus) => {
     const token = localStorage.getItem("token");
     if (!token || !funcionario) return;
@@ -271,9 +271,9 @@ export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) 
               <SelectContent>
                 <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="inativo">Inativo</SelectItem>
-                <SelectItem value="de férias">Férias</SelectItem>
-                <SelectItem value="de licença">Licença</SelectItem>
-                <SelectItem value="de atestado">Atestado</SelectItem>
+                <SelectItem value="férias">Férias</SelectItem>
+                <SelectItem value="licença">Licença</SelectItem>
+                <SelectItem value="atestado">Atestado</SelectItem>
               </SelectContent>
             </Select>
           </div>

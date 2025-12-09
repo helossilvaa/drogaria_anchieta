@@ -24,6 +24,12 @@ export default function Salarios() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
+  // ------------ NOVO: ESTADOS DO HISTÓRICO -------------- //
+  const [modalHistorico, setModalHistorico] = useState(false);
+  const [pagamentos, setPagamentos] = useState([]);
+  const [salarioSelecionado, setSalarioSelecionado] = useState(null);
+  // ------------------------------------------------------- //
+
   const API_URL = "http://localhost:8080/api/salarios";
 
   const toInputDate = (dataString) => {
@@ -84,8 +90,7 @@ export default function Salarios() {
   };
 
   const getNomeDepartamento = (id) => {
-    const depto = departamentos.find(d => String(d.id) === String(id));
-    // Assumimos que o nome do departamento está na propriedade 'departamento' (como usado no modal)
+    const depto = departamentos.find((d) => String(d.id) === String(id));
     return depto ? depto.departamento : id;
   };
 
@@ -96,7 +101,6 @@ export default function Salarios() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      console.log("💾 Dados recebidos da API:", JSON.stringify(data, null, 2));
       setSalarios(data);
     } catch (err) {
       console.error("Erro ao carregar salários:", err);
@@ -117,8 +121,6 @@ export default function Salarios() {
       const funcionariosData = await resFuncionarios.json();
 
       setDepartamentos(Array.isArray(departamentosData) ? departamentosData : []);
-      console.log("DEPARTAMENTOS RECEBIDOS:", departamentosData);
-
       setFuncionarios(Array.isArray(funcionariosData) ? funcionariosData : []);
     } catch (erro) {
       console.error("Erro ao carregar listas:", erro);
@@ -130,21 +132,20 @@ export default function Salarios() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let novoValor;
+
     if (type === "checkbox") {
       novoValor = checked;
     } else if (name === "valor") {
-      // Permite que o usuário digite a vírgula, mas mantém o estado interno limpo para parseFloat
       novoValor = value.replace(/,/g, ".").replace(/[^\d.]/g, "");
       const partes = novoValor.split(".");
-      if (partes.length > 2) {
-        novoValor = partes[0] + "." + partes.slice(1).join("");
-      }
-      // Se for o campo valor, mantemos o valor como string para que o input reflita a formatação
-      setNovoSalario((prev) => ({ ...prev, [name]: value.replace(/[^\d,]/g, '') }));
+      if (partes.length > 2) novoValor = partes[0] + "." + partes.slice(1).join("");
+
+      setNovoSalario((prev) => ({ ...prev, [name]: value.replace(/[^\d,]/g, "") }));
       return;
     } else {
       novoValor = value;
     }
+
     setNovoSalario((prev) => ({ ...prev, [name]: novoValor }));
   };
 
@@ -155,7 +156,6 @@ export default function Salarios() {
       alert("Preencha todos os campos obrigatórios.");
       return;
     }
-
 
     const valorLimpo = novoSalario.valor.replace(/,/g, ".").replace(/[^\d.]/g, "");
 
@@ -186,7 +186,6 @@ export default function Salarios() {
         alert(data.message || "Erro ao salvar salário");
         return;
       }
-
 
       alert(`Salário ${editarSalarioId ? "editado" : "cadastrado"} com sucesso!`);
       setAbrirModal(false);
@@ -220,7 +219,6 @@ export default function Salarios() {
     setAbrirModal(true);
   };
 
-
   const handleExcluir = (id) => {
     setExcluirSalarioId(id);
     setAbrirModalExcluir(true);
@@ -233,7 +231,9 @@ export default function Salarios() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (!res.ok) throw new Error("Erro ao excluir salário");
+
       alert("Salário excluído com sucesso!");
       setAbrirModalExcluir(false);
       setExcluirSalarioId(null);
@@ -248,13 +248,11 @@ export default function Salarios() {
     if (!pesquisa) return true;
 
     const termo = pesquisa.toLowerCase();
-
     return (
       (s.funcionario && s.funcionario.toLowerCase().includes(termo)) ||
       (s.registro && String(s.registro).includes(termo))
     );
   });
-
 
   const indexUltimo = paginaAtual * itensPorPagina;
   const indexPrimeiro = indexUltimo - itensPorPagina;
@@ -275,6 +273,25 @@ export default function Salarios() {
     fetchSalarios();
     carregarListas();
   }, []);
+
+  // ----------- NOVA FUNÇÃO: ABRIR HISTÓRICO ------------- //
+  const abrirHistorico = async (salario) => {
+    setSalarioSelecionado(salario);
+    setModalHistorico(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8080/api/salarios/${salario.id}/pagamentos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      setPagamentos(data);
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err);
+    }
+  };
+  // ------------------------------------------------------- //
 
   return (
     <>
@@ -299,10 +316,12 @@ export default function Salarios() {
         <button
           type="button"
           onClick={handleNovaSalario}
-          className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white">
+          className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white"
+        >
           Nova Conta
         </button>
       </div>
+
       {/* MODAL ADICIONAR / EDITAR */}
       {abrirModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
@@ -312,8 +331,6 @@ export default function Salarios() {
             </h2>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-
-              {/* ✅ REGISTRO */}
               <label htmlFor="registro" className="block">
                 Registro
               </label>
@@ -323,7 +340,8 @@ export default function Salarios() {
                 list="listaRegistros"
                 value={novoSalario.registro || ""}
                 onChange={(e) => {
-                  if (editarSalarioId) return; // 🔥 impede mudanças no modo editar
+                  if (editarSalarioId) return;
+
                   const valor = e.target.value;
                   const funcionarioSelecionado = funcionarios.find(
                     (u) => String(u.registro) === String(valor)
@@ -336,15 +354,12 @@ export default function Salarios() {
                     nome: funcionarioSelecionado?.nome || "",
                     departamento_id: funcionarioSelecionado?.departamento_id || "",
                   }));
-
                 }}
-                disabled={!!editarSalarioId}   // 🔥 CONGELA NO EDITAR
+                disabled={!!editarSalarioId}
                 className="border rounded-md p-2 w-full"
                 placeholder="Digite ou selecione o registro"
               />
 
-
-              {/* ✅ FUNCIONÁRIO */}
               <label htmlFor="nome" className="block">
                 Funcionário
               </label>
@@ -354,7 +369,8 @@ export default function Salarios() {
                 list="listaFuncionarios"
                 value={novoSalario.nome || ""}
                 onChange={(e) => {
-                  if (editarSalarioId) return; // 🔥 impede mudanças no modo editar
+                  if (editarSalarioId) return;
+
                   const valor = e.target.value;
                   const funcionarioSelecionado = funcionarios.find(
                     (u) => String(u.nome) === String(valor)
@@ -368,7 +384,7 @@ export default function Salarios() {
                     departamento_id: funcionarioSelecionado?.departamento_id || "",
                   }));
                 }}
-                disabled={!!editarSalarioId}   // 🔥 CONGELA NO EDITAR
+                disabled={!!editarSalarioId}
                 className="border rounded-md p-2 w-full"
                 placeholder="Digite ou selecione o funcionário"
               />
@@ -430,13 +446,13 @@ export default function Salarios() {
                 setNovoSalario(estadoInicialSalario);
               }}
               className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-xl"
-              aria-label="Fechar modal"
             >
               &times;
             </button>
           </div>
         </div>
       )}
+
       {/* MODAL EXCLUSÃO */}
       {abrirModalExcluir && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
@@ -444,16 +460,73 @@ export default function Salarios() {
             <h2 className="text-xl mb-4 font-bold">Confirmar Exclusão</h2>
             <p>Tem certeza que deseja excluir este salário?</p>
             <div className="flex justify-end gap-4 mt-6">
-              <button onClick={() => setAbrirModalExcluir(false)} className="bg-gray-300 px-4 py-2 rounded-md">
+              <button
+                onClick={() => setAbrirModalExcluir(false)}
+                className="bg-gray-300 px-4 py-2 rounded-md"
+              >
                 Cancelar
               </button>
-              <button onClick={confirmarExcluir} className="bg-red-600 text-white px-4 py-2 rounded-md">
+              <button
+                onClick={confirmarExcluir}
+                className="bg-red-600 text-white px-4 py-2 rounded-md"
+              >
                 Excluir
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ----------- MODAL DE HISTÓRICO DE PAGAMENTOS ----------- */}
+      {modalHistorico && salarioSelecionado && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl mb-4 font-bold text-center">
+              Histórico de Pagamentos – {salarioSelecionado.funcionario}
+            </h2>
+
+            {pagamentos.length === 0 ? (
+              <p className="text-center text-gray-600">Nenhum pagamento encontrado.</p>
+            ) : (
+              <table className="w-full border-collapse mt-3">
+                <thead>
+                  <tr className="bg-[#245757] text-white">
+                    <th className="p-2">Valor</th>
+                    <th className="p-2">Status</th>
+                    <th className="p-2">Data Pagamento</th>
+                    <th className="p-2">Registrado Em</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagamentos.map((p) => (
+                    <tr key={p.id} className="border-b">
+                      <td className="p-2">{formatarValor(p.valor)}</td>
+                      <td className="p-2">{p.status_pagamento}</td>
+                      <td className="p-2">
+                        {new Date(p.data_pagamento).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="p-2">
+                        {new Date(p.criado_em).toLocaleDateString("pt-BR")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <button
+              onClick={() => {
+                setModalHistorico(false);
+                setPagamentos([]);
+              }}
+              className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-xl"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+      {/* -------------------------------------------------------- */}
 
       {/* TABELA */}
       <div className="mt-6 overflow-x-auto">
@@ -474,8 +547,8 @@ export default function Salarios() {
             {salariosPagina.map((u) => (
               <tr
                 key={u.id}
-                className="border-t hover:bg-gray-50 cursor-pointer"
-                onClick={() => window.location.href = `/salariosFilial/funcionario/${u.id_funcionario}`}
+                onClick={() => abrirHistorico(u)}
+                className="hover:bg-gray-100 cursor-pointer"
               >
                 <td className="p-2">{u.registro}</td>
                 <td className="p-2">{u.funcionario}</td>
@@ -499,19 +572,29 @@ export default function Salarios() {
                     : ""}
                 </td>
 
-
                 <td className="p-2 text-center flex gap-2 justify-center">
                   <button
-                    onClick={() => handleEditar(u)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditar(u);
+                    }}
                     className="text-gray-700 hover:text-[#245757]"
                     title="Editar"
                   >
+
                     <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
                     </svg>
                   </button>
 
-                  <button onClick={() => handleExcluir(u.id)} className="text-red-700 hover:text-red-900" title="Excluir">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExcluir(u.id);
+                    }}
+                    className="text-red-700 hover:text-red-900"
+                    title="Excluir"
+                  >
                     <svg className="w-6 h-6 text-red-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                       <path fillRule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clipRule="evenodd" />
                     </svg>

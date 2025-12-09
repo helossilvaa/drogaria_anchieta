@@ -17,6 +17,7 @@ export const Salario = {
       s.departamento_id,
       d.departamento AS departamento,
       s.valor,
+      s.tipo,
       s.status_pagamento,
       s.data_atualizado
     FROM salarios s

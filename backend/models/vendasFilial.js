@@ -1,6 +1,9 @@
 import { query } from "../config/database.js";
- 
-const listarVenda = async (unidade_id) => {
+
+//
+// LISTAR VENDAS (SEM AGRUPAR)
+//
+export const listarVenda = async (unidade_id) => {
   try {
     const sql = `
       SELECT 
@@ -15,40 +18,82 @@ const listarVenda = async (unidade_id) => {
         d.desconto AS desconto_valor
       FROM vendas v
       LEFT JOIN descontos d ON v.desconto_id = d.id
-      WHERE v.unidade_id = ${unidade_id}
+      WHERE v.unidade_id = ?
+      ORDER BY v.data DESC
     `;
-    return await query(sql);
+    
+    return await query(sql, [unidade_id]);
+
   } catch (error) {
     console.error("Erro ao listar vendas:", error);
     throw error;
   }
 };
 
-
-const registrarTotalDoDia = async (unidade_id, data) => {
+export const atualizarTransacoesDeTodasVendas = async (unidade_id) => {
   try {
-    // Calcula o total das vendas do dia
-    const sqlTotal = `
-      SELECT SUM(v.total) AS total_dia
-      FROM vendas v
-      WHERE v.unidade_id = ? AND DATE(v.data) = ?
+    //
+    // 1️⃣ BUSCAR TODOS OS DIAS QUE TÊM VENDAS
+    //
+    const diasQuery = `
+      SELECT DATE(data) AS dia
+      FROM vendas
+      WHERE unidade_id = ?
+      GROUP BY DATE(data)
+      ORDER BY DATE(data) DESC
     `;
-    const [result] = await query(sqlTotal, [unidade_id, data]);
-    const total = result.total_dia || 0;
 
-    // Insere na tabela de transações
-    const sqlInsert = `
-      INSERT INTO transacoes
-      (data_lancamento, tipo_movimento, valor, descricao, unidade_id, categoria_transacao_id, origem)
-      VALUES (?, 'ENTRADA', ?, 'Total de vendas do dia', ?, 5, 'Sistema')
-    `;
-    await query(sqlInsert, [new Date(), total, unidade_id]);
+    const dias = await query(diasQuery, [unidade_id]);
 
-    console.log(`Transação do dia ${data} registrada para a unidade ${unidade_id}: ${total}`);
+    //
+    // 2️⃣ PARA CADA DIA → SOMAR AS VENDAS E CRIAR/ATUALIZAR A TRANSACAO
+    //
+    for (const item of dias) {
+      const dia = item.dia;
+
+      // Soma do dia
+      const sqlTotal = `
+        SELECT SUM(total) AS total_dia
+        FROM vendas
+        WHERE unidade_id = ?
+        AND DATE(data) = ?
+      `;
+      const [result] = await query(sqlTotal, [unidade_id, dia]);
+      const totalDia = result.total_dia || 0;
+
+      // Verifica se já existe
+      const sqlBusca = `
+        SELECT id
+        FROM transacoes
+        WHERE unidade_id = ?
+          AND DATE(data_lancamento) = ?
+          AND descricao = 'Vendas do dia'
+          AND origem = 'VENDAS'
+          AND tipo_movimento = 'ENTRADA'
+      `;
+      const existe = await query(sqlBusca, [unidade_id, dia]);
+
+      if (existe.length > 0) {
+        // Atualiza
+        await query(
+          `UPDATE transacoes SET valor = ? WHERE id = ?`,
+          [totalDia, existe[0].id]
+        );
+      } else {
+        // Cria
+        await query(
+          `INSERT INTO transacoes
+           (data_lancamento, tipo_movimento, valor, descricao, unidade_id, categoria_transacao_id, origem)
+           VALUES (?, 'ENTRADA', ?, 'Vendas do dia', ?, 2, 'VENDAS')
+          `,
+          [dia, totalDia, unidade_id]
+        );
+      }
+    }
+
+    console.log("Transações diárias atualizadas com sucesso.");
+
   } catch (error) {
-    console.error("Erro ao registrar transação do dia:", error);
+    console.error("Erro ao gerar transações diárias:", error);
   }
 };
-
-
-export { registrarTotalDoDia, listarVenda};

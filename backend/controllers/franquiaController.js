@@ -1,6 +1,6 @@
 import { criarUnidade, listarUnidades, obterunidadeId, atualizarUnidade, deletarUnidade } from "../models/franquia.js";
-import { obterFuncionarioId, atualizarFuncionario, listarFuncionarios } from "../models/funcionarios.js"; 
 import { read, update, query } from '../config/database.js';
+import fetch from "node-fetch";
 
 const atribuirGerenteAdmController = async (req, res) => {
    try {
@@ -42,43 +42,82 @@ const atribuirGerenteAdmController = async (req, res) => {
 
 
 // criar franquia
-const criarUnidadeController = async (req, res) => {
-    try {
-
-        const {
-            tipo,
-            nome,
-            cnpj,
-            cidade,
-            estado,
-            cep,
-            numero,
-            logradouro,
-            telefone,
-            email
-        } = req.body; 
-
-        const unidadeData = {
-            tipo: tipo,
-            nome: nome,
-            cnpj: cnpj,
-            cidade: cidade,
-            estado: estado,
-            cep: cep,
-            numero: numero,
-            logradouro: logradouro,
-            telefone: telefone,
-            email: email
-        };
-
-        const unidadeId = await criarUnidade(unidadeData);
-        res.status(201).json({mensagem: 'unidade criada com sucesso! : ', id: unidadeId});
 
 
-    } catch (error) {
-        console.error('Erro ao criar unidade: ', error);
-        res.status(500).json({mensagem: 'Erro ao criar unidade'});
+const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/search";
+
+async function geocodeEndereco(endereco) {
+  const url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(
+    endereco
+  )}&format=json&limit=1`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "DrogariaApp/1.0" },
+    });
+    const data = await res.json();
+    if (data.length > 0) {
+      return {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon),
+      };
     }
+  } catch (error) {
+    console.error("Erro no geocoding:", error);
+  }
+
+  return { latitude: null, longitude: null };
+}
+
+const criarUnidadeController = async (req, res) => {
+  try {
+    const {
+      tipo,
+      nome,
+      cnpj,
+      cidade,
+      estado,
+      cep,
+      numero,
+      logradouro,
+      telefone,
+      email,
+      data_abertura
+    } = req.body;
+
+    // Geocodifica o endereço antes de criar a unidade
+    const enderecoCompleto = `${logradouro}, ${cidade}, ${estado}, Brasil`;
+    const coords = await geocodeEndereco(enderecoCompleto);
+
+    // Cria a unidade já com latitude e longitude
+    const unidadeData = {
+      tipo,
+      nome,
+      cnpj,
+      cidade,
+      estado,
+      cep,
+      numero,
+      logradouro,
+      telefone,
+      email,
+      data_abertura,
+      latitude: coords.latitude,
+      longitude: coords.longitude
+    };
+
+    const unidadeId = await criarUnidade(unidadeData);
+
+    res.status(201).json({
+      mensagem: "Unidade criada com sucesso!",
+      id: unidadeId,
+      coordenadas: coords
+    });
+
+  } catch (error) {
+    console.error("Erro ao criar unidade:", error);
+    res.status(500).json({ mensagem: "Erro ao criar unidade" });
+  }
 };
 
 // listar franquia 

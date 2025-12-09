@@ -43,7 +43,7 @@ export function LoginForm() {
         setTimeout(() => {
           if (departamento === "diretor geral") router.push("/matriz");
           else if (departamento === "diretor administrativo") router.push("/filial");
-          else if (departamento === "gerente") router.push("/filial");
+          else if (departamento === "pdv") router.push("/filial");
           else router.push("/pdv");
         }, 800);
 
