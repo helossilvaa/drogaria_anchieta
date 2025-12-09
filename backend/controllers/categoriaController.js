@@ -3,7 +3,8 @@ import {
     obterCategoriaPorID,
     atualizarCategoria,
     deletarCategoria,
-    criarCategoria
+    criarCategoria,
+    categoriasMaisVendidas
 } from "../models/categoria.js";
 
 const criarCategoriaController = async (req, res) => {
@@ -82,10 +83,23 @@ const atualizarCategoriaController = async (req, res) => {
     }
 };
 
+
+const categoriasMaisVendidasController = async (req, res) => {
+    try {
+
+    const categorias = await categoriasMaisVendidas();
+    res.json(categorias);
+    
+  } catch (error) {
+    console.error("Erro ao listar categorias mais vendidas:", error);
+    res.status(500).json({ mensagem: "Erro ao listar categorias mais vendidas" });
+  }
+}
 export {
     criarCategoriaController,
     listarCategoriaController,
     obterCategoriaPorIDController,
     deletarCategoriaController,
-    atualizarCategoriaController
+    atualizarCategoriaController,
+    categoriasMaisVendidasController
 };

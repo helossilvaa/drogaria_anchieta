@@ -59,6 +59,8 @@ CREATE TABLE unidade (
     cidade VARCHAR(100) NOT NULL, 
     estado CHAR(2) NOT NULL, 
     cep VARCHAR(9) NOT NULL, 
+    latitude DECIMAL(10,7) DEFAULT NULL,
+    longitude DECIMAL(10,7) DEFAULT NULL,
     numero INT NOT NULL, 
     telefone VARCHAR(13) NOT NULL, 
     email VARCHAR(100) NOT NULL, 

@@ -1,6 +1,6 @@
 import { query } from "../config/database.js";
 
-export const VendasPorFilial = {
+const VendasPorFilial = {
   listarPorUnidade: async (unidadeId) => {
     const sql = `
       SELECT v.id, v.total, v.data, v.tipo_pagamento_id, d.desconto AS desconto_valor

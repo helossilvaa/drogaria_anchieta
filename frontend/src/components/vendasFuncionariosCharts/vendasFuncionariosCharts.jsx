@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -20,6 +20,7 @@ import {
 
 import { ChartContainer } from "@/components/ui/chart";
 import { TrendingUp } from "lucide-react";
+
 import {
   Select,
   SelectTrigger,
@@ -29,69 +30,93 @@ import {
 } from "@/components/ui/select";
 
 const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const mesesAno = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const mesesAno = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+];
 
-export function ChartVendasHora({ data = [], funcionarios = [], periodo = "7dias" }) {
-  const [periodoLocal, setPeriodoLocal] = useState(periodo);
+export function ChartVendasHora({
+  data = [],
+  funcionarios = [],
+  periodo,
+  onPeriodoChange, 
+}) {
   const [chartData, setChartData] = useState([]);
   const [chartConfig, setChartConfig] = useState({});
 
-  // Normaliza o dia conforme período
+  
   const normalizarDia = (dia) => {
-    if (!dia) return "";
+    
+    if (periodo === "6meses" && typeof dia === "string" && /^\d{4}-\d{2}$/.test(dia)) {
+      return dia;
+    }
+
     const dt = new Date(dia);
 
-    if (periodoLocal === "6meses") {
+    if (periodo === "6meses") {
       return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
     }
-    if (periodoLocal === "30dias" || periodoLocal === "7dias") {
-      return dt.toISOString().split("T")[0];
-    }
-    return dia;
+
+    return dt.toISOString().split("T")[0];
   };
 
   const formatLabel = (dia) => {
     if (!dia) return "";
-    if (periodoLocal === "6meses") {
-      const [year, month] = dia.split("-");
-      return mesesAno[Number(month) - 1];
+
+    if (periodo === "6meses") {
+  
+      if (typeof dia === "string" && /^\d{4}-\d{2}$/.test(dia)) {
+        const [, month] = dia.split("-");
+        return mesesAno[Number(month) - 1];
+      }
+      return dia;
     }
-    if (periodoLocal === "7dias") {
-      const dt = new Date(dia);
+
+    const dt = new Date(dia);
+    if (periodo === "7dias") {
+     
       return diasSemana[dt.getDay()];
     }
-    if (periodoLocal === "30dias") {
-      const dt = new Date(dia);
-      return dt.getDate().toString();
+
+    if (periodo === "30dias") {
+      
+      return String(dt.getDate());
     }
+
     return dia;
   };
 
   useEffect(() => {
-    // Configuração de cores por funcionário
     const config = {};
     funcionarios.forEach((f, idx) => {
-      config[f.nome] = { color: `var(--chart-${(idx % 6) + 1})` };
+      config[f.nome] = {
+        color: `var(--chart-${(idx % 6) + 1})`,
+      };
     });
     setChartConfig(config);
 
-    // Normaliza os dados para o gráfico
-    const final = data.map((d) => ({
-      ...d,
-      dia: normalizarDia(d.dia),
-    }));
-    setChartData(final);
-  }, [data, funcionarios, periodoLocal]);
+    setChartData(
+      data.map((d) => ({
+        ...d,
+        dia: normalizarDia(d.dia),
+      }))
+    );
+  }, [data, funcionarios, periodo]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
+
     const total = payload.reduce((sum, p) => sum + (p.value || 0), 0);
+
     return (
       <div className="bg-white p-3 rounded-md shadow-lg border border-gray-200">
         <div className="font-semibold mb-1">{formatLabel(label)}</div>
-        <div className="mb-1 font-medium">
+        <div className="mb-2 font-medium">
           Total:{" "}
-          {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          {total.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
         </div>
         {payload.map((p) => (
           <div key={p.dataKey} className="flex justify-between gap-2 text-sm">
@@ -118,10 +143,12 @@ export function ChartVendasHora({ data = [], funcionarios = [], periodo = "7dias
           <CardDescription>Total de vendas por funcionário</CardDescription>
         </div>
 
-        <Select value={periodoLocal} onValueChange={setPeriodoLocal}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue />
+       
+        <Select value={periodo} onValueChange={onPeriodoChange}> 
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Selecione" />
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="7dias">Últimos 7 dias</SelectItem>
             <SelectItem value="30dias">Últimos 30 dias</SelectItem>
@@ -135,13 +162,17 @@ export function ChartVendasHora({ data = [], funcionarios = [], periodo = "7dias
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid vertical={false} />
+
               <XAxis
                 dataKey="dia"
                 tickLine={false}
                 axisLine={false}
+                interval={0}
                 tickFormatter={formatLabel}
               />
+
               <BarTooltip content={<CustomTooltip />} />
+
               {funcionarios.map((f, idx) => (
                 <Bar
                   key={f.nome}

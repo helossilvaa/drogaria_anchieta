@@ -28,16 +28,12 @@ import estoqueFranquiaRotas from './routes/estoqueFranquiaRotas.js';
 import movimentacaoEstoqueRotas from './routes/movimentacaoEstoqueRotas.js';
 import notificacoesRotas from './routes/notificacoesRotas.js';
 import { downloadPDF } from './controllers/contasFilialController.js';
-import UploadRotas from './middlewares/upload.js';
 import vendasFilial from './routes/vendasFilialRotas.js'
 import transacoesRotas from './routes/transacoesFilialRotas.js';
 import {registrarPagamentoMensal} from './services/registrarPagamento.js';
 import {transacaoPagamento} from './controllers/transaçãoPagamentoController.js';
 import {atualizarStatusSalarios} from "./services/atualizarStatusSalarios.js";
 import { pagarContasAutomaticamente } from "./services/pagarConta.js";
-import SalariosPorFilialRotas from './routes/salariosPorFilialRotas.js';
-import vendasPorFilialRotas from './routes/vendasPorFilialRotas.js';
-import FuncionariosPorFilialRotas from './routes/funcionariosPorFilialRotas.js';
 import './services/transacaoVendas.js';
 
 
@@ -96,9 +92,7 @@ app.use ('/movimentacoesestoque', movimentacaoEstoqueRotas);
 app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
-app.use('/funcionariosPorFilial', FuncionariosPorFilialRotas);
-app.use('/vendasPorFilial', vendasPorFilialRotas);
-app.use('/salariosPorFilial', SalariosPorFilialRotas);
+
 
 
 app.get('/health', (req, res) => {
