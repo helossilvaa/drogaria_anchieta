@@ -52,6 +52,7 @@
     "react-loading-indicators": "^1.0.1",
     "react-number-format": "^5.4.4",
     "react-simple-maps": "^3.0.0",
+    "react-sparklines": "^1.7.0",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",

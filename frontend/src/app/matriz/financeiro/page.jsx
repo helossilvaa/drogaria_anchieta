@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import DashboardFinanceiro from '@/components/dashboardFinanceiro/page';
-import Estoque from '@/components/estoqueMatriz/page';
 import Transacoes from '@/components/transacoesMatriz/page';
 import Layout from '@/components/layout/layout';
 
@@ -11,7 +10,7 @@ export default function Financeiro() {
   const containerRef = useRef(null);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
-  const items = ['Dashboard', 'Estoque', 'Transações'];
+  const items = ['Dashboard', 'Transações'];
  
   useEffect(() => {
     const container = containerRef.current;
@@ -28,8 +27,7 @@ export default function Financeiro() {
 
  const contentMap = {
   0: <DashboardFinanceiro/>,
-  1: <Estoque/>,
-  2: <Transacoes/>
+  1: <Transacoes/>
 }
 
   return (
@@ -68,8 +66,7 @@ export default function Financeiro() {
           style={{ left: underlineStyle.left, width: underlineStyle.width }}
         />
       </div>
-
-      <div className="mt-6">
+      <div >
         {contentMap[activeIndex]}
       </div>
     </Layout>

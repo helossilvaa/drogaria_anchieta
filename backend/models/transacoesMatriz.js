@@ -5,7 +5,7 @@ export async function getTransacoesComTotais() {
   const sql = `
     SELECT 
       t.id,
-      t.unidade_id,
+      t.unidade_id, 
       t.ano,
       t.mes,
       t.entradas,

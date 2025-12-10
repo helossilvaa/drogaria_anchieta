@@ -406,23 +406,6 @@ CREATE TABLE notificacoes (
     FOREIGN KEY (tipo_id) REFERENCES notificacao_tipos(id) 
 ); 
 
-CREATE TABLE requisicoes_estoque (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    estoque_matriz_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade_requisitada INT NOT NULL,
-    valor_unitario DECIMAL(10, 2) NOT NULL,
-    valor_total DECIMAL(10, 2) NOT NULL,
-    data_requisicao DATE NOT NULL,
-    fornecedor_id INT NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    
-    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
-    FOREIGN KEY (produto_id) REFERENCES produtos(id),
-    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
-);
-
-
 CREATE TABLE transacoes_matriz (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     unidade_id INT NOT NULL,   -- id da filial

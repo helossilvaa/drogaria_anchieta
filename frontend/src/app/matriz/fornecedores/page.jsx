@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Layout from "@/components/layout/layout";
 
 export default function CadastroFornecedores() {
   const estadoInicialFornecedor = {
@@ -14,7 +15,7 @@ export default function CadastroFornecedores() {
     bairro: "",
     logradouro: "",
     numero: "",
-    status: true, // status padrão: ativo
+    status: true,
   };
 
   const [abrirModal, setAbrirModal] = useState(false);
@@ -26,23 +27,24 @@ export default function CadastroFornecedores() {
   const [abrirModalExcluir, setAbrirModalExcluir] = useState(false);
 
   const fornecedoresFiltrados = fornecedores.filter((f) =>
-  f.fornecedor.toLowerCase().includes(buscaFornecedor.toLowerCase())
-);
+    f.fornecedor.toLowerCase().includes(buscaFornecedor.toLowerCase())
+  );
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
   const indexUltimo = paginaAtual * itensPorPagina;
   const indexPrimeiro = indexUltimo - itensPorPagina;
-  const fornecedoresPagina = fornecedoresFiltrados.slice(indexPrimeiro, indexUltimo);
+  const fornecedoresPagina = fornecedoresFiltrados.slice(
+    indexPrimeiro,
+    indexUltimo
+  );
   const totalPaginas = Math.ceil(fornecedoresFiltrados.length / itensPorPagina);
 
   const mudarPagina = (numero) => {
-  if (numero < 1) numero = 1;
-  if (numero > totalPaginas) numero = totalPaginas;
-  setPaginaAtual(numero);
-};
-
-
+    if (numero < 1) numero = 1;
+    if (numero > totalPaginas) numero = totalPaginas;
+    setPaginaAtual(numero);
+  };
 
   const API_URL = "http://localhost:8080/api/fornecedores";
 
@@ -54,19 +56,23 @@ export default function CadastroFornecedores() {
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
-      setFornecedores(data);
+      // Normaliza status para booleano
+      const dataNormalizada = data.map((f) => ({
+        ...f,
+        status: f.status === "ATIVO" || f.status === true,
+      }));
+      setFornecedores(dataNormalizada);
     } catch (error) {
       console.error("Erro ao carregar fornecedores:", error);
     }
   };
-
 
   const aplicarMascara = (name, value) => {
     if (name === "telefone") {
       return value
         .replace(/\D/g, "")
         .replace(/^(\d{2})(\d)/, "($1) $2")
-        .replace(/(\d{5})(\d)/, "$1-$2")
+        .replace(/(\d{4,5})(\d)/, "$1-$2")
         .slice(0, 15);
     }
 
@@ -74,9 +80,9 @@ export default function CadastroFornecedores() {
       return value
         .replace(/\D/g, "")
         .replace(/^(\d{2})(\d)/, "$1.$2")
-        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/\.(\d{3})(\d)/, ".$1/$2")
-        .replace(/(\d{4})(\d)/, "$1-$2")
+        .replace(/^(\d{2}\.\d{3})(\d)/, "$1.$2")
+        .replace(/^(\d{2}\.\d{3}\.\d{3})(\d)/, "$1/$2")
+        .replace(/^(\d{2}\.\d{3}\.\d{3}\/\d{4})(\d)/, "$1-$2")
         .slice(0, 18);
     }
 
@@ -108,7 +114,6 @@ export default function CadastroFornecedores() {
     }
   };
 
- 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -117,7 +122,7 @@ export default function CadastroFornecedores() {
     if (type === "checkbox") {
       novoValor = checked;
     } else if (name === "status") {
-      novoValor = value === "true"; 
+      novoValor = value === "true";
     } else {
       novoValor = aplicarMascara(name, value);
     }
@@ -131,7 +136,7 @@ export default function CadastroFornecedores() {
     e.preventDefault();
 
     const fornecedorParaAPI = {
-      ...novoFornecedor
+      ...novoFornecedor,
     };
 
     try {
@@ -174,7 +179,7 @@ export default function CadastroFornecedores() {
       bairro: fornecedor.bairro || "",
       logradouro: fornecedor.logradouro || "",
       numero: fornecedor.numero || "",
-      status: fornecedor.status === "ATIVO" || fornecedor.status === true,
+      status: fornecedor.status === true || fornecedor.status === "ATIVO",
     });
     setAbrirModal(true);
   };
@@ -207,47 +212,56 @@ export default function CadastroFornecedores() {
   };
 
   return (
-    <>
+    <Layout>
       <div>
-        <h1>Fornecedores</h1>
+        <h1 className="text-2xl font-semibold text-[#2d4b47]">Fornecedores</h1>
       </div>
 
-    <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
-  <input
-    type="text"
-    placeholder="Buscar fornecedor por nome..."
-    value={buscaFornecedor}
-    onChange={(e) => {
-    setBuscaFornecedor(e.target.value);
-    setPaginaAtual(1); 
-}}
+      <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
+        <input
+          type="text"
+          placeholder="Buscar fornecedor por nome..."
+          value={buscaFornecedor}
+          onChange={(e) => {
+            setBuscaFornecedor(e.target.value);
+            setPaginaAtual(1);
+          }}
+          className="border border-gray-300 rounded-md p-2 w-64 focus:outline-none focus:ring-2 focus:ring-[#2d4b47]"
+        />
 
-    className="border rounded-md p-2 w-64"
-  />
-
-  <button
-    type="button"
-    onClick={() => {
-      setNovoFornecedor(estadoInicialFornecedor);
-      setEditarFornecedorId(null);
-      setAbrirModal(true);
-    }}
-    className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white"
-  >
-    Novo Fornecedor
-  </button>
-</div>
+        <button
+          type="button"
+          onClick={() => {
+            setNovoFornecedor(estadoInicialFornecedor);
+            setEditarFornecedorId(null);
+            setAbrirModal(true);
+          }}
+          className="inline-flex items-center gap-2 bg-[#2d4b47] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#24403d] transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Novo Fornecedor
+        </button>
+      </div>
 
       {/* Modal de Cadastro/Edição */}
       {abrirModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl mb-3 font-bold">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative">
+            <h2 className="text-xl mb-4 font-bold text-[#2d4b47]">
               {editarFornecedorId ? "Editar Fornecedor" : "Novo Fornecedor"}
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              {[ 
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {[
                 ["fornecedor", "Fornecedor", "text"],
                 ["email", "Email", "email"],
                 ["telefone", "Telefone", "tel"],
@@ -260,7 +274,10 @@ export default function CadastroFornecedores() {
                 ["numero", "Número", "number"],
               ].map(([name, label, type]) => (
                 <div key={name}>
-                  <label htmlFor={name} className="block">
+                  <label
+                    htmlFor={name}
+                    className="block mb-1 text-sm font-semibold text-[#2d4b47]"
+                  >
                     {label}
                   </label>
                   <input
@@ -269,7 +286,7 @@ export default function CadastroFornecedores() {
                     name={name}
                     value={novoFornecedor[name]}
                     onChange={handleChange}
-                    className="border rounded-md p-2 w-full"
+                    className="border border-gray-300 rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#2d4b47]"
                     required
                   />
                 </div>
@@ -277,7 +294,7 @@ export default function CadastroFornecedores() {
 
               {/* Campo de Status com Radio Buttons */}
               <div className="flex flex-col gap-2 mt-2">
-                <label className="block font-medium text-gray-700">Status</label>
+                <label className="block font-semibold text-[#2d4b47]">Status</label>
                 <div className="flex items-center gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -286,7 +303,8 @@ export default function CadastroFornecedores() {
                       value="true"
                       checked={novoFornecedor.status === true}
                       onChange={handleChange}
-                      className="w-4 h-4"
+                      className="w-4 h-4 border-2 border-[#2d4b47] rounded-full
+             appearance-none checked:bg-[#2d4b47]"
                     />
                     <span>Ativo</span>
                   </label>
@@ -298,17 +316,29 @@ export default function CadastroFornecedores() {
                       value="false"
                       checked={novoFornecedor.status === false}
                       onChange={handleChange}
-                      className="w-4 h-4"
+                      className="w-4 h-4 border-2 border-[#2d4b47] rounded-full
+             appearance-none checked:bg-[#2d4b47]"
                     />
                     <span>Inativo</span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex justify-between mt-4">
+              <div className="flex justify-end mt-6 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAbrirModal(false);
+                    setEditarFornecedorId(null);
+                    setNovoFornecedor(estadoInicialFornecedor);
+                  }}
+                  className="px-4 py-2 rounded-md bg-gray-300 text-gray-700 hover:bg-gray-400 transition"
+                >
+                  Cancelar
+                </button>
                 <button
                   type="submit"
-                  className="bg-green-600 text-white rounded-md p-2"
+                  className="px-4 py-2 rounded-md bg-[#2d4b47] text-white hover:bg-[#24403d] transition"
                 >
                   Salvar
                 </button>
@@ -321,7 +351,7 @@ export default function CadastroFornecedores() {
                 setEditarFornecedorId(null);
                 setNovoFornecedor(estadoInicialFornecedor);
               }}
-              className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-xl"
+              className="absolute top-3 right-3 text-[#2d4b47] hover:text-[#24403d] text-2xl font-bold"
               aria-label="Fechar modal"
             >
               &times;
@@ -333,20 +363,20 @@ export default function CadastroFornecedores() {
       {/* Modal de Exclusão */}
       {abrirModalExcluir && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl mb-4 font-bold">Confirmar Exclusão</h2>
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl mb-4 font-bold text-[#2d4b47]">Confirmar Exclusão</h2>
             <p>Tem certeza que deseja excluir este fornecedor?</p>
 
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setAbrirModalExcluir(false)}
-                className="bg-gray-300 px-4 py-2 rounded-md"
+                className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400 transition"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmarExcluir}
-                className="bg-red-600 text-white px-4 py-2 rounded-md"
+                className="bg-[#2d4b47] text-white px-4 py-2 rounded-md hover:bg-[#24403d] transition"
               >
                 Excluir
               </button>
@@ -357,46 +387,44 @@ export default function CadastroFornecedores() {
 
       {/* Tabela de Fornecedores */}
       <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse min-w-[900px]">
+        <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-[#245757] text-left text-white rounded-t-lg">
-              <th className="p-2">Fornecedor</th>
-              <th className="p-2">E-mail</th>
-              <th className="p-2">Telefone</th>
-              <th className="p-2">CNPJ</th>
-              <th className="p-2">CEP</th>
-              <th className="p-2">Cidade</th>
-              <th className="p-2">Estado</th>
-              <th className="p-2">Bairro</th>
-              <th className="p-2">Endereço</th>
-              <th className="p-2">Número</th>
-              <th className="p-2">Status</th>
-              <th className="p-2 rounded-tr-lg">Ações</th>
+            <tr className="bg-[#2d4b47] text-white text-left text-sm font-semibold rounded-t-lg">
+              <th className="py-3 px-4 rounded-tl-lg">Fornecedor</th>
+              <th className="py-3 px-4">CNPJ</th>
+              <th className="py-3 px-4">Telefone</th>
+              <th className="py-3 px-4">E-mail</th>
+              <th className="py-3 px-4">Cidade</th>
+              <th className="py-3 px-4">Estado</th>
+              <th className="py-3 px-4">Bairro</th>
+              <th className="py-3 px-4">Endereço</th>
+              <th className="py-3 px-4">Número</th>
+              <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4 rounded-tr-lg text-center">Ações</th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="text-sm text-gray-900">
             {fornecedoresPagina.map((u) => (
-              <tr key={u.id} className="border-t hover:bg-gray-50">
-                <td className="p-2">{u.fornecedor}</td>
-                <td className="p-2">{u.email}</td>
-                <td className="p-2">{u.telefone}</td>
-                <td className="p-2">{u.cnpj}</td>
-                <td className="p-2">{u.cep}</td>
-                <td className="p-2">{u.cidade}</td>
-                <td className="p-2">{u.estado}</td>
-                <td className="p-2">{u.bairro}</td>
-                <td className="p-2">{u.logradouro}</td>
-                <td className="p-2">{u.numero}</td>
-                <td className="p-2">
+              <tr key={u.id} className="border-b border-gray-200 hover:bg-gray-50">
+                <td className="py-3 px-4 whitespace-pre-wrap max-w-[150px]">{u.fornecedor}</td>
+                <td className="py-3 px-4">{u.cnpj}</td>
+                <td className="py-3 px-4 whitespace-pre-wrap max-w-[110px]">{u.telefone}</td>
+                <td className="py-3 px-4 max-w-[160px] break-words">{u.email}</td>
+                <td className="py-3 px-4">{u.cidade}</td>
+                <td className="py-3 px-4">{u.estado}</td>
+                <td className="py-3 px-4">{u.bairro}</td>
+                <td className="py-3 px-4">{u.logradouro}</td>
+                <td className="py-3 px-4">{u.numero}</td>
+                <td className="py-3 px-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      u.status === "ATIVO" || u.status === true
-                        ? "bg-[#245757]/20 text-[#245757]"
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                      u.status
+                        ? "bg-[#d7e6e4] text-[#2d4b47]"
                         : "bg-gray-300 text-gray-700"
                     }`}
                   >
-                    {u.status === "ATIVO" || u.status === true ? "Ativo" : "Inativo"}
+                    {u.status ? "Ativo" : "Inativo"}
                   </span>
                 </td>
                 <td className="p-2 text-center flex gap-2 justify-center">
@@ -444,43 +472,54 @@ export default function CadastroFornecedores() {
                 </td>
               </tr>
             ))}
+
+            {fornecedoresPagina.length === 0 && (
+              <tr>
+                <td colSpan="11" className="text-center py-4 text-gray-600">
+                  Nenhum fornecedor encontrado.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-        {totalPaginas > 1 && (
-  <div className="flex justify-center items-center gap-2 mt-4 select-none">
-    <button
-      onClick={() => mudarPagina(paginaAtual - 1)}
-      disabled={paginaAtual === 1}
-      className="px-3 py-1 border rounded disabled:opacity-50"
-    >
-      &lt; Anterior
-    </button>
+      </div>
 
-    {[...Array(totalPaginas)].map((_, i) => {
-      const numeroPagina = i + 1;
-      return (
+      {/* Paginação */}
+      <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
         <button
-          key={numeroPagina}
-          onClick={() => mudarPagina(numeroPagina)}
-          className={`px-3 py-1 border rounded ${
-            paginaAtual === numeroPagina ? "bg-blue-300" : ""
+          onClick={() => mudarPagina(paginaAtual - 1)}
+          disabled={paginaAtual === 1}
+          className={`px-3 py-1 rounded-md border border-[#2d4b47] text-[#2d4b47] hover:bg-[#2d4b47] hover:text-white transition ${
+            paginaAtual === 1 ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          {numeroPagina}
+          Anterior
         </button>
-      );
-    })}
 
-    <button
-      onClick={() => mudarPagina(paginaAtual + 1)}
-      disabled={paginaAtual === totalPaginas}
-      className="px-3 py-1 border rounded disabled:opacity-50"
-    >
-      Próxima &gt;
-    </button>
-  </div>
-)}
+        {[...Array(totalPaginas)].map((_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => mudarPagina(i + 1)}
+            className={`px-3 py-1 rounded-md border border-[#2d4b47] hover:bg-[#2d4b47] hover:text-white transition ${
+              paginaAtual === i + 1
+                ? "bg-[#2d4b47] text-white cursor-default"
+                : "text-[#2d4b47]"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        <button
+          onClick={() => mudarPagina(paginaAtual + 1)}
+          disabled={paginaAtual === totalPaginas}
+          className={`px-3 py-1 rounded-md border border-[#2d4b47] text-[#2d4b47] hover:bg-[#2d4b47] hover:text-white transition ${
+            paginaAtual === totalPaginas ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          Próximo
+        </button>
       </div>
-    </>
+    </Layout>
   );
 }
