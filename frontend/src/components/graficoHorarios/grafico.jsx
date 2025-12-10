@@ -17,7 +17,7 @@ export function ChartHorarios() {
     async function fetchVendasPorHora() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/vendasPorFilial/vendas-por-hora`, {
+        const res = await fetch(`${API_URL}/vendas/vendas-por-hora`, {
           method: "GET",
           credentials: "include",
           headers: {
