@@ -1,6 +1,6 @@
 import express from 'express';
 import { totalVendasHoje, vendasPorHora, topProdutos } from '../controllers/vendasPorFilialController.js';
-import { listarVendasPorUnidade, totalVendasHoje, evolucaoVendasMensalFilialController } from '../controllers/vendasPorFilial.js';
+import { listarVendasPorUnidade,  evolucaoVendasMensalFilialController } from '../controllers/vendasPorFilial.js';
 import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();

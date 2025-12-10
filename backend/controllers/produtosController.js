@@ -26,8 +26,8 @@ const obterProdutoPorCodigoBarrasController = async (req, res) => {
 
 const criarProdutoController = async (req, res) => {
     try {
-        const { id, registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento } = req.body;
-        const produtoData = { id, registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento };
+        const { id, registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, armazenamento } = req.body;
+        const produtoData = { id, registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, armazenamento };
         await criarProduto(produtoData);
         res.status(201).json({ mensagem: 'Produto criado com sucesso!' });
 
@@ -65,14 +65,14 @@ const obterProdutoPorIdController = async (req, res) => {
 const atualizarProdutoController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento } = req.body;
+        const { registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, armazenamento } = req.body;
         const produtoExistente = await obterProdutoPorId(id);
 
         if (!produtoExistente) {
             return res.status(404).json({ mensagem: 'Produto não encontrado!!!' });
         }
 
-        const produtoData = { registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento };
+        const produtoData = { registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, armazenamento };
         await atualizarProduto(id, produtoData);
         res.status(200).json({ mensagem: 'Produto atualizado com sucesso!!!' });
 

@@ -559,13 +559,22 @@ insert into departamento (departamento, tipoUnidade_id) VALUES
 ('diretor administrativo', 2 ),   
 ('diretor geral', 1 ); 
 
-INSERT INTO unidade (tipo, nome, cnpj, logradouro, cidade, estado, cep, numero, telefone, email, data_abertura) VALUES 
-('matriz', 'Drogaria Anchieta Matriz', '61270294000166', 'Via Anchieta', 'São Paulo', 'SP', '04246001', 1248, '5511953456564', 'matriz@anchieta.com.br', '2000-01-01'), 
-('franquia', 'Drogaria Anchieta São Bernardo', '61279665478990', 'Rua Marechal Deodoro', 'São Bernardo do Campo', 'SP', '968877662', 1845, '551143352121', 'sbc@anchieta.com.br', '2005-05-10'), 
-('franquia', 'Drogaria Anchieta BH', '32345678000133', 'Av. Afonso Pena', 'Belo Horizonte', 'MG', '30130000', 1200, '998877665', 'bh@techstore.com.br', '2019-05-20'), 
-('franquia', 'Drogaria Anchieta Curitiba', '42345678000122', 'Rua XV de Novembro', 'Curitiba', 'PR', '80020310', 45, '987123456', 'curitiba@techstore.com.br', '2020-02-10'), 
-('franquia', 'Drogaria Anchieta Porto Alegre', '52345678000111', 'Av. Ipiranga', 'Porto Alegre', 'RS', '90160092', 500, '912345678', 'poa@techstore.com.br', '2021-09-15'); 
- 
+INSERT INTO unidade (
+    tipo, nome, cnpj, logradouro, cidade, estado, cep,
+    latitude, longitude, numero, telefone, email, data_abertura, status
+) VALUES
+('matriz', 'Drogaria Anchieta Matriz', '00011122000150', 'Via Anchieta', 'São Paulo', 'SP', '04001-001',
+    -23.9290125, -46.3623294, 1000, '11987654321', 'matriz@drogariaanchieta.com', '2014-08-01', 'ativa'),
+('franquia', 'Drogaria Anchieta São Bernardo', '00011122000251', 'Rua Marechal Deodoro', 'São Bernardo do Campo', 'SP', '09710-001',
+    -23.7223235, -46.5494902, 50, '11987654322', 'sbc@drogariaanchieta.com', '2016-03-15', 'ativa'),
+('franquia', 'Drogaria Anchieta BH', '00011122000352', 'Av. Afonso Pena', 'Belo Horizonte', 'MG', '30130-001',
+    -19.9320392, -43.9304670, 700, '31987654323', 'bh@drogariaanchieta.com', '2017-09-20', 'ativa'),
+('franquia', 'Drogaria Anchieta Curitiba', '00011122000453', 'Rua XV de Novembro', 'Curitiba', 'PR', '80020-000',
+    -25.4316937, -49.2729707, 250, '41987654324', 'curitiba@drogariaanchieta.com', '2018-05-10', 'ativa'),
+('franquia', 'Drogaria Anchieta Porto Alegre', '00011122000554', 'Av. Ipiranga', 'Porto Alegre', 'RS', '90040-000',
+    -30.0576433, -51.1840526, 120, '51987654325', 'poa@drogariaanchieta.com', '2019-11-28', 'ativa');
+
+
 INSERT INTO funcionarios (registro, cpf, telefone, data_nascimento, genero,  
 nome, email, departamento_id, logradouro, cidade, estado, cep, numero, unidade_id) VALUES  
 ('123456', '54470306843', '5511967855691', '2007-09-12', 'feminino', 'Heloise Soares',  
@@ -575,7 +584,17 @@ nome, email, departamento_id, logradouro, cidade, estado, cep, numero, unidade_i
 ('123456', '47028350843', '5511971537650', '2008-03-30', 'feminino', 'Isabella Nunes',  
 'isabella@gmail.com', 3, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37', 2), 
 ('123456', '15544650870', '5511996108022', '2008-09-11', 'masculino', 'Gerson Rodrigues',  
-'gerson@gmail.com', 4, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37', 1); 
+'gerson@gmail.com', 4, 'Rua Mogi Guassu', 'São Caetano do Sul', 'SP', '09540570', '37', 1),
+('123457', '12345678901', '5521987654321', '1995-04-10', 'masculino', 'Carlos Silva', 
+'carlos.silva@empresa.com', 1, 'Rua da Assembleia', 'Rio de Janeiro', 'RJ', '20011-001', '10', 3), 
+('123458', '23456789012', '5531976543210', '1988-11-25', 'feminino', 'Aline Ferreira', 
+'aline.ferreira@empresa.com', 2, 'Av. Afonso Pena', 'Belo Horizonte', 'MG', '30130-001', '100', 4), 
+('123459', '34567890123', '5551965432109', '2001-01-05', 'feminino', 'Patrícia Souza', 
+'patricia.souza@empresa.com', 3, 'Rua da Praia', 'Porto Alegre', 'RS', '90010-000', '50', 5), 
+('123460', '45678901234', '5541954321098', '1990-07-17', 'masculino', 'Ricardo Santos', 
+'ricardo.santos@empresa.com', 4, 'Rua XV de Novembro', 'Curitiba', 'PR', '80020-000', '200', 1),
+('123461', '56789012345', '5581943210987', '1992-03-22', 'feminino', 'Juliana Lima', 
+'juliana.lima@empresa.com', 1, 'Av. Conde da Boa Vista', 'Recife', 'PE', '50060-000', '30', 2);
  
 INSERT INTO usuarios ( 
  senha, departamento_id, funcionario_id) VALUES  
@@ -1193,12 +1212,32 @@ INSERT INTO descontos (tipodesconto_id, nome, desconto) VALUES
    (2, "CUPOM45", 0.45), 
    (2, "CUPOM5", 0.50); 
  
-insert into vendas (cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, desconto_valor) values
-('1', '1', '2', '3', '1', '83.20', '20.80'),
-('1', '1', '2', '3', '1', '84.00', '21.00'),
-('3', '1', '2', '3', '7', '72.00', '8.00'),
-('3', '1', '2', '3', '8', '6.60', '15.40'),
-('1', '1', '2', '3', '1', '20.25', '24.75');
+INSERT INTO vendas (cliente_id, usuario_id, unidade_id, tipo_pagamento_id, desconto_id, total, desconto_valor, data) VALUES 
+-- Janeiro
+(1, 1, 1, 1, 1, 550000.00, 1, '2024-01-15 10:00:00'),
+-- Fevereiro
+(2, 1, 2, 2, NULL, 600000.00, 1, '2024-02-20 11:30:00'),
+-- Março
+(3, 1, 3, 3, 2, 580000.00, 1, '2024-03-05 14:45:00'),
+-- Abril
+(4, 1, 4, 1, 1, 620000.00, 1, '2024-04-18 09:15:00'),
+-- Maio
+(5, 1, 5, 2, 3, 700000.00, 1, '2024-05-25 16:00:00'),
+-- Junho
+(1, 1, 1, 3, NULL, 520000.00, 1, '2024-06-10 12:10:00'),
+-- Julho
+(2, 1, 2, 1, 1, 560000.00, 1, '2024-07-01 08:30:00'),
+-- Agosto
+(3, 1, 3, 2, 2, 650000.00, 1, '2024-08-14 17:50:00'),
+-- Setembro
+(4, 1, 4, 3, NULL, 540000.00, 1, '2024-09-08 13:20:00'),
+-- Outubro
+(5, 1, 5, 1, 3, 680000.00, 1, '2024-10-21 10:55:00'),
+-- Novembro
+(1, 1, 1, 2, 1, 750000.00, 1, '2024-11-03 15:35:00'),
+-- Dezembro
+(2, 1, 2, 3, 2, 800000.00, 1, '2024-12-12 18:00:00');
+
 
 insert into itens_venda (venda_id, produto_id, lote_id, quantidade, preco_unitario, subtotal) values
 ('1', '1', NULL, '8', '13.00', '104.00'),

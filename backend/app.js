@@ -40,7 +40,7 @@ import { gerarDecimoTerceiro } from "./controllers/salariosFilialController.js";
 import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
 import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
-
+import dashboardfinanceiro from'./routes/dashboardFinanceiroRotas.js';
 import relatoriosRotas from "./routes/relatoriosRotas.js";
 import salariosFilialRotas from './routes/salariosFilialRotas.js';
 
@@ -109,6 +109,7 @@ app.use ('/relatorios', relatoriosRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
 app.use('/salariosfilial', salariosFilialRotas);
 app.use("/uploads/produtos", express.static(path.join(__dirname, "uploads/produtos")));
+app.use('/dashboard-financeiro', dashboardfinanceiro)
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

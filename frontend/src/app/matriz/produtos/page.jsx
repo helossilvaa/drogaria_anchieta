@@ -577,17 +577,6 @@ export default function Produtos() {
               <Input placeholder="Medida ID" value={novoProduto.medida_id} onChange={(e) => setNovoProduto({ ...novoProduto, medida_id: e.target.value })} />
               <Input placeholder="Marca ID" value={novoProduto.marca_id} onChange={(e) => setNovoProduto({ ...novoProduto, marca_id: e.target.value })} />
               <Input placeholder="Fornecedor ID" value={novoProduto.fornecedor_id} onChange={(e) => setNovoProduto({ ...novoProduto, fornecedor_id: e.target.value })} />
-              <Select value={String(novoProduto.lote_id || "")} onValueChange={handleSelectLoteNovo} >
-                <SelectTrigger><SelectValue placeholder="Selecione o lote" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Sem lote</SelectItem>
-                  {lotes.map((lote) => (
-                    <SelectItem key={lote.id} value={String(lote.id)}>
-                      Lote {lote.numero_lote} — Validade {lote.data_validade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Input placeholder="Armazenamento" value={novoProduto.armazenamento} onChange={(e) => setNovoProduto({ ...novoProduto, armazenamento: e.target.value })} />
             </div>
 
