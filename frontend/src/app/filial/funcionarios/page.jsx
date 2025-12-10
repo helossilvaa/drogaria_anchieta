@@ -154,12 +154,12 @@ export default function Funcionarios() {
   useEffect(() => { if (funcionarios.length > 0) fetchVendas(); }, [funcionarios, periodo]);
   useEffect(() => { fetchFuncionarioDestaque(); }, []);
 
-  // NOVAS MÉTRICAS (sem novos)
+  // cards de metricas gerais sobre funcionários da filial
   const metricas = [
     {
       title: "Total de Funcionários",
       amount: totais.total,
-      growth: crescimento.ativos + crescimento.inativos, // crescimento geral
+      growth: crescimento.ativos + crescimento.inativos, 
       description: "Total cadastrado",
     },
     {
@@ -206,7 +206,7 @@ export default function Funcionarios() {
               ))}
             </div>
 
-            {/* GRÁFICO + DESTAQUE */}
+            {/* GRÁFICO + FUNCIONARIO DESTAQUE */}
             <div className="flex flex-col lg:flex-row gap-6 mb-6 w-full">
               
               <div className="flex-1 w-full">
@@ -258,7 +258,7 @@ export default function Funcionarios() {
             </div>
           </TabsContent>
 
-          {/* TABELA */}
+          {/* TABELA DE FUNCIONARIOS */}
           <TabsContent value="novo" className="w-full mt-6">
             <div className="overflow-x-auto w-full">
               <TableFuncionarios funcionarios={funcionarios} />

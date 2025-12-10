@@ -10,7 +10,7 @@ export default function loading() {
         size={40}       
         bgOpacity={0.1} 
         speed={1.75}     
-        color="red"    
+        color="green"    
       />
     </div>
   );

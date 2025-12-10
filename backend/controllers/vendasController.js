@@ -114,6 +114,7 @@ const atualizarVendaController = async (req, res) => {
     }
 };
 
+//evolucao geral de vendas de todas as redes
 const evolucaoVendasMensalController = async (req, res) => {
     try {
         const sql = `

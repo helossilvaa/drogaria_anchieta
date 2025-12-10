@@ -8,7 +8,7 @@ import {
 } from "../models/movimentacaoEstoque.js";
 
 import { Notificacao } from "../models/notificacoes.js";
-import { read } from "../config/database.js";
+import { create, read } from "../config/database.js";
 
 const criarMovimentacaoController = async (req, res) => {
     try {
@@ -55,13 +55,13 @@ const listarMovimentacoesPorProdutoController = async (req, res) => {
 };
 
 const listarSolicitacoesPendentesController = async (req, res) => {
-  try {
-    const solicitacoes = await listarMovimentacoes(`tipo_movimento = 'solicitacao'`);
-    return res.status(200).json(solicitacoes);
-  } catch (error) {
-    console.error("Erro ao listar solicitações:", error);
-    res.status(500).json({ mensagem: "Erro ao listar solicitações pendentes" });
-  }
+    try {
+        const solicitacoes = await listarMovimentacoes(`tipo_movimento = 'solicitacao'`);
+        return res.status(200).json(solicitacoes);
+    } catch (error) {
+        console.error("Erro ao listar solicitações:", error);
+        res.status(500).json({ mensagem: "Erro ao listar solicitações pendentes" });
+    }
 };
 
 const obterMovimentacaoPorIdController = async (req, res) => {
@@ -157,8 +157,6 @@ const solicitarReposicaoController = async (req, res) => {
             return res.status(404).json({ mensagem: "Produto não encontrado!" });
         }
 
-        const produto_nome = produto.nome || "Produto desconhecido";
-
         // Criar movimentação
         const movimentacaoData = {
             produto_id,
@@ -171,13 +169,21 @@ const solicitarReposicaoController = async (req, res) => {
         };
         await criarMovimentacao(movimentacaoData);
 
+        //Criar solicitacao 
+        const solicataoData = {
+            filial_id: filialId,
+            produto_id,
+            quantidade_solicitada: quantidade
+        }
+        await create (`solicitacoes_estoque`, solicataoData)
+
         // Notificação para a filial
         try {
             await Notificacao.create({
                 usuario_id: usuarioId,
                 unidade_id: filialId,
                 titulo: "Solicitação enviada",
-                mensagem: `Seu pedido de ${qty} unidades de ${produto_nome} foi enviado à matriz.`,
+                mensagem: `Seu pedido de ${qty} unidades de ${produto.nome} foi enviado à matriz.`,
                 tipo_id: 3,
                 lida: 0,
                 criada_em: new Date()
@@ -186,22 +192,32 @@ const solicitarReposicaoController = async (req, res) => {
             console.warn("Falha ao criar notificação para a filial:", notifErr);
         }
 
-        // Notificação para todos os gestores da matriz
+        // Notificação para gestores da matriz
         try {
-            const gestores = await read("usuarios", "unidade_id = 1 AND departamento LIKE '%gestor%'");
-            for (const g of gestores) {
-                await Notificacao.create({
-                    usuario_id: g.id,
-                    unidade_id: 1,
-                    titulo: "Nova solicitação de reposição",
-                    mensagem: `A filial ${filialId} solicitou ${qty} unidades de ${produto_nome}.`,
-                    tipo_id: 2,
-                    lida: 0,
-                    criada_em: new Date(),
-                    extra_info: JSON.stringify({ produto_id, quantidade: qty, filialId }),
-                    acao_texto: "Ver detalhes"
-                });
+            // Busca um único gestor
+            const gestor = await read("usuarios", `departamento_id = 4`);
+
+            // Transforma em array para manter compatibilidade
+            const gestores = gestor ? [gestor] : [];
+
+            if (gestores.length > 0) {
+                for (const g of gestores) {
+                    await Notificacao.create({
+                        usuario_id: g.id,
+                        unidade_id: 1, // matriz
+                        titulo: "Nova solicitação de reposição",
+                        mensagem: `A filial ${filialId} solicitou ${qty} unidades de ${produto.nome}.`,
+                        tipo_id: 2,
+                        lida: 0,
+                        criada_em: new Date(),
+                        extra_info: JSON.stringify({ produto_id, quantidade: qty, filialId }),
+                        acao_texto: "Ver detalhes"
+                    });
+                }
+            } else {
+                console.warn("Nenhum gestor encontrado no departamento 4.");
             }
+
         } catch (notifErr) {
             console.warn("Falha ao criar notificação para a matriz:", notifErr);
         }
@@ -217,6 +233,64 @@ const solicitarReposicaoController = async (req, res) => {
     }
 };
 
+const enviarLoteController = async (req, res) => {
+    try {
+        const { produto_id, filial_id, quantidade } = req.body;
+
+        if (!produto_id || !filial_id || !quantidade) {
+            return res.status(400).json({ mensagem: "Dados incompletos para enviar lote." });
+        }
+
+
+        const estoqueMArray = await read(`estoque_matriz`, `produto_id = ${produto_id}
+        LIMIT 1`, `id, quantidade`)
+
+        const estoqueM = estoqueMArray;
+
+        if (!estoqueM) {
+            return res.status(404).json({ mensagem: "Produto não encontrado na matriz." });
+        }
+
+        if (estoqueM.quantidade < quantidade) {
+            return res.status(400).json({ mensagem: "Estoque insuficiente na matriz." });
+        }
+
+        //Subtrair da matriz
+        await update(
+            `UPDATE estoque_matriz SET quantidade = quantidade - ? WHERE id = ?`,
+            [quantidade, estoqueM.id]
+        );
+
+        // Somar na filial
+        await update(
+            `UPDATE estoque_franquia SET quantidade = quantidade + ? 
+       WHERE produto_id = ? AND estoque_matriz_id = ?`,
+            [quantidade, produto_id, estoqueM.id]
+        );
+
+        // Registrar movimentação (sem usuario_id)
+        const sqlMov = `
+      INSERT INTO movimentacoes_estoque 
+          (produto_id, unidade_id, tipo, quantidade, descricao)
+      VALUES (?, ?, 'envio', ?, 'Envio da matriz para filial')
+    `;
+
+        await create(sqlMov, [
+            produto_id,
+            filial_id,
+            quantidade
+        ]);
+
+        return res.json({ mensagem: "Lote enviado com sucesso!" });
+
+    } catch (error) {
+        console.error("Erro enviarLote:", error);
+        return res.status(500).json({ mensagem: "Erro interno ao enviar lote." });
+    }
+};
+
+
+
 
 
 export {
@@ -228,4 +302,5 @@ export {
     atualizarMovimentacaoController,
     deletarMovimentacaoController,
     solicitarReposicaoController,
+    enviarLoteController
 };

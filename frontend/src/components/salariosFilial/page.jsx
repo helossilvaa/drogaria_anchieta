@@ -24,12 +24,6 @@ export default function Salarios() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 15;
 
-  // ------------ NOVO: ESTADOS DO HISTÓRICO -------------- //
-  const [modalHistorico, setModalHistorico] = useState(false);
-  const [pagamentos, setPagamentos] = useState([]);
-  const [salarioSelecionado, setSalarioSelecionado] = useState(null);
-  // ------------------------------------------------------- //
-
   const API_URL = "http://localhost:8080/api/salarios";
 
   const toInputDate = (dataString) => {
@@ -274,25 +268,6 @@ export default function Salarios() {
     carregarListas();
   }, []);
 
-  // ----------- NOVA FUNÇÃO: ABRIR HISTÓRICO ------------- //
-  const abrirHistorico = async (salario) => {
-    setSalarioSelecionado(salario);
-    setModalHistorico(true);
-
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8080/api/salarios/${salario.id}/pagamentos`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-      setPagamentos(data);
-    } catch (err) {
-      console.error("Erro ao carregar histórico:", err);
-    }
-  };
-  // ------------------------------------------------------- //
-
   return (
     <>
       {/* FILTROS */}
@@ -309,16 +284,16 @@ export default function Salarios() {
               setPesquisa(e.target.value);
               setPaginaAtual(1);
             }}
-            className="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#245757]"
+            className="border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#44A6A0]"
           />
         </div>
 
         <button
           type="button"
           onClick={handleNovaSalario}
-          className="cursor-pointer border p-2 rounded-md bg-blue-500 text-white"
+          className="cursor-pointer border p-2 rounded-md bg-[#44A6A0] text-white hover:bg-[44A6A0]"
         >
-          Nova Conta
+          Novo Salário
         </button>
       </div>
 
@@ -331,9 +306,7 @@ export default function Salarios() {
             </h2>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <label htmlFor="registro" className="block">
-                Registro
-              </label>
+              <label htmlFor="registro" className="block">Registro</label>
               <input
                 id="registro"
                 name="registro"
@@ -356,13 +329,11 @@ export default function Salarios() {
                   }));
                 }}
                 disabled={!!editarSalarioId}
-                className="border rounded-md p-2 w-full"
+                className="border rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#44A6A0]"
                 placeholder="Digite ou selecione o registro"
               />
 
-              <label htmlFor="nome" className="block">
-                Funcionário
-              </label>
+              <label htmlFor="nome" className="block">Funcionário</label>
               <input
                 id="nome"
                 name="nome"
@@ -385,21 +356,19 @@ export default function Salarios() {
                   }));
                 }}
                 disabled={!!editarSalarioId}
-                className="border rounded-md p-2 w-full"
+                className="border rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#44A6A0]"
                 placeholder="Digite ou selecione o funcionário"
               />
 
               <div>
-                <label htmlFor="valor" className="block">
-                  Valor
-                </label>
+                <label htmlFor="valor" className="block">Valor</label>
                 <input
                   id="valor"
                   name="valor"
                   type="text"
                   onChange={handleChange}
                   value={novoSalario.valor}
-                  className="border rounded-md p-2 w-full"
+                  className="border rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-[#44A6A0]"
                   required
                 />
               </div>
@@ -433,7 +402,7 @@ export default function Salarios() {
               </div>
 
               <div className="flex justify-between mt-4">
-                <button type="submit" className="bg-green-600 text-white rounded-md p-2">
+                <button type="submit" className="bg-[#44A6A0] text-white rounded-md p-2 hover:bg-teal-500">
                   Salvar
                 </button>
               </div>
@@ -462,13 +431,13 @@ export default function Salarios() {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setAbrirModalExcluir(false)}
-                className="bg-gray-300 px-4 py-2 rounded-md"
+                className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmarExcluir}
-                className="bg-red-600 text-white px-4 py-2 rounded-md"
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
               >
                 Excluir
               </button>
@@ -477,153 +446,108 @@ export default function Salarios() {
         </div>
       )}
 
-      {/* ----------- MODAL DE HISTÓRICO DE PAGAMENTOS ----------- */}
-      {modalHistorico && salarioSelecionado && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl mb-4 font-bold text-center">
-              Histórico de Pagamentos – {salarioSelecionado.funcionario}
-            </h2>
-
-            {pagamentos.length === 0 ? (
-              <p className="text-center text-gray-600">Nenhum pagamento encontrado.</p>
-            ) : (
-              <table className="w-full border-collapse mt-3">
-                <thead>
-                  <tr className="bg-[#245757] text-white">
-                    <th className="p-2">Valor</th>
-                    <th className="p-2">Status</th>
-                    <th className="p-2">Data Pagamento</th>
-                    <th className="p-2">Registrado Em</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagamentos.map((p) => (
-                    <tr key={p.id} className="border-b">
-                      <td className="p-2">{formatarValor(p.valor)}</td>
-                      <td className="p-2">{p.status_pagamento}</td>
-                      <td className="p-2">
-                        {new Date(p.data_pagamento).toLocaleDateString("pt-BR")}
-                      </td>
-                      <td className="p-2">
-                        {new Date(p.criado_em).toLocaleDateString("pt-BR")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-            <button
-              onClick={() => {
-                setModalHistorico(false);
-                setPagamentos([]);
-              }}
-              className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-xl"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
-      {/* -------------------------------------------------------- */}
-
       {/* TABELA */}
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse table-auto">
+      <div className="overflow-x-auto mt-6">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-[#245757] text-left text-white rounded-t-lg">
+            <tr className="bg-[#44A6A0] text-white">
               <th className="p-2">Registro</th>
-              <th className="p-2">Funcionário</th>
+              <th className="p-2">Nome</th>
               <th className="p-2">Departamento</th>
               <th className="p-2">Valor</th>
               <th className="p-2">Status</th>
-              <th className="p-2">Dia do Pagamento</th>
-              <th className="p-2 rounded-tr-lg">Ações</th>
+              <th className="p-2">Data Atualizado</th>
+              <th className="p-2">Ações</th>
             </tr>
           </thead>
-
           <tbody>
-            {salariosPagina.map((u) => (
-              <tr
-                key={u.id}
-                onClick={() => abrirHistorico(u)}
-                className="hover:bg-gray-100 cursor-pointer"
-              >
-                <td className="p-2">{u.registro}</td>
-                <td className="p-2">{u.funcionario}</td>
-                <td className="p-2">{getNomeDepartamento(u.departamento)}</td>
-                <td className="p-2">{formatarValor(u.valor)}</td>
-
-                <td className="p-2">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${u.status_pagamento === "pendente"
-                      ? "bg-[#245757]/20 text-[#245757]"
-                      : "bg-gray-300 text-gray-700"
-                      }`}
-                  >
-                    {u.status_pagamento === "pendente" ? "Pendente" : "Pago"}
-                  </span>
-                </td>
-
-                <td className="p-2">
-                  {u.data_atualizado
-                    ? new Date(u.data_atualizado).toLocaleDateString("pt-BR")
-                    : ""}
-                </td>
-
-                <td className="p-2 text-center flex gap-2 justify-center">
+            {salariosPagina.map((s) => (
+              <tr key={s.id} className="border-b hover:bg-teal-50">
+                <td className="p-2">{s.registro}</td>
+                <td className="p-2">{s.funcionario}</td>
+                <td className="p-2">{getNomeDepartamento(s.departamento_id)}</td>
+                <td className="p-2">{formatarValor(s.valor)}</td>
+                <td className="p-2 capitalize">{s.status_pagamento}</td>
+                <td className="p-2">{formatarData(s.data_atualizado)}</td>
+                <td className="p-2 flex gap-2 justify-center">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditar(u);
-                    }}
-                    className="text-gray-700 hover:text-[#245757]"
-                    title="Editar"
-                  >
+                                        onClick={() => handleEditar(u)}
+                                        className="text-gray-700 hover:text-[#245757]"
+                                        title="Editar"
+                                    >
+                                        <svg
+                                            className="w-6 h-6"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"
+                                            />
+                                        </svg>
+                                    </button>
 
-                    <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
-                    </svg>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleExcluir(u.id);
-                    }}
-                    className="text-red-700 hover:text-red-900"
-                    title="Excluir"
-                  >
-                    <svg className="w-6 h-6 text-red-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                      <path fillRule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                                    <button
+                                        onClick={() => handleExcluir(u.id)}
+                                        className="text-red-700 hover:text-red-900"
+                                        title="Excluir"
+                                    >
+                                        <svg
+                                            className="w-6 h-6 text-red-600 dark:text-white"
+                                            aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="24"
+                                            height="24"
+                                            fill="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+                                                clipRule="evenodd"
+                                            />
+                                        </svg>
+                                    </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
 
-        {/* Paginação */}
-        {totalPaginas > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-4 select-none">
-            <button onClick={() => mudarPagina(paginaAtual - 1)} disabled={paginaAtual === 1} className="px-3 py-1 border rounded disabled:opacity-50">
-              &lt; Anterior
-            </button>
-            {[...Array(totalPaginas)].map((_, i) => {
-              const numeroPagina = i + 1;
-              return (
-                <button key={numeroPagina} onClick={() => mudarPagina(numeroPagina)} className={`px-3 py-1 border rounded ${paginaAtual === numeroPagina ? "bg-blue-300" : ""}`}>
-                  {numeroPagina}
-                </button>
-              );
-            })}
-            <button onClick={() => mudarPagina(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} className="px-3 py-1 border rounded disabled:opacity-50">
-              Próxima &gt;
-            </button>
-          </div>
-        )}
+      {/* PAGINAÇÃO */}
+      <div className="flex justify-center items-center mt-4 gap-2 flex-wrap">
+        <button
+          onClick={() => mudarPagina(paginaAtual - 1)}
+          className="px-3 py-1 bg-[#44A6A0] text-white rounded hover:bg-teal-500"
+        >
+          Anterior
+        </button>
+
+        {Array.from({ length: totalPaginas }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => mudarPagina(i + 1)}
+            className={`px-3 py-1 rounded ${
+              paginaAtual === i + 1
+                ? "bg-teal-500 text-white"
+                : "bg-teal-100 text-teal-800 hover:bg-teal-200"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        <button
+          onClick={() => mudarPagina(paginaAtual + 1)}
+          className="px-3 py-1 bg-[#44A6A0] text-white rounded hover:bg-teal-500"
+        >
+          Próxima
+        </button>
       </div>
     </>
   );

@@ -44,8 +44,13 @@ export default function NovaVendaPage() {
   const [unidadeTipo, setUnidadeTipo] = useState("");
   const [filiais, setFiliais] = useState([]);
 
+  
+  
+  
+
 
   // Buscar filiais do backend
+
   useEffect(() => {
     if (unidadeTipo === "filial") {
       fetch("/api/unidades?tipo=franquia")
@@ -56,6 +61,7 @@ export default function NovaVendaPage() {
       setFiliais([]); // limpa as filiais quando não for filial
     }
   }, [unidadeTipo]);
+
 
   useEffect(() => {
     const carrinhoSalvo = localStorage.getItem("carrinho");

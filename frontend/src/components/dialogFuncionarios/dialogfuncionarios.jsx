@@ -76,7 +76,7 @@ export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) 
     setFormValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-
+//para mudar informações funcionario
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token || !funcionario) return;
@@ -127,7 +127,7 @@ export function DialogFuncionario({ open, onOpenChange, onSaved, funcionario }) 
     }
   };
 
-
+  //para mudar status do funcionario
   const handleStatusChange = async (novoStatus) => {
     const token = localStorage.getItem("token");
     if (!token || !funcionario) return;

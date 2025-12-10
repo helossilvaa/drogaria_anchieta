@@ -95,6 +95,7 @@ export function DialogUsuario({ open, onOpenChange, funcionario, onCreated }) {
       <DialogContent className="!max-w-[400px] p-6">
         <DialogHeader>
           <DialogTitle>
+            {/* caso o usuario exista, da a opcao de alterar a senha, se nao existir, de criar um usuario */}
             {usuarioExistente ? "Alterar senha" : "Criar usuário"}
           </DialogTitle>
           <DialogDescription>
@@ -104,10 +105,10 @@ export function DialogUsuario({ open, onOpenChange, funcionario, onCreated }) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 mt-4">
+        <div className="grid gap-3 mt-4 gap-4">
           <div>
             <Label>Email (do funcionário)</Label>
-            <Input value={funcionario?.email || ""} size="sm" disabled />
+            <Input value={funcionario?.email || ""} size="sm" disabled className="mt-4" />
           </div>
 
           <div>
@@ -118,6 +119,7 @@ export function DialogUsuario({ open, onOpenChange, funcionario, onCreated }) {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               size="sm"
+              className="mt-4"
             />
           </div>
         </div>
@@ -128,7 +130,7 @@ export function DialogUsuario({ open, onOpenChange, funcionario, onCreated }) {
               Cancelar
             </Button>
           </DialogClose>
-          <Button size="sm" onClick={handleSubmit}>
+          <Button size="sm" onClick={handleSubmit} variant="verde">
             {usuarioExistente ? "Alterar senha" : "Criar usuário"}
           </Button>
         </DialogFooter>
