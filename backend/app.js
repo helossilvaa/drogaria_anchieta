@@ -43,6 +43,7 @@ import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
 
 import relatoriosRotas from "./routes/relatoriosRotas.js";
 import salariosFilialRotas from './routes/salariosFilialRotas.js';
+import SolicitacoesRotas from './routes/solicitacoesRotas.js'
 
 
 
@@ -109,6 +110,7 @@ app.use ('/relatorios', relatoriosRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
 app.use('/salariosfilial', salariosFilialRotas);
 app.use("/uploads/produtos", express.static(path.join(__dirname, "uploads/produtos")));
+app.use("/solicitacoes", SolicitacoesRotas);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

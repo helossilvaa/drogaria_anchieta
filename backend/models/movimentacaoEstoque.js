@@ -13,9 +13,9 @@ const criarMovimentacao = async (movimentacaoData) => {
 
 const listarMovimentacoes = async () => {
     try {
-        return await readAll("movimentacoes_estoque");
+        return await readAll("solicitacoes_estoque");
     } catch (error) {
-        console.error("Erro ao listar movimentações:", error);
+        console.error("Erro ao listar solicitacoes:", error);
         throw error;
     }
 };
