@@ -40,11 +40,11 @@ import { fecharMesDasFiliais } from './services/fecharMes.js';
 import reqEstoqueMatrizRotas from './routes/reqEstoqueMatrizRotas.js';
 import transacoesMatrizRotas from './routes/transacoesMatrizRotas.js'
 // import { listarPagamentosPorSalario } from './controllers/salariosFilialController.js';
-import relatoriosRotas from "./routes/relatoriosRotas.js";
 import salariosFilialRotas from './routes/salariosFilialRotas.js';
 import dashboardFinanceiroRotas from "./routes/dashboardFinanceiroRotas.js";
 import enviarLotesRotas from "./routes/enviarLotesRotas.js";
 import solicitacoesRotas from "./routes/solicitacoesRotas.js";
+import relatoriosRotas from "./routes/relatoriosRotas.js";
 
 
 
