@@ -56,7 +56,7 @@ const listarMovimentacoesPorProdutoController = async (req, res) => {
 
 const listarSolicitacoesPendentesController = async (req, res) => {
     try {
-        const solicitacoes = await listarMovimentacoes(`tipo_movimento = 'solicitacao'`);
+        const solicitacoes = await listarMovimentacoes(`status = 'pendente'`);
         return res.status(200).json(solicitacoes);
     } catch (error) {
         console.error("Erro ao listar solicitações:", error);

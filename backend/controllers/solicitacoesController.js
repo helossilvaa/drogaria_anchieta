@@ -67,6 +67,7 @@ export const enviarLoteController = async (req, res) => {
                 produto_id,
                 unidade_id: filial_id,
                 quantidade: qty,
+                estoque_matriz_id: estoqueMatriz.id 
             });
         }
 

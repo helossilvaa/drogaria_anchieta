@@ -142,6 +142,7 @@ CREATE TABLE produtos (
     preco_unitario INT NOT NULL, 
     validade DATE NOT NULL, 
     fornecedor_id INT NOT NULL, 
+    lote_id INT NOT NULL, 
     armazenamento VARCHAR(250) NOT NULL, 
      FOREIGN KEY (medida_id) REFERENCES unidade_medida(id), 
      FOREIGN KEY (tarja_id) REFERENCES tipo_medicamento(id), 
@@ -170,9 +171,9 @@ CREATE TABLE estoque_matriz (
     estoque_minimo INT NOT NULL, 
     estoque_maximo INT NOT NULL, 
     localizacao VARCHAR(200) NOT NULL, 
-    data_atualizacao DATE NOT NULL, 
+    data_atualizacao DATE NOT NULL,
     FOREIGN KEY (produto_id) REFERENCES produtos(id), 
-    FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id) 
+    FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id)
 ); 
  
 CREATE TABLE estoque_franquia ( 
@@ -182,40 +183,12 @@ CREATE TABLE estoque_franquia (
     estoque_minimo INT NOT NULL, 
     estoque_maximo INT NOT NULL, 
     estoque_matriz_id INT NOT NULL, 
+    unidade_id INT NOT NULL,
     FOREIGN KEY (produto_id) REFERENCES produtos(id), 
-    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id) 
+    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
+    FOREIGN KEY (unidade_id) REFERENCES unidade(id)
 ); 
  
- -- Tabela de Movimentações de Estoque (entradas, saídas, perdas, transferências)
-CREATE TABLE movimentacoes_estoque (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    produto_id INT NOT NULL,
-    lote_id INT NULL,
-    unidade_id INT NOT NULL,
-    tipo_movimento ENUM('entrada','saida','transferencia','perda','roubo') NOT NULL,
-    quantidade INT NOT NULL,
-    data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    usuario_id INT NOT NULL,
-    FOREIGN KEY (produto_id) REFERENCES produtos(id),
-    FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id),
-    FOREIGN KEY (unidade_id) REFERENCES unidade(id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-);
- 
-ALTER TABLE movimentacoes_estoque
-ADD COLUMN status_movimentacao VARCHAR(20) DEFAULT 'pendente',
-ADD COLUMN origem VARCHAR(20) DEFAULT 'solicitacao';
- 
-CREATE TABLE solicitacoes_estoque (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    filial_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade_solicitada INT NOT NULL,
-    status ENUM('pendente','enviado','cancelado') DEFAULT 'pendente',
-    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    data_atendimento TIMESTAMP NULL
-);
-
 CREATE TABLE parcerias ( 
 	id INT NOT NULL PRIMARY KEY auto_increment, 
     parceiro VARCHAR(250) NOT NULL, 
@@ -335,11 +308,6 @@ CREATE TABLE tiporelatorio (
     tiporelatorio VARCHAR(250) NOT NULL 
 ); 
  
- CREATE TABLE IF NOT EXISTS tiporelatorio (
-	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    tiporelatorio VARCHAR(250) NOT NULL 
-);
-
 CREATE TABLE relatorios ( 
 	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
     tipoRelatorio_id INT NOT NULL, 
@@ -347,23 +315,7 @@ CREATE TABLE relatorios (
     FOREIGN KEY (tipoRelatorio_id) REFERENCES tiporelatorio(id) 
 ); 
  
- CREATE TABLE IF NOT EXISTS relatorios (
-	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    nome VARCHAR(255) NOT NULL,
-    tipoRelatorio_id INT NOT NULL,
-    usuario_id INT NULL,
-    relatorio LONGBLOB NOT NULL,   -- PDF/Excel
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (tipoRelatorio_id) REFERENCES tiporelatorio(id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-);
-
-ALTER TABLE relatorios ADD COLUMN nome VARCHAR(255) AFTER id;
-
-ALTER TABLE relatorios
-ADD COLUMN criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
+ 
 CREATE TABLE vendas ( 
     id INT AUTO_INCREMENT PRIMARY KEY, 
     cliente_id INT NULL, 
@@ -393,6 +345,16 @@ CREATE TABLE itens_venda (
     FOREIGN KEY (produto_id) REFERENCES produtos(id), 
     FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id) 
 ); 
+
+CREATE TABLE solicitacoes_estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    filial_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_solicitada INT NOT NULL,
+    status ENUM('pendente','enviado','cancelado') DEFAULT 'pendente',
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atendimento TIMESTAMP NULL
+);
  
 -- Tabela de Movimentações de Estoque (entradas, saídas, perdas, transferências) 
 CREATE TABLE movimentacoes_estoque ( 
@@ -408,21 +370,7 @@ CREATE TABLE movimentacoes_estoque (
     FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id), 
     FOREIGN KEY (unidade_id) REFERENCES unidade(id), 
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) 
-);
-
-ALTER TABLE movimentacoes_estoque 
-ADD COLUMN status_movimentacao VARCHAR(20) DEFAULT 'pendente',
-ADD COLUMN origem VARCHAR(20) DEFAULT 'solicitacao';
-
-CREATE TABLE solicitacoes_estoque (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    filial_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade_solicitada INT NOT NULL,
-    status ENUM('pendente','enviado','cancelado') DEFAULT 'pendente',
-    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    data_atendimento TIMESTAMP NULL
-);
+); 
  
 CREATE TABLE categoria_transacoes ( 
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
@@ -452,23 +400,6 @@ CREATE TABLE notificacao_tipos (
     acao_texto_padrao VARCHAR(100), 
     extra_info_padrao VARCHAR(255) 
 ); 
-
-CREATE TABLE requisicoes_estoque (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    estoque_matriz_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade_requisitada INT NOT NULL,
-    valor_unitario DECIMAL(10, 2) NOT NULL,
-    valor_total DECIMAL(10, 2) NOT NULL,
-    data_requisicao DATE NOT NULL,
-    fornecedor_id INT NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    
-    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
-    FOREIGN KEY (produto_id) REFERENCES produtos(id),
-    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
-);
-
   
 CREATE TABLE notificacoes ( 
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -488,6 +419,21 @@ CREATE TABLE notificacoes (
     FOREIGN KEY (tipo_id) REFERENCES notificacao_tipos(id) 
 ); 
 
+CREATE TABLE requisicoes_estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estoque_matriz_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_requisitada INT NOT NULL,
+    valor_unitario DECIMAL(10, 2) NOT NULL,
+    valor_total DECIMAL(10, 2) NOT NULL,
+    data_requisicao DATE NOT NULL,
+    fornecedor_id INT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    
+    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
+    FOREIGN KEY (produto_id) REFERENCES produtos(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
+);
 
 
 CREATE TABLE transacoes_matriz (
@@ -663,139 +609,141 @@ INSERT INTO contas (nomeConta, categoria, dataPostada, dataVencimento, valor, co
 ('Juros de antecipação de recebíveis', 'Financeiras / Bancárias', '2025-10-15', '2025-10-29', 370.00, '', 3), 
 ('Pagamento de boletos via banco', 'Financeiras / Bancárias', '2025-10-18', '2025-10-31', 100.00, '', 1); 
  
-INSERT INTO produtos (registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, armazenamento) VALUES
-('102340125', 'Paracetamol', 'paracetamol.webp', 5, 2, 5, 31, '2147483641', 'Analgésico e antipirético para dores leves e febre: 500mg - 20 Comprimidos', '13', '2026-04-15', 18, 'Ambiente natural'),
-('457891234', 'Dipirona Sódica', 'dipironaSodica.webp', 5, 1, 3, 14, '2147483642', 'Analgésico e antitérmico: 1g - 10 Comprimidos', '9', '2025-11-20', 1, 'Local fresco e seco'),
-('203567891', 'Amoxicilina', 'amoxicilina.webp', 5, 3, 1, 51, '2147483643', 'Antibiótico de uso oral: 500mg - 21 Cápsulas', '69', '2027-02-01', 13, 'Temperatura ambiente'),
-('897654321', 'Losartana Potássica', 'losartanaPotassica.webp', 5, 2, 2, 2, '2147483644', 'Medicamento para hipertensão: 50mg - 30 Comprimidos', '35', '2028-08-10', 5, 'Ambiente natural'),
-('108765432', 'Clonazepam', 'clonazepam.webp', 5, 4, 1, 44, '2147483645', 'Medicamento de uso controlado (Tarja Preta): 2mg - 20 Comprimidos', '29', '2026-09-30', 2, 'Local seguro e controlado'),
-('409172561', 'Vacina Rotavírus', null, 5, 3, 5, 1, '2147483646', 'Imunização contra rotavírus (Tarja Amarela).', '150', '2025-07-31', 19, 'Refrigerado - Controle Especial'),
-('102340126', 'Ibuprofeno', 'ibuprofeno.webp', 5, 1, 4, 25, '2147483647', 'Anti-inflamatório e analgésico: 400mg - 10 Comprimidos', '16', '2026-06-01', 10, 'Ambiente natural'),
-('203567892', 'Loratadina', 'loratadina.webp', 5, 2, 1, 3, '2147483622', 'Antialérgico não-sedante: 10mg - 12 Comprimidos', '33', '2027-10-25', 7, 'Temperatura ambiente'),
-('897654322', 'Sertralina', 'sertralina.webp', 5, 3, 1, 16, '2147483623', 'Antidepressivo, venda sob prescrição: 50mg - 30 Comprimidos', '75', '2028-03-15', 14, 'Ambiente natural'),
-('457891235', 'Clonazepam', 'clonazepam.webp', 5, 4, 5, 36, '2147483640', 'Uso controlado (tarja preta): 0.5mg - 30 Comprimidos', '38', '2025-12-10', 17, 'Local seguro e controlado'),
-('256287192', 'Vacina Meningocócica', null, 5, 3, 4, 8, '2147483624', 'Imunização contra meningite.', '180', '2026-01-01', 9, 'Refrigerado - Controle Especial'),
-('102340127', 'Omeprazol', 'omeprazol.webp', 5, 2, 1, 49, '2147483625', 'Inibidor de bomba de prótons para acidez: 20mg - 14 Cápsulas', '30', '2026-03-20', 16, 'Ambiente natural'),
-('897654323', 'Butilbrometo de Escopolamina', 'butilbrometo.webp', 5, 1, 3, 11, '2147483626', 'Antiespasmódico e analgésico.', '15', '2027-05-05', 4, 'Ambiente natural'),
-('203567893', 'Fluoxetina', 'fluoxetina.webp', 5, 2, 5, 21, '2147483627', 'Antidepressivo e ansiolítico:  20mg - 30 Cápsulas', '45', '2028-11-01', 12, 'Temperatura ambiente'),
-('457891236', 'Captopril', 'captopril.webp', 5, 2, 2, 45, '2147483620', 'Anti-hipertensivo, venda sob prescrição: 25mg - 30 Comprimidos', '11', '2029-01-15', 6, 'Ambiente natural'), 
-('457891237', 'Neosaldina', 'neosaldina.webp', 5, 1, 1, 18, '2147483630', 'Para alívio rápido de dores de cabeça.', '10', '2026-07-01', 15, 'Ambiente natural'), 
-('102340128', 'Diclofenaco Sódico', 'diclofenacoSodico.webp', 5, 2, 4, 39, '2147483631', 'Anti-inflamatório genérico:  50mg - 20 Comprimidos', '9', '2025-10-30', 2, 'Ambiente natural'), 
-('897654324', 'Metformina', 'metformina.webp', 5, 2, 3, 9, '2147483632', 'Hipoglicemiante oral: 850mg - 30 Comprimidos', '15', '2027-09-01', 10, 'Ambiente natural'), 
-('309817456', 'Colírio Lubrificante', 'colirioLubrificante.webp', 1, 1, 1, 4, '2147483633', 'Solução para olhos secos: 10ml', '28', '2025-08-30', 14, 'Ambiente natural'), 
-('203567894', 'Dramin B6', 'dramin.webp', 5, 1, 5, 28, '2147483634', 'Para prevenção de náuseas e vômitos: 10 Comprimidos', '15', '2026-12-12', 17, 'Ambiente natural'), 
-('102340129', 'Protetor Solar FPS 50', 'protetorSolar50.webp', 1, 1, 2, 41, '2147483635', 'Protetor solar de uso farmacêutico para pele sensível: 50 - 200ml (farmacêutico)', '80', '2026-04-01', 11, 'Temperatura ambiente'), 
-('102340130', 'Loção Hidratante Corporal', 'locaoHidratanteCorporal.webp', 1, 1, 2, 17, '2147483636', 'Hidratação intensiva indicada por dermatologista: 400ml (Dermocosmético)', '30', '2026-05-20', 8, 'Temperatura ambiente'), 
-('203567895', 'Gel Oral Antisséptico', 'gelOralAntisseptico.webp', 5, 1, 3, 5, '2147483637', 'Antisséptico bucal para feridas e gengivite: 120ml', '35', '2027-11-10', 2, 'Temperatura ambiente'), 
-('897654325', 'Vitamina C', 'vitaminaC.webp', 5, 1, 4, 33, '2147483444', 'Suplemento antioxidante: 500mg - 30 Comprimidos', '25', '2028-05-01', 15, 'Ambiente natural'), 
-('457891238', 'Máscara Hidratação Capilar', 'mascaraHidratacaoCapilar.webp', 3, 1, 2, 23, '2147483333', 'Tratamento intensivo para couro cabeludo sensível.', '55', '2025-09-15', 1, 'Temperatura ambiente'), 
-('102340131', 'Desodorante Roll-on', 'desodoranteRollOn.webp', 1, 1, 3, 47, '2147483640', 'Antitranspirante com controle bacteriano: 50ml', '12', '2026-08-01', 6, 'Temperatura ambiente'), 
-('897654326', 'Tintura Capilar', 'tinturaCapilar.webp', 1, 1, 2, 19, '2147483111', 'Tintura com baixo teor de alergênicos: 50ml', '10', '2028-12-31', 10, 'Temperatura ambiente'),
-('203567896', 'Fragrância Neutra Atóxica', 'fragranciaNeutraAtoxica.webp', 1, 1, 2, 10, '2147483222', 'Fragrância testada dermatologicamente: 50ml', '45', '2027-04-20', 19, 'Temperatura ambiente'), 
-('457891239', 'Bálsamo Labial FPS', 'balsamoLabial.webp', 5, 1, 2, 42, '2147483555', 'Proteção e hidratação para os lábios: 30 unidades', '20', '2025-11-01', 13, 'Temperatura ambiente'), 
-('415673802', 'Delineador para olhos', 'delineadorParaOlhos.webp', 5, 1, 2, 29, '1147483647', 'Produto oftálmico testado para sensibilidade ocular: 2ml', '30', '2027-07-20', 17, 'Temperatura ambiente'), 
-('102340132', 'Creme Anti-idade Noturno', 'cremeAntiIdadeNoturno.webp', 3, 1, 2, 15, '1247483645', 'Creme com retinol e controle dermatológico: 50g', '180', '2026-07-10', 8, 'Temperatura ambiente'), 
-('897654327', 'Óleo Corporal', 'oleoCorporalTerapeuticoCastanhaBrasil.webp', 1, 1, 2, 27, '1347483646', 'Hidratação profunda com ação regeneradora: 200ml', '45', '2028-06-01', 5, 'Temperatura ambiente'), 
-('203567897', 'Shampoo Terapêutico Anticaspa', 'shampooAnticaspa.webp', 1, 1, 3, 40, '1447483647', 'Shampoo com ação antifúngica: 150ml', '40', '2027-03-01', 14, 'Temperatura ambiente'), 
-('457891240', 'Tônico Facial Adstringente', 'tonicoFacialAdstringente.webp', 1, 1, 2, 37, '1547483647', 'Controle de oleosidade e limpeza profunda: 200ml', '48', '2025-10-28', 19, 'Temperatura ambiente'), 
-('503459183', 'Base Líquida Medicinal', 'baseLiquida.webp', 1, 1, 2, 6, '1647483647', 'Base com ação cicatrizante leve: 30ml', '65', '2027-05-01', 3, 'Temperatura ambiente'), 
-('102340133', 'Corretivo Clínico', 'corretivoClinico.webp', 1, 1, 2, 20, '1747483647', 'Corretivo com ação calmante: 10g', '35', '2026-01-25', 18, 'Temperatura ambiente'), 
-('897654328', 'Máscara de Cílios', 'mascaraCiliosHipoalergenica.webp', 5, 1, 2, 12, '1847483647', 'Rímel dermatologicamente testado.', '50', '2028-10-01', 1, 'Temperatura ambiente'), 
-('203567898', 'Sombra Paleta Neutra', 'sombraPaletaNeutra.webp', 5, 1, 2, 46, '1947483647', 'Paleta indicada para olhos sensíveis.', '55', '2027-08-01', 13, 'Temperatura ambiente'), 
-('457891241', 'Gloss', 'glossLabialHipoalergenico.webp', 5, 1, 2, 34, '1047483647', 'Brilho labial testado dermatologicamente.', '22', '2026-02-01', 5, 'Temperatura ambiente'), 
-('654782901', 'Primer', 'primerMedicoMaquiagem.webp', 1, 1, 2, 48, '2047483647', 'Prepara a pele e diminui irritações.', '59', '2027-04-01', 2, 'Temperatura ambiente'), 
-('102340134', 'Sabonete Líquido Antibacteriano', 'saboneteLiquido.webp', 1, 1, 3, 26, '2140483647', 'Sabonete antibacteriano: 500ml', '16', '2026-09-01', 12, 'Ambiente natural'), 
-('897654329', 'Creme Dental Terapêutico', 'cremeDental.webp', 3, 1, 3, 50, '2141483647', 'Proteção contra cáries e sensibilidade.', '9', '2028-05-01', 6, 'Prateleira'), 
-('203567899', 'Shampoo Anticaspa', 'shampooAnticaspa.webp', 1, 1, 3, 22, '2142483647', 'Limpeza profunda e controle da caspa.', '22', '2027-12-01', 15, 'Ambiente natural'), 
-('457891242', 'Enxaguante Bucal', 'enxaguanteBucal.webp', 1, 1, 3, 7, '2143483647', 'Complemento para higiene bucal com flúor.', '15', '2026-03-01', 11, 'Prateleira'),
-('798267536', 'Fralda Descartável Hipoalergênica', 'fraldaDescartavel.webp', 5, 1, 5, 43, '2144483647', 'Fralda indicada para pele sensível (Tam M)', '50', '2029-05-01', 8, 'Local seco e arejado'), 
-('102340135', 'Escova de Dente Ergonômica', 'escovaDenteErgonomica.webp', 5, 1, 3, 4, '2145483647', 'Cerdas macias para gengiva sensível.', '7', '2028-09-01', 19, 'Prateleira'), 
-('897654330', 'Toalhas Umedecidas Hipoalergênicas', 'toalhasUmedecidas.webp', 5, 1, 5, 38, '2146483647', 'Toalhas para higiene sensível (50 unid)', '20', '2028-09-01', 3, 'Prateleira'), 
-('203567900', 'Fio Dental Encerado com Flúor', 'fioDental.webp', 5, 1, 3, 13, '2145083647', 'Fio dental para proteção adicional.', '11', '2027-06-15', 18, 'Prateleira'), 
-('457891243', 'Cotonetes Higiênicos Esterilizados', 'cotonetes.webp', 5, 1, 5, 49, '2145183647', 'Cotonetes esterilizados (75 unid.)', '6', '2025-12-01', 1, 'Prateleira'), 
-('876234561', 'Lenço de Papel Caixa', 'lencoPapelCaixa.webp', 5, 1, 5, 3, '2145283647', 'Lenços sem perfume (100 folhas)', '8', '2028-05-01', 13, 'Prateleira'), 
-('102340136', 'Condicionador Terapêutico', 'condicionador.webp', 1, 1, 3, 24, '2145383647', 'Condicionador para cabelos sensíveis.', '23', '2026-11-20', 5, 'Prateleira'), 
-('897654331', 'Papel Higiênico Folha Dupla', 'papelHigienico.webp', 5, 1, 5, 41, '2145483647', 'Produto dermatologicamente testado (12 rolos)', '25', '2027-10-01', 10, 'Local seco'), 
-('203567901', 'Álcool em Gel', 'alcoolGel70.webp', 1, 1, 3, 51, '2145583647', 'Álcool 70% – 500ml', '15', '2028-04-01', 7, 'Prateleira'), 
-('457891244', 'Desinfetante Clínico', 'desinfetante.webp', 2, 1, 5, 14, '2145683647', 'Desinfetante para superfícies clínicas.', '12', '2026-01-01', 14, 'Prateleira'), 
-('954987622', 'Absorvente Diário', 'absorventeDiario.webp', 5, 1, 5, 32, '2145783647', 'Absorvente diário hipoalergênico (40 unid.)', '10', '2029-05-01', 17, 'Prateleira'), 
-('102340137', 'Gel Lubrificante para Barbear', 'gelBarbear.webp', 3, 1, 3, 2, '2143083647', 'Facilita o deslize da lâmina: 150g', '18', '2026-12-01', 9, 'Temperatura ambiente'), 
-('897654332', 'Absorvente Noturno', 'absorventeNoturno.webp', 5, 1, 5, 25, '2143183647', 'Absorvente noturno sem perfume (8 unid.)', '9', '2029-02-01', 16, 'Prateleira'), 
-('203567902', 'Removedor de Esmalte', 'removedorEsmalte.webp', 1, 1, 2, 1, '2143283647', 'Remoção suave ideal para unhas frágeis.', '7', '2027-07-20', 4, 'Prateleira'), 
-('457891245', 'Sabonete em Barra Glicerina', 'saboneteBarraGlicerina.webp', 3, 1, 3, 44, '2143383647', 'Sabonete suave dermatológico 90g', '5', '2026-04-01', 12, 'Prateleira'), 
-('107643973', 'Spray Antisséptico', 'sprayAntissepticoFerida.webp', 1, 1, 1, 35, '2143483647', 'Limpa e desinfeta pequenas feridas.', '21', '2027-09-01', 6, 'Prateleira'), 
-('102340138', 'AAS 100mg', 'AAS100mg.webp', 5, 1, 1, 17, '2143583647', 'Antiagregante plaquetário: 30 comprimidos', '6', '2026-10-01', 15, 'Ambiente natural'), 
-('457891246', 'Sinvastatina', 'sinvastatina.webp', 5, 2, 1, 30, '2143683647', 'Para controle do colesterol: 20mg', '45', '2028-01-20', 11, 'Local fresco e seco'),
-('203567903', 'Fenilefrina', 'fenilefrina.webp', 1, 1, 1, 46, '2143783647', 'Descongestionante nasal: 30ml', '19', '2025-11-15', 8, 'Temperatura ambiente'), 
-('897654333', 'Prednisona', 'prednisona.webp', 5, 2, 1, 19, '2143883647', 'Corticosteroide 5mg - 20 comprimidos', '12', '2027-04-10', 1, 'Ambiente natural'), 
-('102340139', 'Óleo Capilar', 'oleoCapilarReparadorPontas.webp', 1, 1, 2, 9, '2143983647', 'Reparação de pontas duplas.', '42', '2026-06-01', 19, 'Temperatura ambiente'), 
-('102340140', 'Demaquilante Bifásico', 'demaquilante.webp', 1, 1, 2, 45, '2146083647', 'Remove maquiagem à prova d’água: 150ml', '32', '2027-09-10', 3, 'Temperatura ambiente'), 
-('203567904', 'Creme para Pentear', 'cremePentear.webp', 3, 1, 3, 28, '2146183647', 'Controla frizz: 300g', '25', '2028-03-01', 18, 'Temperatura ambiente'), 
-('102340141', 'Pós-Barba Refrescante Gel', 'pósBarba.webp', 1, 1, 3, 11, '2146283647', 'Acalma a pele após o barbear.', '20', '2026-10-15', 13, 'Ambiente natural'), 
-('897654334', 'Escova Interdental', 'escovaInterdental.webp', 5, 1, 5, 36, '2146383647', 'Limpeza de espaços interdentais.', '15', '2029-01-01', 5, 'Prateleira'), 
-('203567905', 'Absorvente Interno Regular', 'absorventeInterno.webp', 5, 1, 5, 47, '2146483647', 'Absorvente interno: 10 unid.', '17', '2027-11-01', 10, 'Prateleira'), 
-('118763456', 'Termômetro', 'termometro.webp', 5, 1, 5, 23, '2146583647', 'Medição precisa de temperatura.', '40', '2030-12-31', 7, 'Prateleira'), 
-('127863452', 'Curativo', 'curativo.webp', 5, 1, 5, 16, '2146683647', 'Curativos hipoalergênicos estéreis.', '9', '2028-05-01', 14, 'Local seco'), 
-('130987345', 'Bolsa de Água Quente', 'bolsaAguaQuente.webp', 5, 1, 5, 43, '2146783647', 'Para dores musculares: 2L', '25', '2035-01-01', 17, 'Prateleira'), 
-('147653534', 'Máscara Protetora Descartável', 'mascaraProtetora.webp', 5, 1, 5, 40, '2146883647', 'Máscara facial tripla camada.', '20', '2026-03-01', 9, 'Prateleira'), 
-('150984357', 'Pilhas Alcalinas', 'pilhasAlcalinas.webp', 5, 1, 5, 33, '2146983647', 'Pilhas AA (4 unid.).', '16', '2029-10-01', 16, 'Prateleira'), 
-('102340142', 'Dipirona', 'dipirona.webp', 5, 1, 1, 24, '2147083647', 'Dorflex similar: 36 comprimidos', '20', '2026-05-10', 4, 'Ambiente natural'), 
-('457891247', 'Sinvastatina', 'sinvastatina.webp', 5, 2, 1, 48, '2147183647', 'Para colesterol: 10mg', '22', '2027-08-01', 12, 'Local fresco e seco'), 
-('203567906', 'Lágrimas Artificiais', 'lagrimasArtificiais.webp', 1, 1, 1, 26, '2147283647', 'Lubrificante ocular.', '35', '2025-10-20', 6, 'Temperatura ambiente'), 
-('897654335', 'Creme para Assaduras', 'cremeAssaduras.webp', 3, 1, 3, 50, '2147383647', 'Proteção e tratamento de assaduras.', '19', '2028-04-15', 15, 'Prateleira'), 
-('108765433', 'Probiótico Infantil', 'probioticoInfantil.webp', 5, 1, 4, 22, '2147303647', 'Probiótico infantil.', '50', '2026-09-01', 11, 'Refrigerado - Controle Especial'), 
-('167345974', 'Máscara Facial de Argila Verde', 'mascaraFacial.webp', 3, 1, 2, 7, '2147313647', 'Controle de oleosidade.', '38', '2027-07-01', 8, 'Temperatura ambiente'), 
-('102340143', 'Esfoliante Corporal', 'esfolianteCorporal.webp', 3, 1, 2, 42, '2147323647', 'Remove células mortas.', '45', '2026-06-20', 1, 'Temperatura ambiente'), 
-('203567907', 'Shampoo a Seco Dark', 'shampooSeco.webp', 1, 1, 2, 34, '2147333647', 'Shampoo a seco.', '42', '2027-10-05', 19, 'Temperatura ambiente'), 
-('897654336', 'Sabonete Íntimo Suave', 'saboneteIntimo.webp', 1, 1, 3, 29, '2147343647', 'Higiene íntima com pH balanceado.', '17', '2028-03-30', 3, 'Prateleira'), 
-('457891248', 'Fita Micropore', 'fitaMicropore.webp', 5, 1, 5, 15, '2147353647', 'Fita hipoalergênica.', '12', '2030-12-31', 18, 'Local seco'), 
-('178734256', 'Gel Massageador ', 'gelMassageador.webp', 3, 1, 5, 27, '2147363647', 'Alívio para dores musculares.', '30', '2026-01-05', 13, 'Ambiente natural'), 
-('102340144', 'Compressas de Gaze Estéril', 'gazeEsteril.webp', 5, 1, 5, 41, '2147373647', 'Para limpeza de feridas.', '8', '2027-03-25', 5, 'Local seco'), 
-('897654337', 'Protetor Auditivo de Silicone', 'protetorAuditivo.webp', 5, 1, 5, 17, '2147383647', 'Atenuação de ruídos.', '15', '2035-01-01', 10, 'Prateleira'),
-('203567908', 'Preservativo Lubrificado', 'preservativoLubrificado.webp', 5, 1, 5, 30, '2147393647', 'Contraceptivo.', '12', '2028-11-20', 7, 'Prateleira'), 
-('457891249', 'Spray Bucal Refrescante', 'sprayBucal.webp', 1, 1, 3, 44, '2147430647', 'Hálito fresco.', '15', '2029-01-15', 14, 'Prateleira'), 
-('457891250', 'Pastilha', 'pastilha.webp', 5, 1, 4, 39, '2147431647', 'Alívio da dor de garganta.', '10', '2026-07-15', 17, 'Ambiente natural'), 
-('102340145', 'Kit de Viagem Farmacêutico', 'kitViagem.webp', 5, 1, 3, 6, '2147432647', 'Miniaturas de higiene.', '30', '2025-10-01', 9, 'Prateleira'), 
-('897654338', 'Protetor Solar', 'protetorSolar.webp', 1, 1, 2, 21, '2147433647', 'FPS 30 - 120ml', '55', '2027-09-25', 16, 'Temperatura ambiente'), 
-('185982134', 'Band-Aid', 'bandAid.webp', 5, 1, 5, 45, '2147434647', 'Curativo transparente estéril.', '15', '2025-08-20', 4, 'Prateleira'), 
-('203567909', 'Pó Translúcido HD para Maquiagem', 'poTranslucido.webp', 3, 1, 2, 43, '2147435647', 'Sela a maquiagem.', '49', '2026-12-01', 12, 'Temperatura ambiente'), 
-('102340146', 'Propranolol Cloridrato', 'propranololCloridrato.webp', 5, 2, 1, 18, '2147436647', 'Betabloqueador para hipertensão e angina.', '18', '2028-02-01', 6, 'Temperatura controlada'), 
-('457891251', 'Xarope', 'xarope.webp', 1, 1, 1, 38, '2147437647', 'Antitussígeno para tosse irritativa.', '22', '2026-03-10', 15, 'Ambiente natural'), 
-('203567910', 'Melatonina', 'melatonina.webp', 5, 1, 4, 5, '2147438647', 'Suplemento para auxiliar o sono.', '50', '2027-11-25', 11, 'Local fresco e seco'), 
-('897654339', 'Dipropionato de Betametasona Creme', 'dipropionatoBetametasona.webp', 3, 2, 1, 31, '2147439647', 'Corticosteroide tópico anti-inflamatório.', '16', '2025-12-05', 8, 'Temperatura ambiente'), 
-('102340147', 'Ivermectina', 'ivermectina.webp', 5, 2, 1, 23, '2147483307', 'Antiparasitário oral conforme prescrição.', '18', '2027-06-30', 1, 'Ambiente natural'), 
-('102340148', 'Insulina', 'insulina.webp', 4, 4, 1, 47, '2147483317', 'Insulina para controle glicêmico, refrigerar antes do uso.', '120', '2026-12-31', 19, 'Refrigerado - Controle Especial'), 
-('102340149', 'Sulfato de Magnésio', 'sulfatoMagnesio.webp', 4, 4, 1, 19, '2147483327', 'Uso hospitalar para reposição de magnésio.', '25', '2028-07-01', 3, 'Temperatura controlada'), 
-('102340150', 'Vacina Influenza Trivalente', NULL, 5, 4, 1, 10, '2147483337', 'Vacina sazonal contra influenza.', '80', '2026-05-31', 18, 'Refrigerado - Controle Especial'), 
-('102340151', 'Cloreto de Sódio', 'cloretoSodio.webp', 4, 1, 1, 12, '2147483347', 'Solução isotônica para hidratação e limpeza.', '8', '2029-01-01', 13, 'Prateleira'), 
-('102340152', 'Naproxeno', 'naproxeno.webp', 5, 2, 1, 46, '2147483357', 'Anti-inflamatório não esteroide.', '22', '2027-08-15', 5, 'Ambiente natural'), 
-('102340153', 'Cetirizina', 'cetirizina.webp', 5, 1, 1, 34, '2147483367', 'Antialérgico oral de longa duração.', '13', '2028-03-20', 10, 'Temperatura ambiente'), 
-('102340154', 'Clotrimazol Creme', 'clotrimazolCreme.webp', 3, 1, 1, 48, '2147483377', 'Antifúngico tópico para micoses cutâneas.', '14', '2026-10-10', 7, 'Temperatura ambiente'), 
-('102340155', 'Ranitidina', 'ranitidina.webp', 5, 2, 1, 26, '2147483387', 'Antagonista H2 para acidez gástrica.', '16', '2027-11-11', 14, 'Ambiente natural'), 
-('102340156', 'Clindamicina', 'clindamicina.webp', 5, 2, 1, 50, '2147483397', 'Antibiótico para infecções diversas.', '48', '2028-09-01', 17, 'Temperatura ambiente'), 
-('102340157', 'Cefalexina', 'cefalexina.webp', 5, 2, 1, 16, '2147483407', 'Antibiótico betalactâmico oral.', '35', '2026-04-10', 9, 'Temperatura ambiente'), 
-('102340158', 'Loratadina Xarope', 'loratadinaXarope.webp', 1, 1, 1, 41, '2147483417', 'Antialérgico em suspensão oral pediátrica.', '19', '2027-01-01', 16, 'Ambiente natural'),
-('102340159', 'Clorexidina Solução', 'clorexidinaSolucao.webp', 1, 1, 1, 32, '2147483427', 'Antisséptico para pele e mucosas.', '13', '2028-06-01', 4, 'Prateleira'), 
-('102340160', 'Salmeterol', 'salmeterol.webp', 4, 2, 1, 2, '2147483437', 'Broncodilatador combinado para asma crônica.', '185', '2029-03-01', 12, 'Temperatura controlada'), 
-('102340161', 'Bromoprida', 'bromoprida.webp', 4, 1, 1, 25, '2147483447', 'Antiemético para uso parenteral.', '28', '2027-05-05', 6, 'Temperatura ambiente'), 
-('102340162', 'Valerato de Betametasona Creme', 'valeratoBetametasonaCreme.webp', 3, 2, 1, 1, '2147483457', 'Corticosteroide tópico para inflamação cutânea.', '15', '2026-08-08', 15, 'Temperatura ambiente'), 
-('102340163', 'Sulfonato de Neomicina Ointment', 'sulfonatoNeomicinaOintment.webp', 3, 1, 1, 43, '2147483467', 'Pomada antibacteriana tópica.', '23', '2027-09-09', 11, 'Prateleira'), 
-('102340164', 'Atenolol', 'atenolol.webp', 5, 2, 1, 38, '2147483477', 'Betabloqueador para hipertensão.', '17', '2028-12-12', 8, 'Temperatura ambiente'), 
-('102340165', 'Epinefrina', 'epinefrina.webp', 4, 4, 1, 13, '2147483487', 'Uso emergencial para anafilaxia.', '28', '2026-02-28', 1, 'Refrigerado - Controle Especial'), 
-('102340166', 'Claritromicina', 'claritromicina.webp', 5, 2, 1, 36, '2147483497', 'Antibiótico macrolídeo.', '52', '2027-02-14', 19, 'Temperatura ambiente'), 
-('102340167', 'Rifaximina', 'rifaximina.webp', 5, 2, 1, 47, '2147483507', 'Antibiótico para infecções entéricas.', '100', '2028-11-11', 3, 'Ambiente natural'), 
-('102340168', 'Benzetacil', 'benzetacil.webp', 4, 4, 1, 24, '2147483517', 'Penicilina benzilpenicilina benzatina para uso IM.', '65', '2029-05-05', 18, 'Temperatura controlada'), 
-('102340169', 'Nistatina Creme', 'nistatinaCreme.webp', 3, 1, 1, 40, '2147483527', 'Antifúngico tópico para candidíase cutânea.', '18', '2027-07-07', 13, 'Temperatura ambiente'), 
-('102340170', 'Naproxeno Gel', 'naproxenoGel.webp', 3, 1, 1, 29, '2147483537', 'Gel anti-inflamatório para uso tópico.', '27', '2026-11-11', 5, 'Temperatura ambiente'), 
-('102340171', 'Sulfametoxazol', 'sulfametoxazol.webp', 5, 2, 1, 15, '2147483547', 'Antibiótico para infecções bacterianas.', '30', '2027-03-03', 10, 'Temperatura ambiente'), 
-('102340172', 'Ipratropio Brometo Aerossol', 'ipratropioBrometoAerossol.webp', 4, 1, 1, 32, '2147483557', 'Broncodilatador de ação anticolinérgica.', '135', '2028-08-08', 7, 'Temperatura controlada'), 
-('102340173', 'Vitaminas B Complex', 'vitaminasBComplex.webp', 5, 1, 4, 49, '2147483567', 'Complexo vitamínico do complexo B.', '35', '2029-01-01', 14, 'Ambiente natural'), 
-('102340174', 'Colecalciferol', 'colecalciferol.webp', 5, 1, 4, 28, '2147483577', 'Suplemento de vitamina D para reposição.', '27', '2027-12-12', 17, 'Temperatura ambiente'), 
-('102340175', 'Ondansetrona', 'ondansetrona.webp', 5, 1, 1, 11, '2147483587', 'Antiemético para náuseas e vômitos.', '19', '2026-06-06', 9, 'Ambiente natural'), 
-('102340176', 'Solução Ringer Lactato', 'solucaoRingerLactato.webp', 4, 1, 1, 20, '2147483597', 'Sol. para reposição hidroeletrolítica (uso hospitalar).', '23', '2028-04-04', 16, 'Temperatura controlada'), 
-('102340177', 'Clonidina', 'clonidina.webp', 5, 2, 1, 10, '2147483207', 'Anti-hipertensivo com ação central.', '21', '2027-09-09', 4, 'Temperatura ambiente'), 
-('102340178', 'Bacitracina Pomada', 'bacitracinaPomada.webp', 3, 1, 1, 42, '2147483217', 'Pomada antibacteriana para uso tópico.', '10', '2029-02-02', 12, 'Prateleira');
-
+ 
+ 
+INSERT INTO produtos (registro_anvisa, nome, foto, medida_id, tarja_id, categoria_id, marca_id, codigo_barras, descricao, preco_unitario, validade, fornecedor_id, lote_id, armazenamento) values 
+('102340125', 'Paracetamol', 'paracetamol.webp', 5, 2, 5, 31, '2147483641', 'Analgésico e antipirético para dores leves e febre: 500mg - 20 Comprimidos', '13', '2026-04-15', 18, 101, 'Ambiente natural'), 
+('457891234', 'Dipirona Sódica', 'dipironaSodica.webp', 5, 1, 3, 14, '2147483642', 'Analgésico e antitérmico: 1g - 10 Comprimidos', '9', '2025-11-20', 1, 102, 'Local fresco e seco'), 
+('203567891', 'Amoxicilina', 'amoxicilina.webp', 5, 3, 1, 51, '2147483643', 'Antibiótico de uso oral: 500mg - 21 Cápsulas', '69', '2027-02-01', 13, 103, 'Temperatura ambiente'), 
+('897654321', 'Losartana Potássica', 'losartanaPotassica.webp', 5, 2, 2, 2, '2147483644', 'Medicamento para hipertensão: 50mg - 30 Comprimidos', '35', '2028-08-10', 5, 104, 'Ambiente natural'), 
+('108765432', 'Clonazepam', 'clonazepam.webp', 5, 4, 1, 44, '2147483645', 'Medicamento de uso controlado (Tarja Preta): 2mg - 20 Comprimidos', '29', '2026-09-30', 2, 105, 'Local seguro e controlado'), 
+('409172561', 'Vacina Rotavírus', null, 5, 3, 5, 1, '2147483646', 'Imunização contra rotavírus (Tarja Amarela).', '150', '2025-07-31', 19, 106, 'Refrigerado - Controle Especial'), 
+('102340126', 'Ibuprofeno', 'ibuprofeno.webp', 5, 1, 4, 25, '2147483647', 'Anti-inflamatório e analgésico: 400mg - 10 Comprimidos', '16', '2026-06-01', 10, 107, 'Ambiente natural'), 
+('203567892', 'Loratadina', 'loratadina.webp', 5, 2, 1, 3, '2147483622', 'Antialérgico não-sedante: 10mg - 12 Comprimidos', '33', '2027-10-25', 7, 108, 'Temperatura ambiente'), 
+('897654322', 'Sertralina', 'sertralina.webp', 5, 3, 1, 16, '2147483623', 'Antidepressivo, venda sob prescrição: 50mg - 30 Comprimidos', '75', '2028-03-15', 14, 109, 'Ambiente natural'), 
+('457891235', 'Clonazepam', 'clonazepam.webp', 5, 4, 5, 36, '2147483640', 'Uso controlado (tarja preta): 0.5mg - 30 Comprimidos', '38', '2025-12-10', 17, 110, 'Local seguro e controlado'), 
+('256287192', 'Vacina Meningocócica', null, 5, 3, 4, 8, '2147483624', 'Imunização contra meningite.', '180', '2026-01-01', 9, 111, 'Refrigerado - Controle Especial'), 
+('102340127', 'Omeprazol', 'omeprazol.webp', 5, 2, 1, 49, '2147483625', 'Inibidor de bomba de prótons para acidez: 20mg - 14 Cápsulas', '30', '2026-03-20', 16, 112, 'Ambiente natural'), 
+('897654323', 'Butilbrometo de Escopolamina', 'butilbrometo.webp', 5, 1, 3, 11, '2147483626', 'Antiespasmódico e analgésico.', '15', '2027-05-05', 4, 113, 'Ambiente natural'), 
+('203567893', 'Fluoxetina', 'fluoxetina.webp', 5, 2, 5, 21, '2147483627', 'Antidepressivo e ansiolítico:  20mg - 30 Cápsulas', '45', '2028-11-01', 12, 114, 'Temperatura ambiente'), 
+('457891236', 'Captopril', 'captopril.webp', 5, 2, 2, 45, '2147483620', 'Anti-hipertensivo, venda sob prescrição: 25mg - 30 Comprimidos', '11', '2029-01-15', 6, 115, 'Ambiente natural'), 
+('457891237', 'Neosaldina', 'neosaldina.webp', 5, 1, 1, 18, '2147483630', 'Para alívio rápido de dores de cabeça.', '10', '2026-07-01', 15, 116, 'Ambiente natural'), 
+('102340128', 'Diclofenaco Sódico', 'diclofenacoSodico.webp', 5, 2, 4, 39, '2147483631', 'Anti-inflamatório genérico:  50mg - 20 Comprimidos', '9', '2025-10-30', 2, 117, 'Ambiente natural'), 
+('897654324', 'Metformina', 'metformina.webp', 5, 2, 3, 9, '2147483632', 'Hipoglicemiante oral: 850mg - 30 Comprimidos', '15', '2027-09-01', 10, 118, 'Ambiente natural'), 
+('309817456', 'Colírio Lubrificante', 'colirioLubrificante.webp', 1, 1, 1, 4, '2147483633', 'Solução para olhos secos: 10ml', '28', '2025-08-30', 14, 119, 'Ambiente natural'), 
+('203567894', 'Dramin B6', 'dramin.webp', 5, 1, 5, 28, '2147483634', 'Para prevenção de náuseas e vômitos: 10 Comprimidos', '15', '2026-12-12', 17, 120, 'Ambiente natural'), 
+('102340129', 'Protetor Solar FPS 50', 'protetorSolar50.webp', 1, 1, 2, 41, '2147483635', 'Protetor solar de uso farmacêutico para pele sensível: 50 - 200ml (farmacêutico)', '80', '2026-04-01', 11, 121, 'Temperatura ambiente'), 
+('102340130', 'Loção Hidratante Corporal', 'locaoHidratanteCorporal.webp', 1, 1, 2, 17, '2147483636', 'Hidratação intensiva indicada por dermatologista: 400ml (Dermocosmético)', '30', '2026-05-20', 8, 122, 'Temperatura ambiente'), 
+('203567895', 'Gel Oral Antisséptico', 'gelOralAntisseptico.webp', 5, 1, 3, 5, '2147483637', 'Antisséptico bucal para feridas e gengivite: 120ml', '35', '2027-11-10', 2, 123, 'Temperatura ambiente'), 
+('897654325', 'Vitamina C', 'vitaminaC.webp', 5, 1, 4, 33, '2147483444', 'Suplemento antioxidante: 500mg - 30 Comprimidos', '25', '2028-05-01', 15, 124, 'Ambiente natural'), 
+('457891238', 'Máscara Hidratação Capilar', 'mascaraHidratacaoCapilar.webp', 3, 1, 2, 23, '2147483333', 'Tratamento intensivo para couro cabeludo sensível.', '55', '2025-09-15', 1, 125, 'Temperatura ambiente'), 
+('102340131', 'Desodorante Roll-on', 'desodoranteRollOn.webp', 1, 1, 3, 47, '2147483640', 'Antitranspirante com controle bacteriano: 50ml', '12', '2026-08-01', 6, 126, 'Temperatura ambiente'), 
+('897654326', 'Tintura Capilar', 'tinturaCapilar.webp', 1, 1, 2, 19, '2147483111', 'Tintura com baixo teor de alergênicos: 50ml', '10', '2028-12-31', 10, 127, 'Temperatura ambiente'), 
+('203567896', 'Fragrância Neutra Atóxica', 'fragranciaNeutraAtoxica.webp', 1, 1, 2, 10, '2147483222', 'Fragrância testada dermatologicamente: 50ml', '45', '2027-04-20', 19, 128, 'Temperatura ambiente'), 
+('457891239', 'Bálsamo Labial FPS', 'balsamoLabial.webp', 5, 1, 2, 42, '2147483555', 'Proteção e hidratação para os lábios: 30 unidades', '20', '2025-11-01', 13, 129, 'Temperatura ambiente'), 
+('415673802', 'Delineador para olhos', 'delineadorParaOlhos.webp', 5, 1, 2, 29, '1147483647', 'Produto oftálmico testado para sensibilidade ocular: 2ml', '30', '2027-07-20', 17, 130, 'Temperatura ambiente'), 
+('102340132', 'Creme Anti-idade Noturno', 'cremeAntiIdadeNoturno.webp', 3, 1, 2, 15, '1247483645', 'Creme com retinol e controle dermatológico: 50g', '180', '2026-07-10', 8, 131, 'Temperatura ambiente'), 
+('897654327', 'Óleo Corporal', 'oleoCorporalTerapeuticoCastanhaBrasil.webp', 1, 1, 2, 27, '1347483646', 'Hidratação profunda com ação regeneradora: 200ml', '45', '2028-06-01', 5, 132, 'Temperatura ambiente'), 
+('203567897', 'Shampoo Terapêutico Anticaspa', 'shampooAnticaspa.webp', 1, 1, 3, 40, '1447483647', 'Shampoo com ação antifúngica: 150ml', '40', '2027-03-01', 14, 133, 'Temperatura ambiente'), 
+('457891240', 'Tônico Facial Adstringente', 'tonicoFacialAdstringente.webp', 1, 1, 2, 37, '1547483647', 'Controle de oleosidade e limpeza profunda: 200ml', '48', '2025-10-28', 19, 134, 'Temperatura ambiente'), 
+('503459183', 'Base Líquida Medicinal', 'baseLiquida.webp', 1, 1, 2, 6, '1647483647', 'Base com ação cicatrizante leve: 30ml', '65', '2027-05-01', 3, 135, 'Temperatura ambiente'), 
+('102340133', 'Corretivo Clínico', 'corretivoClinico.webp', 1, 1, 2, 20, '1747483647', 'Corretivo com ação calmante: 10g', '35', '2026-01-25', 18, 136, 'Temperatura ambiente'), 
+('897654328', 'Máscara de Cílios', 'mascaraCiliosHipoalergenica.webp', 5, 1, 2, 12, '1847483647', 'Rímel dermatologicamente testado.', '50', '2028-10-01', 1, 137, 'Temperatura ambiente'), 
+('203567898', 'Sombra Paleta Neutra', 'sombraPaletaNeutra.webp', 5, 1, 2, 46, '1947483647', 'Paleta indicada para olhos sensíveis.', '55', '2027-08-01', 13, 138, 'Temperatura ambiente'), 
+('457891241', 'Gloss', 'glossLabialHipoalergenico.webp', 5, 1, 2, 34, '1047483647', 'Brilho labial testado dermatologicamente.', '22', '2026-02-01', 5, 139, 'Temperatura ambiente'), 
+('654782901', 'Primer', 'primerMedicoMaquiagem.webp', 1, 1, 2, 48, '2047483647', 'Prepara a pele e diminui irritações.', '59', '2027-04-01', 2, 140, 'Temperatura ambiente'), 
+('102340134', 'Sabonete Líquido Antibacteriano', 'saboneteLiquido.webp', 1, 1, 3, 26, '2140483647', 'Sabonete antibacteriano: 500ml', '16', '2026-09-01', 12, 141, 'Ambiente natural'), 
+('897654329', 'Creme Dental Terapêutico', 'cremeDental.webp', 3, 1, 3, 50, '2141483647', 'Proteção contra cáries e sensibilidade.', '9', '2028-05-01', 6, 142, 'Prateleira'), 
+('203567899', 'Shampoo Anticaspa', 'shampooAnticaspa.webp', 1, 1, 3, 22, '2142483647', 'Limpeza profunda e controle da caspa.', '22', '2027-12-01', 15, 143, 'Ambiente natural'), 
+('457891242', 'Enxaguante Bucal', 'enxaguanteBucal.webp', 1, 1, 3, 7, '2143483647', 'Complemento para higiene bucal com flúor.', '15', '2026-03-01', 11, 144, 'Prateleira'), 
+('798267536', 'Fralda Descartável Hipoalergênica', 'fraldaDescartavel.webp', 5, 1, 5, 43, '2144483647', 'Fralda indicada para pele sensível (Tam M)', '50', '2029-05-01', 8, 145, 'Local seco e arejado'), 
+('102340135', 'Escova de Dente Ergonômica', 'escovaDenteErgonomica.webp', 5, 1, 3, 4, '2145483647', 'Cerdas macias para gengiva sensível.', '7', '2028-09-01', 19, 146, 'Prateleira'), 
+('897654330', 'Toalhas Umedecidas Hipoalergênicas', 'toalhasUmedecidas.webp', 5, 1, 5, 38, '2146483647', 'Toalhas para higiene sensível (50 unid)', '20', '2028-09-01', 3, 147, 'Prateleira'), 
+('203567900', 'Fio Dental Encerado com Flúor', 'fioDental.webp', 5, 1, 3, 13, '2145083647', 'Fio dental para proteção adicional.', '11', '2027-06-15', 18, 148, 'Prateleira'), 
+('457891243', 'Cotonetes Higiênicos Esterilizados', 'cotonetes.webp', 5, 1, 5, 49, '2145183647', 'Cotonetes esterilizados (75 unid.)', '6', '2025-12-01', 1, 149, 'Prateleira'), 
+('876234561', 'Lenço de Papel Caixa', 'lencoPapelCaixa.webp', 5, 1, 5, 3, '2145283647', 'Lenços sem perfume (100 folhas)', '8', '2028-05-01', 13, 150, 'Prateleira'), 
+('102340136', 'Condicionador Terapêutico', 'condicionador.webp', 1, 1, 3, 24, '2145383647', 'Condicionador para cabelos sensíveis.', '23', '2026-11-20', 5, 151, 'Prateleira'), 
+('897654331', 'Papel Higiênico Folha Dupla', 'papelHigienico.webp', 5, 1, 5, 41, '2145483647', 'Produto dermatologicamente testado (12 rolos)', '25', '2027-10-01', 10, 152, 'Local seco'), 
+('203567901', 'Álcool em Gel', 'alcoolGel70.webp', 1, 1, 3, 51, '2145583647', 'Álcool 70% – 500ml', '15', '2028-04-01', 7, 153, 'Prateleira'), 
+('457891244', 'Desinfetante Clínico', 'desinfetante.webp', 2, 1, 5, 14, '2145683647', 'Desinfetante para superfícies clínicas.', '12', '2026-01-01', 14, 154, 'Prateleira'), 
+('954987622', 'Absorvente Diário', 'absorventeDiario.webp', 5, 1, 5, 32, '2145783647', 'Absorvente diário hipoalergênico (40 unid.)', '10', '2029-05-01', 17, 155, 'Prateleira'), 
+('102340137', 'Gel Lubrificante para Barbear', 'gelBarbear.webp', 3, 1, 3, 2, '2143083647', 'Facilita o deslize da lâmina: 150g', '18', '2026-12-01', 9, 156, 'Temperatura ambiente'), 
+('897654332', 'Absorvente Noturno', 'absorventeNoturno.webp', 5, 1, 5, 25, '2143183647', 'Absorvente noturno sem perfume (8 unid.)', '9', '2029-02-01', 16, 157, 'Prateleira'), 
+('203567902', 'Removedor de Esmalte', 'removedorEsmalte.webp', 1, 1, 2, 1, '2143283647', 'Remoção suave ideal para unhas frágeis.', '7', '2027-07-20', 4, 158, 'Prateleira'), 
+('457891245', 'Sabonete em Barra Glicerina', 'saboneteBarraGlicerina.webp', 3, 1, 3, 44, '2143383647', 'Sabonete suave dermatológico 90g', '5', '2026-04-01', 12, 159, 'Prateleira'), 
+('107643973', 'Spray Antisséptico', 'sprayAntissepticoFerida.webp', 1, 1, 1, 35, '2143483647', 'Limpa e desinfeta pequenas feridas.', '21', '2027-09-01', 6, 160, 'Prateleira'), 
+('102340138', 'AAS 100mg', 'AAS100mg.webp', 5, 1, 1, 17, '2143583647', 'Antiagregante plaquetário: 30 comprimidos', '6', '2026-10-01', 15, 161, 'Ambiente natural'), 
+('457891246', 'Sinvastatina', 'sinvastatina.webp', 5, 2, 1, 30, '2143683647', 'Para controle do colesterol: 20mg', '45', '2028-01-20', 11, 162, 'Local fresco e seco'), 
+('203567903', 'Fenilefrina', 'fenilefrina.webp', 1, 1, 1, 46, '2143783647', 'Descongestionante nasal: 30ml', '19', '2025-11-15', 8, 163, 'Temperatura ambiente'), 
+('897654333', 'Prednisona', 'prednisona.webp', 5, 2, 1, 19, '2143883647', 'Corticosteroide 5mg - 20 comprimidos', '12', '2027-04-10', 1, 164, 'Ambiente natural'), 
+('102340139', 'Óleo Capilar', 'oleoCapilarReparadorPontas.webp', 1, 1, 2, 9, '2143983647', 'Reparação de pontas duplas.', '42', '2026-06-01', 19, 165, 'Temperatura ambiente'), 
+('102340140', 'Demaquilante Bifásico', 'demaquilante.webp', 1, 1, 2, 45, '2146083647', 'Remove maquiagem à prova d’água: 150ml', '32', '2027-09-10', 3, 166, 'Temperatura ambiente'), 
+('203567904', 'Creme para Pentear', 'cremePentear.webp', 3, 1, 3, 28, '2146183647', 'Controla frizz: 300g', '25', '2028-03-01', 18, 167, 'Temperatura ambiente'), 
+('102340141', 'Pós-Barba Refrescante Gel', 'pósBarba.webp', 1, 1, 3, 11, '2146283647', 'Acalma a pele após o barbear.', '20', '2026-10-15', 13, 168, 'Ambiente natural'), 
+('897654334', 'Escova Interdental', 'escovaInterdental.webp', 5, 1, 5, 36, '2146383647', 'Limpeza de espaços interdentais.', '15', '2029-01-01', 5, 169, 'Prateleira'), 
+('203567905', 'Absorvente Interno Regular', 'absorventeInterno.webp', 5, 1, 5, 47, '2146483647', 'Absorvente interno: 10 unid.', '17', '2027-11-01', 10, 170, 'Prateleira'), 
+('118763456', 'Termômetro', 'termometro.webp', 5, 1, 5, 23, '2146583647', 'Medição precisa de temperatura.', '40', '2030-12-31', 7, 171, 'Prateleira'), 
+('127863452', 'Curativo', 'curativo.webp', 5, 1, 5, 16, '2146683647', 'Curativos hipoalergênicos estéreis.', '9', '2028-05-01', 14, 172, 'Local seco'), 
+('130987345', 'Bolsa de Água Quente', 'bolsaAguaQuente.webp', 5, 1, 5, 43, '2146783647', 'Para dores musculares: 2L', '25', '2035-01-01', 17, 173, 'Prateleira'), 
+('147653534', 'Máscara Protetora Descartável', 'mascaraProtetora.webp', 5, 1, 5, 40, '2146883647', 'Máscara facial tripla camada.', '20', '2026-03-01', 9, 174, 'Prateleira'), 
+('150984357', 'Pilhas Alcalinas', 'pilhasAlcalinas.webp', 5, 1, 5, 33, '2146983647', 'Pilhas AA (4 unid.).', '16', '2029-10-01', 16, 175, 'Prateleira'), 
+('102340142', 'Dipirona', 'dipirona.webp', 5, 1, 1, 24, '2147083647', 'Dorflex similar: 36 comprimidos', '20', '2026-05-10', 4, 176, 'Ambiente natural'), 
+('457891247', 'Sinvastatina', 'sinvastatina.webp', 5, 2, 1, 48, '2147183647', 'Para colesterol: 10mg', '22', '2027-08-01', 12, 177, 'Local fresco e seco'), 
+('203567906', 'Lágrimas Artificiais', 'lagrimasArtificiais.webp', 1, 1, 1, 26, '2147283647', 'Lubrificante ocular.', '35', '2025-10-20', 6, 178, 'Temperatura ambiente'), 
+('897654335', 'Creme para Assaduras', 'cremeAssaduras.webp', 3, 1, 3, 50, '2147383647', 'Proteção e tratamento de assaduras.', '19', '2028-04-15', 15, 179, 'Prateleira'), 
+('108765433', 'Probiótico Infantil', 'probioticoInfantil.webp', 5, 1, 4, 22, '2147303647', 'Probiótico infantil.', '50', '2026-09-01', 11, 180, 'Refrigerado - Controle Especial'), 
+('167345974', 'Máscara Facial de Argila Verde', 'mascaraFacial.webp', 3, 1, 2, 7, '2147313647', 'Controle de oleosidade.', '38', '2027-07-01', 8, 181, 'Temperatura ambiente'), 
+('102340143', 'Esfoliante Corporal', 'esfolianteCorporal.webp', 3, 1, 2, 42, '2147323647', 'Remove células mortas.', '45', '2026-06-20', 1, 182, 'Temperatura ambiente'), 
+('203567907', 'Shampoo a Seco Dark', 'shampooSeco.webp', 1, 1, 2, 34, '2147333647', 'Shampoo a seco.', '42', '2027-10-05', 19, 183, 'Temperatura ambiente'), 
+('897654336', 'Sabonete Íntimo Suave', 'saboneteIntimo.webp', 1, 1, 3, 29, '2147343647', 'Higiene íntima com pH balanceado.', '17', '2028-03-30', 3, 184, 'Prateleira'), 
+('457891248', 'Fita Micropore', 'fitaMicropore.webp', 5, 1, 5, 15, '2147353647', 'Fita hipoalergênica.', '12', '2030-12-31', 18, 185, 'Local seco'), 
+('178734256', 'Gel Massageador ', 'gelMassageador.webp', 3, 1, 5, 27, '2147363647', 'Alívio para dores musculares.', '30', '2026-01-05', 13, 186, 'Ambiente natural'), 
+('102340144', 'Compressas de Gaze Estéril', 'gazeEsteril.webp', 5, 1, 5, 41, '2147373647', 'Para limpeza de feridas.', '8', '2027-03-25', 5, 187, 'Local seco'), 
+('897654337', 'Protetor Auditivo de Silicone', 'protetorAuditivo.webp', 5, 1, 5, 17, '2147383647', 'Atenuação de ruídos.', '15', '2035-01-01', 10, 188, 'Prateleira'), 
+('203567908', 'Preservativo Lubrificado', 'preservativoLubrificado.webp', 5, 1, 5, 30, '2147393647', 'Contraceptivo.', '12', '2028-11-20', 7, 189, 'Prateleira'), 
+('457891249', 'Spray Bucal Refrescante', 'sprayBucal.webp', 1, 1, 3, 44, '2147430647', 'Hálito fresco.', '15', '2029-01-15', 14, 190, 'Prateleira'), 
+('457891250', 'Pastilha', 'pastilha.webp', 5, 1, 4, 39, '2147431647', 'Alívio da dor de garganta.', '10', '2026-07-15', 17, 191, 'Ambiente natural'), 
+('102340145', 'Kit de Viagem Farmacêutico', 'kitViagem.webp', 5, 1, 3, 6, '2147432647', 'Miniaturas de higiene.', '30', '2025-10-01', 9, 192, 'Prateleira'), 
+('897654338', 'Protetor Solar', 'protetorSolar.webp', 1, 1, 2, 21, '2147433647', 'FPS 30 - 120ml', '55', '2027-09-25', 16, 193, 'Temperatura ambiente'), 
+('185982134', 'Band-Aid', 'bandAid.webp', 5, 1, 5, 45, '2147434647', 'Curativo transparente estéril.', '15', '2025-08-20', 4, 194, 'Prateleira'), 
+('203567909', 'Pó Translúcido HD para Maquiagem', 'poTranslucido.webp', 3, 1, 2, 43, '2147435647', 'Sela a maquiagem.', '49', '2026-12-01', 12, 195, 'Temperatura ambiente'), 
+('102340146', 'Propranolol Cloridrato', 'propranololCloridrato.webp', 5, 2, 1, 18, '2147436647', 'Betabloqueador para hipertensão e angina.', '18', '2028-02-01', 6, 196, 'Temperatura controlada'), 
+('457891251', 'Xarope', 'xarope.webp', 1, 1, 1, 38, '2147437647', 'Antitussígeno para tosse irritativa.', '22', '2026-03-10', 15, 197, 'Ambiente natural'), 
+('203567910', 'Melatonina', 'melatonina.webp', 5, 1, 4, 5, '2147438647', 'Suplemento para auxiliar o sono.', '50', '2027-11-25', 11, 198, 'Local fresco e seco'), 
+('897654339', 'Dipropionato de Betametasona Creme', 'dipropionatoBetametasona.webp', 3, 2, 1, 31, '2147439647', 'Corticosteroide tópico anti-inflamatório.', '16', '2025-12-05', 8, 199, 'Temperatura ambiente'), 
+('102340147', 'Ivermectina', 'ivermectina.webp', 5, 2, 1, 23, '2147483307', 'Antiparasitário oral conforme prescrição.', '18', '2027-06-30', 1, 200, 'Ambiente natural'), 
+('102340148', 'Insulina', 'insulina.webp', 4, 4, 1, 47, '2147483317', 'Insulina para controle glicêmico, refrigerar antes do uso.', '120', '2026-12-31', 19, 201, 'Refrigerado - Controle Especial'), 
+('102340149', 'Sulfato de Magnésio', 'sulfatoMagnesio.webp', 4, 4, 1, 19, '2147483327', 'Uso hospitalar para reposição de magnésio.', '25', '2028-07-01', 3, 202, 'Temperatura controlada'), 
+('102340150', 'Vacina Influenza Trivalente', null, 5, 4, 1, 10, '2147483337', 'Vacina sazonal contra influenza.', '80', '2026-05-31', 18, 203, 'Refrigerado - Controle Especial'), 
+('102340151', 'Cloreto de Sódio', 'cloretoSodio.webp', 4, 1, 1, 12, '2147483347', 'Solução isotônica para hidratação e limpeza.', '8', '2029-01-01', 13, 204, 'Prateleira'), 
+('102340152', 'Naproxeno', 'naproxeno.webp', 5, 2, 1, 46, '2147483357', 'Anti-inflamatório não esteroide.', '22', '2027-08-15', 5, 205, 'Ambiente natural'), 
+('102340153', 'Cetirizina', 'cetirizina.webp', 5, 1, 1, 34, '2147483367', 'Antialérgico oral de longa duração.', '13', '2028-03-20', 10, 206, 'Temperatura ambiente'), 
+('102340154', 'Clotrimazol Creme', 'clotrimazolCreme.webp', 3, 1, 1, 48, '2147483377', 'Antifúngico tópico para micoses cutâneas.', '14', '2026-10-10', 7, 207, 'Temperatura ambiente'), 
+('102340155', 'Ranitidina', 'ranitidina.webp', 5, 2, 1, 26, '2147483387', 'Antagonista H2 para acidez gástrica.', '16', '2027-11-11', 14, 208, 'Ambiente natural'), 
+('102340156', 'Clindamicina', 'clindamicina.webp', 5, 2, 1, 50, '2147483397', 'Antibiótico para infecções diversas.', '48', '2028-09-01', 17, 209, 'Temperatura ambiente'), 
+('102340157', 'Cefalexina', 'cefalexina.webp', 5, 2, 1, 16, '2147483407', 'Antibiótico betalactâmico oral.', '35', '2026-04-10', 9, 210, 'Temperatura ambiente'), 
+('102340158', 'Loratadina Xarope', 'loratadinaXarope.webp', 1, 1, 1, 41, '2147483417', 'Antialérgico em suspensão oral pediátrica.', '19', '2027-01-01', 16, 211, 'Ambiente natural'), 
+('102340159', 'Clorexidina Solução', 'clorexidinaSolucao.webp', 1, 1, 1, 32, '2147483427', 'Antisséptico para pele e mucosas.', '13', '2028-06-01', 4, 212, 'Prateleira'), 
+('102340160', 'Salmeterol', 'salmeterol.webp', 4, 2, 1, 2, '2147483437', 'Broncodilatador combinado para asma crônica.', '185', '2029-03-01', 12, 213, 'Temperatura controlada'), 
+('102340161', 'Bromoprida', 'bromoprida.webp', 4, 1, 1, 25, '2147483447', 'Antiemético para uso parenteral.', '28', '2027-05-05', 6, 214, 'Temperatura ambiente'), 
+('102340162', 'Valerato de Betametasona Creme', 'valeratoBetametasonaCreme.webp', 3, 2, 1, 1, '2147483457', 'Corticosteroide tópico para inflamação cutânea.', '15', '2026-08-08', 15, 215, 'Temperatura ambiente'), 
+('102340163', 'Sulfonato de Neomicina Ointment', 'sulfonatoNeomicinaOintment.webp', 3, 1, 1, 43, '2147483467', 'Pomada antibacteriana tópica.', '23', '2027-09-09', 11, 216, 'Prateleira'), 
+('102340164', 'Atenolol', 'atenolol.webp', 5, 2, 1, 38, '2147483477', 'Betabloqueador para hipertensão.', '17', '2028-12-12', 8, 217, 'Temperatura ambiente'), 
+('102340165', 'Epinefrina', 'epinefrina.webp', 4, 4, 1, 13, '2147483487', 'Uso emergencial para anafilaxia.', '28', '2026-02-28', 1, 218, 'Refrigerado - Controle Especial'), 
+('102340166', 'Claritromicina', 'claritromicina.webp', 5, 2, 1, 36, '2147483497', 'Antibiótico macrolídeo.', '52', '2027-02-14', 19, 219, 'Temperatura ambiente'), 
+('102340167', 'Rifaximina', 'rifaximina.webp', 5, 2, 1, 47, '2147483507', 'Antibiótico para infecções entéricas.', '100', '2028-11-11', 3, 220, 'Ambiente natural'), 
+('102340168', 'Benzetacil', 'benzetacil.webp', 4, 4, 1, 24, '2147483517', 'Penicilina benzilpenicilina benzatina para uso IM.', '65', '2029-05-05', 18, 221, 'Temperatura controlada'), 
+('102340169', 'Nistatina Creme', 'nistatinaCreme.webp', 3, 1, 1, 40, '2147483527', 'Antifúngico tópico para candidíase cutânea.', '18', '2027-07-07', 13, 222, 'Temperatura ambiente'), 
+('102340170', 'Naproxeno Gel', 'naproxenoGel.webp', 3, 1, 1, 29, '2147483537', 'Gel anti-inflamatório para uso tópico.', '27', '2026-11-11', 5, 223, 'Temperatura ambiente'), 
+('102340171', 'Sulfametoxazol', 'sulfametoxazol.webp', 5, 2, 1, 15, '2147483547', 'Antibiótico para infecções bacterianas.', '30', '2027-03-03', 10, 224, 'Temperatura ambiente'), 
+('102340172', 'Ipratropio Brometo Aerossol', 'ipratropioBrometoAerossol.webp', 4, 1, 1, 32, '2147483557', 'Broncodilatador de ação anticolinérgica.', '135', '2028-08-08', 7, 225, 'Temperatura controlada'), 
+('102340173', 'Vitaminas B Complex', 'vitaminasBComplex.webp', 5, 1, 4, 49, '2147483567', 'Complexo vitamínico do complexo B.', '35', '2029-01-01', 14, 226, 'Ambiente natural'), 
+('102340174', 'Colecalciferol', 'colecalciferol.webp', 5, 1, 4, 28, '2147483577', 'Suplemento de vitamina D para reposição.', '27', '2027-12-12', 17, 227, 'Temperatura ambiente'), 
+('102340175', 'Ondansetrona', 'ondansetrona.webp', 5, 1, 1, 11, '2147483587', 'Antiemético para náuseas e vômitos.', '19', '2026-06-06', 9, 228, 'Ambiente natural'), 
+('102340176', 'Solução Ringer Lactato', 'solucaoRingerLactato.webp', 4, 1, 1, 20, '2147483597', 'Sol. para reposição hidroeletrolítica (uso hospitalar).', '23', '2028-04-04', 16, 229, 'Temperatura controlada'), 
+('102340177', 'Clonidina', 'clonidina.webp', 5, 2, 1, 10, '2147483207', 'Anti-hipertensivo com ação central.', '21', '2027-09-09', 4, 230, 'Temperatura ambiente'), 
+('102340178', 'Bacitracina Pomada', 'bacitracinaPomada.webp', 3, 1, 1, 42, '2147483217', 'Pomada antibacteriana para uso tópico.', '10', '2029-02-02', 12, 231, 'Prateleira'); 
+ 
 INSERT INTO lotes_matriz (produto_id, numero_lote, data_validade, quantidade, data_entrada, fornecedor_id) VALUES 
 (1, 1001, '2026-02-15', 270, '2024-01-12', 1), 
 (2, 1002, '2027-04-03', 190, '2024-01-28', 2), 
@@ -1062,137 +1010,35 @@ INSERT INTO estoque_matriz (produto_id, lote_id, quantidade, estoque_minimo, est
 (130, 130, 30, 5, 70, 'Corredor C - Estante 10', '2032-10-18'); 
  
  
-INSERT INTO estoque_franquia (quantidade, produto_id, estoque_minimo, estoque_maximo, estoque_matriz_id) VALUES  
-(15, 1, 5, 35, 1),
-(20, 2, 5, 40, 2),
-(18, 3, 5, 30, 3),
-(22, 4, 5, 45, 4),
-(10, 5, 2, 25, 5),
-(25, 6, 5, 45, 6),
-(30, 7, 7, 55, 7),
-(20, 8, 5, 40, 8),
-(12, 9, 2, 30, 9),
-(15, 10, 2, 35, 10),
-(25, 11, 5, 50, 11),
-(20, 12, 5, 40, 12),
-(12, 13, 2, 30, 13),
-(20, 14, 5, 45, 14),
-(10, 15, 2, 25, 15),
-(22, 16, 5, 40, 16),
-(28, 17, 7, 55, 17),
-(20, 18, 5, 40, 18),
-(12, 19, 2, 30, 19),
-(15, 20, 2, 35, 20),
-(25, 21, 5, 50, 21),
-(20, 22, 5, 40, 22),
-(12, 23, 2, 30, 23),
-(20, 24, 5, 45, 24),
-(10, 25, 2, 25, 25),
-(22, 26, 5, 40, 26),
-(28, 27, 7, 55, 27),
-(20, 28, 5, 40, 28),
-(12, 29, 2, 30, 29),
-(15, 30, 2, 35, 30),
-(25, 31, 5, 50, 31),
-(20, 32, 5, 40, 32),
-(12, 33, 2, 30, 33),
-(20, 34, 5, 45, 34),
-(10, 35, 2, 25, 35),
-(22, 36, 5, 40, 36),
-(28, 37, 7, 55, 37),
-(20, 38, 5, 40, 38),
-(12, 39, 2, 30, 39),
-(15, 40, 2, 35, 40),
-(15, 41, 5, 35, 41), 
-(20, 42, 5, 40, 42), 
-(15, 43, 5, 30, 43), 
-(20, 44, 5, 45, 44), 
-(10, 45, 2, 25, 45), 
-(25, 46, 5, 45, 46),  
-(30, 47, 7, 55, 47),  
-(20, 48, 5, 40, 48),  
-(12, 49, 2, 30, 49), 
-(15, 50, 2, 35, 50), 
-(25, 51, 5, 50, 51), 
-(20, 52, 5, 40, 52),  
-(12, 53, 2, 30, 53),  
-(20, 54, 5, 45, 54),  
-(10, 55, 2, 25, 55),  
-(22, 56, 5, 40, 56),  
-(28, 57, 7, 55, 57),  
-(20, 58, 5, 40, 58),  
-(12, 59, 2, 30, 59),  
-(15, 60, 2, 35, 60),  
-(25, 61, 5, 50, 61),  
-(20, 62, 5, 40, 62),  
-(12, 63, 2, 30, 63),  
-(20, 64, 5, 45, 64),  
-(10, 65, 2, 25, 65),  
-(22, 66, 5, 40, 66),  
-(28, 67, 7, 55, 67), 
-(20, 68, 5, 40, 68),  
-(12, 69, 2, 30, 69),  
-(15, 70, 2, 35, 70),  
-(25, 71, 5, 50, 71),  
-(20, 72, 5, 40, 72),  
-(12, 73, 2, 30, 73),  
-(20, 74, 5, 45, 74),  
-(10, 75, 2, 25, 75),  
-(22, 76, 5, 40, 76),  
-(28, 77, 7, 55, 77),  
-(20, 78, 5, 40, 78), 
-(12, 79, 2, 30, 79), 
-(15, 80, 2, 35, 80), 
-(25, 81, 5, 50, 81), 
-(20, 82, 5, 40, 82),  
-(12, 83, 2, 30, 83),  
-(20, 84, 5, 45, 84),  
-(10, 85, 2, 25, 85),  
-(22, 86, 5, 40, 86),  
-(28, 87, 7, 55, 87),  
-(20, 88, 5, 40, 88),  
-(12, 89, 2, 30, 89),  
-(15, 90, 2, 35, 90),  
-(25, 91, 5, 50, 91),  
-(20, 92, 5, 40, 92),  
-(12, 93, 2, 30, 93),  
-(20, 94, 5, 45, 94),  
-(10, 95, 2, 25, 95),  
-(22, 96, 5, 40, 96),  
-(28, 97, 7, 55, 97),  
-(20, 98, 5, 40, 98),  
-(12, 99, 2, 30, 99),  
-(15, 100, 2, 35, 100),  
-(25, 101, 5, 50, 101),  
-(20, 102, 5, 40, 102),  
-(12, 103, 2, 30, 103),  
-(20, 104, 5, 45, 104),  
-(10, 105, 2, 25, 105),  
-(22, 106, 5, 40, 106),  
-(28, 107, 7, 55, 107),  
-(20, 108, 5, 40, 108),  
-(12, 109, 2, 30, 109),  
-(15, 110, 2, 35, 110),  
-(25, 111, 5, 50, 111),  
-(20, 112, 5, 40, 112),  
-(12, 113, 2, 30, 113),  
-(20, 114, 5, 45, 114),  
-(10, 115, 2, 25, 115),  
-(22, 116, 5, 40, 116),  
-(28, 117, 7, 55, 117),  
-(20, 118, 5, 40, 118),  
-(12, 119, 2, 30, 119),  
-(15, 120, 2, 35, 120),  
-(25, 121, 5, 50, 121),  
-(20, 122, 5, 40, 122),  
-(12, 123, 2, 30, 123),  
-(20, 124, 5, 45, 124),  
-(10, 125, 2, 25, 125),  
-(22, 126, 5, 40, 126),  
-(28, 127, 7, 55, 127),  
-(20, 128, 5, 40, 128),  
-(12, 129, 2, 30, 129),  
-(15, 130, 2, 35, 130); 
+INSERT INTO estoque_franquia 
+(quantidade, produto_id, estoque_minimo, estoque_maximo, estoque_matriz_id, unidade_id) 
+VALUES  
+(15, 1, 5, 35, 1, 1),
+(20, 2, 5, 40, 2, 2),
+(18, 3, 5, 30, 3, 3),
+(22, 4, 5, 45, 4, 4),
+(10, 5, 2, 25, 5, 5),
+(25, 6, 5, 45, 6, 1),
+(30, 7, 7, 55, 7, 2),
+(20, 8, 5, 40, 8, 3),
+(12, 9, 2, 30, 9, 4),
+(15, 10, 2, 35, 10, 5),
+(25, 11, 5, 50, 11, 1),
+(20, 12, 5, 40, 12, 2),
+(12, 13, 2, 30, 13, 3),
+(20, 14, 5, 45, 14, 4),
+(10, 15, 2, 25, 15, 5),
+(22, 16, 5, 40, 16, 1),
+(28, 17, 7, 55, 17, 2),
+(20, 18, 5, 40, 18, 3),
+(12, 19, 2, 30, 19, 4),
+(15, 20, 2, 35, 20, 5),
+(25, 21, 5, 50, 21, 1),
+(20, 22, 5, 40, 22, 2),
+(12, 23, 2, 30, 23, 3),
+(20, 24, 5, 45, 24, 4),
+(10, 25, 2, 25, 25, 5);
+
  
 INSERT INTO descontos (tipodesconto_id, nome, desconto) VALUES  
    (2, "CUPOM55", 0.55), 
@@ -1274,53 +1120,3 @@ insert into notificacao_tipos (nome, icone, cor, acao_texto_padrao) values
 ('Contas pendentes', 'DollarSign', 'pink', 'Pagar agora'), 
 ('Editado', 'Trash', 'pink', NULL), 
 ('Excluído', 'Pencil', 'pink', NULL); 
-
-INSERT INTO tiporelatorio (tiporelatorio) VALUES
-('Relatório de Vendas'),
-('Relatório Financeiro'),
-('Relatório de Estoque'),
-('Relatório de Produtos Mais Vendidos'),
-('Relatório de Unidades'),
-('Relatório Diário do Caixa');
-
-INSERT INTO relatorios (nome, tipoRelatorio_id, relatorio)
-VALUES ('relatorio_teste.pdf', 1, 'cGFkZGluZ3Rlc3Rl'); -- base64 fake
-
-INSERT INTO movimentacoes_estoque 
-
-(produto_id, lote_id, unidade_id, tipo_movimento, quantidade, data_movimentacao, usuario_id, status_movimentacao, origem)
-
-VALUES
-
-(8, 2, 1, 'saida', 3, '2025-12-09 16:17:00', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 16:22:10', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 2, 'saida', 3, '2025-12-09 16:36:35', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 3, 'saida', 3, '2025-12-09 16:43:29', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 17:09:42', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 17:58:13', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 17:59:25', 3, 'pendente', 'solicitacao'),
-
-(5, 2, 1, 'saida', 3, '2025-12-09 18:00:27', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 4, 'saida', 3, '2025-12-09 18:04:41', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 3, 'saida', 3, '2025-12-09 18:11:37', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 18:17:02', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 18:22:08', 3, 'pendente', 'solicitacao'),
-
-(1, 2, 1, 'saida', 3, '2025-12-09 18:26:40', 3, 'pendente', 'solicitacao'),
-
-(5, 2, 1, 'saida', 3, '2025-12-09 18:38:31', 3, 'pendente', 'solicitacao'),
-
-(5, 2, 1, 'saida', 3, '2025-12-09 18:41:35', 3, 'pendente', 'solicitacao'),
-
-(8, 2, 1, 'saida', 3, '2025-12-09 19:18:10', 3, 'pendente', 'solicitacao');
- 

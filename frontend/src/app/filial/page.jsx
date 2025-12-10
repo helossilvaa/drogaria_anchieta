@@ -50,7 +50,7 @@ export default function Page() {
     async function carregarTotais() {
       try {
         // Buscar total de vendas e produtos vendidos em um único endpoint
-        const res = await fetch(`${API_URL}/vendasPorFilial/totais-hoje`, {
+        const res = await fetch(`${API_URL}/vendas/totais-hoje`, {
           method: "GET",
           credentials: "include",
           headers: { Authorization: `Bearer ${getToken()}` },
@@ -66,7 +66,7 @@ export default function Page() {
 
     async function carregarTopProdutos() {
       try {
-        const res = await fetch(`${API_URL}/vendasPorFilial/top-produtos`, {
+        const res = await fetch(`${API_URL}/vendas/top-produtos`, {
           method: "GET",
           credentials: "include",
           headers: { Authorization: `Bearer ${getToken()}` },
