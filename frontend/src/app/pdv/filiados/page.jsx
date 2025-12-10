@@ -97,7 +97,7 @@ export default function Filiados() {
             logradouro: data.logradouro || "",
           }));
         } else {
-          alert("CEP não encontrado.");
+          toast.error("CEP não encontrado.");
           setNovoUsuario((prev) => ({
             ...prev,
             cidade: "",
@@ -191,7 +191,7 @@ export default function Filiados() {
 
           {/* Barra de pesquisa (agora à esquerda) */}
           <div className="flex justify-center md:justify-start w-full">
-            <div className="relative w-full max-w-md">
+            <div className="relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                 <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" />
@@ -203,7 +203,7 @@ export default function Filiados() {
                 placeholder="Buscar..."
                 value={buscaCPF}
                 onChange={(e) => setBuscaCPF(e.target.value)}
-                className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#f6339a] focus:border-[#f6339a] transition"
+                className="pl-9 pr-3 py-2 w-64 md:w-72 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#f6339a] focus:border-[#f6339a] transition"
               />
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function Filiados() {
             <button
               type="button"
               onClick={() => setAbrirModal(true)}
-              className="flex items-center gap-2 cursor-pointer border px-6 py-3 rounded-lg bg-[#f6339a] text-white text-base font-semibold shadow-md hover:bg-[#f6339a] transition"
+              className="flex items-center gap-2 cursor-pointer border px-4 py-2.5 rounded-lg bg-[#f6339a] text-white text-sm font-semibold shadow-sm hover:bg-[#f6339a] transition"
             >
               <svg
                 className="w-5 h-5 text-white"
@@ -234,11 +234,7 @@ export default function Filiados() {
             </button>
           </div>
 
-
-
         </div>
-
-
 
         {/* Modal de criar novo filiado */}
         {abrirModal && (
@@ -303,22 +299,22 @@ export default function Filiados() {
           </p>
         ) : usuariosFiltrados.length > 0 ? (
           <>
-            <div className="mt-6 overflow-x-auto">
-              <table className="w-full border-collapse text-sm rounded-lg overflow-hidden shadow-sm">
+            <div className="mt-6 w-full overflow-x-visible">
+              <table className="w-full border-collapse text-xs rounded-lg overflow-hidden shadow-sm table-fixed">
                 <thead>
                   <tr className="bg-[#f6339a] text-white">
-                    <th className="p-3 text-left">Nome</th>
-                    <th className="p-3 text-left">E-mail</th>
-                    <th className="p-3 text-left">Telefone</th>
-                    <th className="p-3 text-left">CPF</th>
-                    <th className="p-3 text-left">Data de nascimento</th>
-                    <th className="p-3 text-left">CEP</th>
-                    <th className="p-3 text-left">Cidade</th>
-                    <th className="p-3 text-left">Estado</th>
-                    <th className="p-3 text-left">Bairro</th>
-                    <th className="p-3 text-left">Logradouro</th>
-                    <th className="p-3 text-left">Número</th>
-                    <th className="p-3 text-left">Tipo de Desconto</th>
+                    <th className="p-2 text-left truncate max-w-[120px]">Nome</th>
+                    <th className="p-2 text-left truncate max-w-[120px]">E-mail</th>
+                    <th className="p-2 text-left truncate max-w-[120px]">Telefone</th>
+                    <th className="p-2 text-left truncate max-w-[120px]">CPF</th>
+                    <th className="p-2 text-left truncate max-w-[140px]">Data de nascimento</th>
+                    <th className="p-2 text-left truncate max-w-[100px]">CEP</th>
+                    <th className="p-2 text-left truncate max-w-[120px]">Cidade</th>
+                    <th className="p-2 text-left truncate max-w-[80px]">Estado</th>
+                    <th className="p-2 text-left truncate max-w-[120px]">Bairro</th>
+                    <th className="p-2 text-left truncate max-w-[160px]">Logradouro</th>
+                    <th className="p-2 text-left truncate max-w-[80px]">Número</th>
+                    <th className="p-2 text-left truncate max-w-[140px]">Tipo de Desconto</th>
                   </tr>
                 </thead>
 
@@ -328,20 +324,20 @@ export default function Filiados() {
                       key={u.id}
                       className="border-b hover:bg-gray-100 transition"
                     >
-                      <td className="p-3 font-medium">{u.nome}</td>
-                      <td className="p-3">{u.email}</td>
-                      <td className="p-3">{u.telefone}</td>
-                      <td className="p-3">{u.cpf}</td>
-                      <td className="p-3">
+                      <td className="p-2 truncate max-w-[120px] font-medium">{u.nome}</td>
+                      <td className="p-2 truncate max-w-[120px]">{u.email}</td>
+                      <td className="p-2 truncate max-w-[120px]">{u.telefone}</td>
+                      <td className="p-2 truncate max-w-[120px]">{u.cpf}</td>
+                      <td className="p-2 truncate max-w-[140px]">
                         {new Date(u.data_nascimento).toLocaleDateString()}
                       </td>
-                      <td className="p-3">{u.cep}</td>
-                      <td className="p-3">{u.cidade}</td>
-                      <td className="p-3">{u.estado}</td>
-                      <td className="p-3">{u.bairro}</td>
-                      <td className="p-3">{u.logradouro}</td>
-                      <td className="p-3">{u.numero}</td>
-                      <td className="p-3">{u.tipodesconto}</td>
+                      <td className="p-2 truncate max-w-[100px]">{u.cep}</td>
+                      <td className="p-2 truncate max-w-[120px]">{u.cidade}</td>
+                      <td className="p-2 truncate max-w-[80px]">{u.estado}</td>
+                      <td className="p-2 truncate max-w-[120px]">{u.bairro}</td>
+                      <td className="p-2 truncate max-w-[160px]">{u.logradouro}</td>
+                      <td className="p-2 truncate max-w-[80px]">{u.numero}</td>
+                      <td className="p-2 truncate max-w-[140px]">{u.tipodesconto}</td>
                     </tr>
                   ))}
                 </tbody>

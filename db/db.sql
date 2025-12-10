@@ -186,6 +186,36 @@ CREATE TABLE estoque_franquia (
     FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id) 
 ); 
  
+ -- Tabela de Movimentações de Estoque (entradas, saídas, perdas, transferências)
+CREATE TABLE movimentacoes_estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produto_id INT NOT NULL,
+    lote_id INT NULL,
+    unidade_id INT NOT NULL,
+    tipo_movimento ENUM('entrada','saida','transferencia','perda','roubo') NOT NULL,
+    quantidade INT NOT NULL,
+    data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario_id INT NOT NULL,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id),
+    FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id),
+    FOREIGN KEY (unidade_id) REFERENCES unidade(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+ 
+ALTER TABLE movimentacoes_estoque
+ADD COLUMN status_movimentacao VARCHAR(20) DEFAULT 'pendente',
+ADD COLUMN origem VARCHAR(20) DEFAULT 'solicitacao';
+ 
+CREATE TABLE solicitacoes_estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    filial_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_solicitada INT NOT NULL,
+    status ENUM('pendente','enviado','cancelado') DEFAULT 'pendente',
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atendimento TIMESTAMP NULL
+);
+
 CREATE TABLE parcerias ( 
 	id INT NOT NULL PRIMARY KEY auto_increment, 
     parceiro VARCHAR(250) NOT NULL, 
@@ -305,6 +335,11 @@ CREATE TABLE tiporelatorio (
     tiporelatorio VARCHAR(250) NOT NULL 
 ); 
  
+ CREATE TABLE IF NOT EXISTS tiporelatorio (
+	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    tiporelatorio VARCHAR(250) NOT NULL 
+);
+
 CREATE TABLE relatorios ( 
 	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
     tipoRelatorio_id INT NOT NULL, 
@@ -312,7 +347,23 @@ CREATE TABLE relatorios (
     FOREIGN KEY (tipoRelatorio_id) REFERENCES tiporelatorio(id) 
 ); 
  
- 
+ CREATE TABLE IF NOT EXISTS relatorios (
+	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(255) NOT NULL,
+    tipoRelatorio_id INT NOT NULL,
+    usuario_id INT NULL,
+    relatorio LONGBLOB NOT NULL,   -- PDF/Excel
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (tipoRelatorio_id) REFERENCES tiporelatorio(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+ALTER TABLE relatorios ADD COLUMN nome VARCHAR(255) AFTER id;
+
+ALTER TABLE relatorios
+ADD COLUMN criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
 CREATE TABLE vendas ( 
     id INT AUTO_INCREMENT PRIMARY KEY, 
     cliente_id INT NULL, 
@@ -357,7 +408,21 @@ CREATE TABLE movimentacoes_estoque (
     FOREIGN KEY (lote_id) REFERENCES lotes_matriz(id), 
     FOREIGN KEY (unidade_id) REFERENCES unidade(id), 
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) 
-); 
+);
+
+ALTER TABLE movimentacoes_estoque 
+ADD COLUMN status_movimentacao VARCHAR(20) DEFAULT 'pendente',
+ADD COLUMN origem VARCHAR(20) DEFAULT 'solicitacao';
+
+CREATE TABLE solicitacoes_estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    filial_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_solicitada INT NOT NULL,
+    status ENUM('pendente','enviado','cancelado') DEFAULT 'pendente',
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atendimento TIMESTAMP NULL
+);
  
 CREATE TABLE categoria_transacoes ( 
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
@@ -387,6 +452,23 @@ CREATE TABLE notificacao_tipos (
     acao_texto_padrao VARCHAR(100), 
     extra_info_padrao VARCHAR(255) 
 ); 
+
+CREATE TABLE requisicoes_estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estoque_matriz_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_requisitada INT NOT NULL,
+    valor_unitario DECIMAL(10, 2) NOT NULL,
+    valor_total DECIMAL(10, 2) NOT NULL,
+    data_requisicao DATE NOT NULL,
+    fornecedor_id INT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    
+    FOREIGN KEY (estoque_matriz_id) REFERENCES estoque_matriz(id),
+    FOREIGN KEY (produto_id) REFERENCES produtos(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
+);
+
   
 CREATE TABLE notificacoes ( 
     id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -405,6 +487,8 @@ CREATE TABLE notificacoes (
     FOREIGN KEY (unidade_id) REFERENCES unidade(id), 
     FOREIGN KEY (tipo_id) REFERENCES notificacao_tipos(id) 
 ); 
+
+
 
 CREATE TABLE transacoes_matriz (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -1151,3 +1235,53 @@ insert into notificacao_tipos (nome, icone, cor, acao_texto_padrao) values
 ('Contas pendentes', 'DollarSign', 'pink', 'Pagar agora'), 
 ('Editado', 'Trash', 'pink', NULL), 
 ('Excluído', 'Pencil', 'pink', NULL); 
+
+INSERT INTO tiporelatorio (tiporelatorio) VALUES
+('Relatório de Vendas'),
+('Relatório Financeiro'),
+('Relatório de Estoque'),
+('Relatório de Produtos Mais Vendidos'),
+('Relatório de Unidades'),
+('Relatório Diário do Caixa');
+
+INSERT INTO relatorios (nome, tipoRelatorio_id, relatorio)
+VALUES ('relatorio_teste.pdf', 1, 'cGFkZGluZ3Rlc3Rl'); -- base64 fake
+
+INSERT INTO movimentacoes_estoque 
+
+(produto_id, lote_id, unidade_id, tipo_movimento, quantidade, data_movimentacao, usuario_id, status_movimentacao, origem)
+
+VALUES
+
+(8, 2, 1, 'saida', 3, '2025-12-09 16:17:00', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 16:22:10', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 2, 'saida', 3, '2025-12-09 16:36:35', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 3, 'saida', 3, '2025-12-09 16:43:29', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 17:09:42', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 17:58:13', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 17:59:25', 3, 'pendente', 'solicitacao'),
+
+(5, 2, 1, 'saida', 3, '2025-12-09 18:00:27', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 4, 'saida', 3, '2025-12-09 18:04:41', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 3, 'saida', 3, '2025-12-09 18:11:37', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 18:17:02', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 18:22:08', 3, 'pendente', 'solicitacao'),
+
+(1, 2, 1, 'saida', 3, '2025-12-09 18:26:40', 3, 'pendente', 'solicitacao'),
+
+(5, 2, 1, 'saida', 3, '2025-12-09 18:38:31', 3, 'pendente', 'solicitacao'),
+
+(5, 2, 1, 'saida', 3, '2025-12-09 18:41:35', 3, 'pendente', 'solicitacao'),
+
+(8, 2, 1, 'saida', 3, '2025-12-09 19:18:10', 3, 'pendente', 'solicitacao');
+ 

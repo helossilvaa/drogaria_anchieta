@@ -10,6 +10,7 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// cadastrar um novo usuário
 const cadastroUsuarioController = async (req, res) => {
   try {
     const { funcionario_id, senha, departamento_id } = req.body;
@@ -37,6 +38,7 @@ const cadastroUsuarioController = async (req, res) => {
   }
 };
 
+// alterar a senha de um usuário
 const alterarSenhaController = async (req, res) => {
   try {
     const { senha } = req.body;
@@ -57,8 +59,7 @@ const alterarSenhaController = async (req, res) => {
   }
 };
 
-
-
+//login do usuário 
 const loginController = async (req, res) => {
   const { email, senha } = req.body;
 

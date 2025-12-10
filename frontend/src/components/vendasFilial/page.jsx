@@ -10,7 +10,7 @@ export default function Vendas() {
   const [pagamentos, setPagamentos] = useState([]);
   const [descontos, setDescontos] = useState([]);
 
-  const [filtroValor, setFiltroValor] = useState(10000); // filtro único de valor
+  const [filtroValor, setFiltroValor] = useState(10000);
   const [filtroData, setFiltroData] = useState("");
 
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -21,9 +21,9 @@ export default function Vendas() {
   const formatarValor = (valor) =>
     valor !== null && valor !== undefined
       ? Number(valor).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      })
+          style: "currency",
+          currency: "BRL",
+        })
       : "—";
 
   const getNomeCliente = (id) => {
@@ -55,28 +55,24 @@ export default function Vendas() {
     return descontoObj ? Number(descontoObj.desconto) : 0;
   };
 
-
-
-
   const fetchVendas = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("Token não encontrado no localStorage");
-      return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token não encontrado no localStorage");
+        return;
+      }
+
+      const res = await fetch(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      setVendas(Array.isArray(data) ? data : []);
+    } catch {
+      setVendas([]);
     }
-
-    const res = await fetch(API_URL, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const data = await res.json();
-    setVendas(Array.isArray(data) ? data : []);
-  } catch {
-    setVendas([]);
-  }
-};
-
+  };
 
   const carregarListas = async () => {
     try {
@@ -127,7 +123,7 @@ export default function Vendas() {
     const desconto = getDescontoValor(v.desconto_id);
     const subtotal = Number(v.total) + desconto;
 
-    const passaValor = subtotal <= filtroValor; // filtro único
+    const passaValor = subtotal <= filtroValor;
     const passaData = !filtroData || (v.data && v.data.startsWith(filtroData));
 
     return passaValor && passaData;
@@ -152,10 +148,12 @@ export default function Vendas() {
 
   return (
     <>
-      <div className="flex items-end gap-4 mt-4 flex-wrap">
+      {/* FILTROS */}
+      <div className="flex items-end gap-6 mt-4 flex-wrap bg-white p-4 rounded-lg shadow-sm border">
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-600">
-            Valor máximo: {formatarValor(filtroValor)}
+          <label className="text-sm font-medium text-gray-700">
+            Valor máximo:{" "}
+            <span className="font-semibold">{formatarValor(filtroValor)}</span>
           </label>
           <input
             type="range"
@@ -164,54 +162,58 @@ export default function Vendas() {
             step="10"
             value={filtroValor}
             onChange={(e) => setFiltroValor(Number(e.target.value))}
+            className="accent-[#44A6A0] w-64"
           />
         </div>
 
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-600">Data</label>
+          <label className="text-sm font-medium text-gray-700">Data</label>
           <input
             type="date"
-            className="border rounded-lg px-4 py-2 text-sm"
+            className="border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-[#44A6A0] outline-none"
             value={filtroData}
             onChange={(e) => setFiltroData(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse table-auto">
+      {/* TABELA */}
+      <div className="mt-6 overflow-x-auto bg-white border rounded-lg shadow-sm">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-[#245757] text-white">
-              <th className="p-2">Cliente</th>
-              <th className="p-2">Usuário</th>
-              <th className="p-2">Unidade</th>
-              <th className="p-2">Subtotal</th>
-              <th className="p-2">Desconto</th>
-              <th className="p-2">Total Final</th>
-              <th className="p-2">Pagamento</th>
-              <th className="p-2">Data</th>
+            <tr className="bg-[#44A6A0] text-white">
+              <th className="p-3">Cliente</th>
+              <th className="p-3">Usuário</th>
+              <th className="p-3">Unidade</th>
+              <th className="p-3">Subtotal</th>
+              <th className="p-3">Desconto</th>
+              <th className="p-3">Total Final</th>
+              <th className="p-3">Pagamento</th>
+              <th className="p-3">Data</th>
             </tr>
           </thead>
 
           <tbody>
             {vendasPagina.map((v) => {
-
               const desconto = getDescontoValor(v.desconto_id);
               const subtotal = Number(v.total) + desconto;
 
-
-
               return (
-                <tr key={v.id} className="border-t hover:bg-gray-50">
-                  <td className="p-2">{getNomeCliente(v.cliente_id)}</td>
-                  <td className="p-2">{getNomeUsuario(v.usuario_id)}</td>
-                  <td className="p-2">{getNomeUnidade(v.unidade_id)}</td>
-                  <td className="p-2">{formatarValor(subtotal)}</td>
-                  <td className="p-2">{formatarValor(getDescontoValor(v.desconto_id))}</td>
-                  <td className="p-2">{formatarValor(v.total)}</td>
-                  <td className="p-2">{getPagamento(v.tipo_pagamento_id)}</td>
-                  <td className="p-2">
-                    {v.data ? new Date(v.data).toLocaleDateString("pt-BR") : "—"}
+                <tr
+                  key={v.id}
+                  className="border-t hover:bg-gray-100 transition"
+                >
+                  <td className="p-3">{getNomeCliente(v.cliente_id)}</td>
+                  <td className="p-3">{getNomeUsuario(v.usuario_id)}</td>
+                  <td className="p-3">{getNomeUnidade(v.unidade_id)}</td>
+                  <td className="p-3">{formatarValor(subtotal)}</td>
+                  <td className="p-3">{formatarValor(desconto)}</td>
+                  <td className="p-3">{formatarValor(v.total)}</td>
+                  <td className="p-3">{getPagamento(v.tipo_pagamento_id)}</td>
+                  <td className="p-3">
+                    {v.data
+                      ? new Date(v.data).toLocaleDateString("pt-BR")
+                      : "—"}
                   </td>
                 </tr>
               );
@@ -219,22 +221,26 @@ export default function Vendas() {
           </tbody>
         </table>
 
+        {/* PAGINAÇÃO */}
         {totalPaginas > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-4">
+          <div className="flex justify-center items-center gap-2 p-4">
             <button
               onClick={() => mudarPagina(paginaAtual - 1)}
               disabled={paginaAtual === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-1 rounded bg-[#44A6A0] text-white disabled:opacity-50 hover:bg-[#3b948e] transition"
             >
-              &lt; Anterior
+              ← Anterior
             </button>
 
             {[...Array(totalPaginas)].map((_, i) => (
               <button
                 key={i}
                 onClick={() => mudarPagina(i + 1)}
-                className={`px-3 py-1 border rounded ${paginaAtual === i + 1 ? "bg-blue-300" : ""
-                  }`}
+                className={`px-3 py-1 rounded border transition ${
+                  paginaAtual === i + 1
+                    ? "bg-[#44A6A0] text-white border-[#44A6A0]"
+                    : "bg-white hover:bg-gray-100"
+                }`}
               >
                 {i + 1}
               </button>
@@ -243,9 +249,9 @@ export default function Vendas() {
             <button
               onClick={() => mudarPagina(paginaAtual + 1)}
               disabled={paginaAtual === totalPaginas}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-1 rounded bg-[#44A6A0] text-white disabled:opacity-50 hover:bg-[#3b948e] transition"
             >
-              Próxima &gt;
+              Próxima →
             </button>
           </div>
         )}
