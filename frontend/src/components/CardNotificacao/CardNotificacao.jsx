@@ -1,9 +1,9 @@
 const cores = {
-  pink: "bg-pink-500 hover:bg-pink-600",
-  blue: "bg-blue-500 hover:bg-blue-600",
-  green: "bg-green-500 hover:bg-green-600",
-  yellow: "bg-yellow-500 hover:bg-yellow-600",
-  red: "bg-red-500 hover:bg-red-600",
+  pink: "bg-[#073d39] hover:bg-[#00554f]",
+  blue: "bg-[#00554f] hover:bg-[#567c73]",
+  green: "bg-[#567c73] hover:bg-[#073d39]",
+  yellow: "bg-blue-500 hover:bg-blue-600",
+  red: "bg-yellow-500 hover:bg-yellow-600",
 };
 
 function formatarTempo(dataISO) {

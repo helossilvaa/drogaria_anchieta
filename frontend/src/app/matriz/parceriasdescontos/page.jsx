@@ -479,23 +479,10 @@ export default function ParceriasDescontos() {
         <div className="mt-6">
           {activeTab === "parcerias" && (
             <section>
-              {/* Botão de criar parceria */}
-              <button onClick={() => {
-                setAbrirModalParceria(true);
-                setParceiro("");
-                setPorcentagem("");
-                setErro("");
-                setParceriaEditando(null);
-              }}
-                className="flex items-center gap-1 border p-2 rounded-md bg-[#245757] text-white mt-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
-                <svg className="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5" />
-                </svg>
-                Novo Parceiro
-              </button>
 
-              {/* Barra de pesquisa */}
-              <div className="mb-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+{/* Barra de pesquisa */}
+              <div className="flex justify-center md:justify-start w-full">
                 <div className="relative w-64">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg className="w-6 h-6 text-gray-400 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -510,6 +497,25 @@ export default function ParceriasDescontos() {
                     onChange={(e) => setSearchParceria(e.target.value)}
                   />
                 </div>
+              </div>
+
+              {/* Botão de criar parceria */}
+              <div className="flex justify-end">
+              <button onClick={() => {
+                setAbrirModalParceria(true);
+                setParceiro("");
+                setPorcentagem("");
+                setErro("");
+                setParceriaEditando(null);
+              }}
+                className="flex items-center gap-1 border p-2 rounded-md bg-[#245757] text-white mt-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0">
+                <svg className="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5" />
+                </svg>
+                Novo Parceiro
+              </button>    
+              </div>
+              
               </div>
 
               {/* Modal para criar nova parceria */}
@@ -702,7 +708,28 @@ export default function ParceriasDescontos() {
           {/* Seção de Descontos */}
           {activeTab === "descontos" && (
             <section>
+
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Barra de pesquisa */}
+              <div className="flex justify-center md:justify-start w-full">
+                <div className="relative w-64">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-6 h-6 text-gray-400 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-2 focus:outline-none placeholder-gray-400 focus:ring-[#245757] focus:border-[#245757] transition"
+                    value={searchDesconto}
+                    onChange={(e) => setSearchDesconto(e.target.value)}
+                  />
+                </div>
+              </div> 
+              
               {/* Botão de criar desconto */}
+              <div className="flex justify-end">
               <button
                 onClick={() => {
                   setAbrirModalDesconto(true);
@@ -718,26 +745,10 @@ export default function ParceriasDescontos() {
                   <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14m-7 7V5" />
                 </svg>
                 Novo Desconto
-              </button>
-
-              {/* Barra de pesquisa */}
-              <div className="mb-4">
-                <div className="relative w-64">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <svg className="w-6 h-6 text-gray-400 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                      <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:ring-2 focus:outline-none placeholder-gray-400 focus:ring-[#245757] focus:border-[#245757] transition"
-                    value={searchDesconto}
-                    onChange={(e) => setSearchDesconto(e.target.value)}
-                  />
-                </div>
+              </button>  
               </div>
-
+              </div>
+              
               {/* Modal para criar novo desconto */}
               {abrirModalDesconto && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/30 shadow-inner z-50">

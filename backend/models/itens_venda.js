@@ -1,6 +1,6 @@
 import { create, deleteRecord, read, readAll, update, readJoin } from "../config/database.js";
 
-const TABELA = "itens_venda"; // 👈 Nome correto da tabela
+const TABELA = "itens_venda"; 
 
 const criarItemVenda = async (itemVendaData) => {
     try {

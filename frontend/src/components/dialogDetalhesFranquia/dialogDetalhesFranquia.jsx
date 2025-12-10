@@ -118,7 +118,7 @@ export default function DialogDetalhesFranquia({ unidadeId, open, onOpenChange }
   };
 
   const fetchVendas = async () => {
-    const res = await fetch(`${API_URL}/vendas/unidade/${unidadeId}`, {
+    const res = await fetch(`${API_URL}/vendasPorFilial/unidade/${unidadeId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.json();
