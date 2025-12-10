@@ -47,24 +47,33 @@ const obterEstoqueMatrizPorIDController = async (req, res) => {
   }
 };
 
-
 const obterEstoquePorProdutoController = async (req, res) => {
   try {
-    const { produtoId } = req.params;
+    const { produtoId } = req.params; 
 
-    // read retorna um único registro (pela sua implementação). Mantive esse comportamento.
-    const estoque = await read("estoque_matriz", `produto_id = ${produtoId}`);
+    const estoque = await read('estoque_matriz', `produto_id = ${produtoId}
+        LIMIT 1`, `id, quantidade`);
+    
+    console.log(estoque);
 
-    if (!estoque) {
+    if (!estoque || estoque.length === 0) {
       return res.status(404).json({ mensagem: "Produto não encontrado no estoque da matriz." });
     }
 
+    // read() retorna array, então pega o primeiro item
     return res.status(200).json(estoque);
+
   } catch (error) {
     console.error("Erro ao buscar estoque por produto:", error);
-    return res.status(500).json({ mensagem: "Erro no servidor.", detalhe: error.message });
+    return res.status(500).json({
+      mensagem: "Erro no servidor.",
+      detalhe: error.message
+    });
   }
 };
+
+
+
 
 const atualizarEstoqueMatrizController = async (req, res) => {
   try {

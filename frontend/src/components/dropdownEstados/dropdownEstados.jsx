@@ -10,6 +10,7 @@ export default function DropdownEstados({ value, onChange }) {
   const [estados, setEstados] = useState([]);
 
   useEffect(() => {
+    //puxando via API os estados do Brasil
     fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados")
       .then((response) => response.json())
       .then((data) => {
@@ -27,6 +28,7 @@ export default function DropdownEstados({ value, onChange }) {
 
   return (
     <DropdownMenu>
+      {/* dropdown com os estados */}
       <DropdownMenuTrigger asChild>
         <button
           type="button"

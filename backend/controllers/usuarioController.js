@@ -7,7 +7,7 @@ import {
 
 import generateHashedPassword from '../utils/hashPassword.js';
 
-
+//listar todos usuarios
 const listarUsuariosController = async (req, res) => {
   try {
     const usuarios = await listarUsuarios();
@@ -19,7 +19,7 @@ const listarUsuariosController = async (req, res) => {
   }
 };
 
-
+//obter um usuario
 const obterUsuarioIdController = async (req, res) => {
   try {
     const usuario = await obterUsuarioId(req.params.id);
@@ -37,7 +37,7 @@ const obterUsuarioIdController = async (req, res) => {
 };
 
 
-
+//atualizar usuario
 const atualizarUsuarioController = async (req, res) => {
   try {
     const usuario = await obterUsuarioId(req.params.id);
@@ -79,7 +79,7 @@ const atualizarUsuarioController = async (req, res) => {
 };
 
 
-
+//deletar usuario
 const deletarUsuarioController = async (req, res) => {
   try {
     const usuario = await obterUsuarioId(req.params.id);

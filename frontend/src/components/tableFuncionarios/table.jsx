@@ -1,11 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import TableBase from "@/components/tableBase/tableBase"; // Componente base de tabela
-import { MoreVerticalIcon, Trash2, UserPen } from "lucide-react"; 
-import { Button } from "@/components/ui/button"; // Botões estilizados
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; 
-import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"; // Lista de ações dentro do popover
+import TableBase from "@/components/tableBase/tableBase";
+import { MoreVerticalIcon, Trash2, UserPen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -16,15 +30,14 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/components/ui/alert-dialog"; // Modal de confirmação para exclusão
+} from "@/components/ui/alert-dialog";
 
-import { DialogUsuario } from "@/components/dialogUsuario/dialogUsuario"; // Modal para criar usuário
-import { DialogFuncionario } from "../dialogFuncionarios/dialogfuncionarios"; // Modal para editar funcionário
-import { toast } from "react-toastify"; 
-import "react-toastify/dist/ReactToastify.css";
-import { useUser } from "@/components/context/userContext"; // Contexto do usuário logado
+import { DialogUsuario } from "@/components/dialogUsuario/dialogUsuario";
+import { DialogFuncionario } from "../dialogFuncionarios/dialogfuncionarios";
+import { toast } from "react-toastify";
+import { useUser } from "@/components/context/userContext";
 
-// Badge colorido para status
+// Badge de status
 const StatusBadge = ({ status }) => {
   const colors = {
     ativo: "bg-green-100 text-green-700",
@@ -33,15 +46,19 @@ const StatusBadge = ({ status }) => {
     licença: "bg-blue-100 text-blue-700",
     atestado: "bg-orange-100 text-orange-700",
   };
-  // Retorna badge estilizada
+
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[status] || "bg-gray-100 text-gray-700"}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+        colors[status] || "bg-gray-100 text-gray-700"
+      }`}
+    >
       {String(status || "").charAt(0).toUpperCase() + String(status || "").slice(1)}
     </span>
   );
 };
 
-// Avatar do funcionário com fallback para iniciais
+// Avatar com fallback
 const Avatar = ({ nome, foto }) => {
   const [imgErro, setImgErro] = useState(false);
 
@@ -50,19 +67,18 @@ const Avatar = ({ nome, foto }) => {
       <img
         src={`http://localhost:8080${foto}`}
         alt={nome}
-        className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 object-cover rounded-full"
+        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
         onError={() => setImgErro(true)}
       />
     );
   }
 
-  // Gera iniciais do nome
   const initials = nome
-    ? nome.trim().split(/\s+/).slice(0, 2).map(n => n[0]?.toUpperCase()).join("")
+    ? nome.trim().split(" ").slice(0, 2).map((n) => n[0]?.toUpperCase()).join("")
     : "";
 
   return (
-    <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm sm:text-base font-bold text-black">
+    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-300 flex items-center justify-center text-sm md:text-base font-semibold">
       {initials}
     </div>
   );
@@ -71,109 +87,141 @@ const Avatar = ({ nome, foto }) => {
 export default function TableFuncionarios() {
   const API_URL = "http://localhost:8080";
   const usuario = useUser();
+
   const [funcionarios, setFuncionarios] = useState([]);
+  const [unidades, setUnidades] = useState([]);
+  const [departamentos, setDepartamentos] = useState([]);
   const [openDialogUsuario, setOpenDialogUsuario] = useState(false);
   const [openDialogFuncionario, setOpenDialogFuncionario] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
-  // Verifica se o usuário é diretor geral para permitir acesso completo
+  //identificar se o departamento é diretor geral (tabela modifica)
   const isDiretorGeral = usuario?.funcionario?.departamentoNome?.toLowerCase() === "diretor geral";
 
-  // Função para buscar funcionários da API
+  // filtros
+  const [filtroUnidade, setFiltroUnidade] = useState("todas");
+  const [filtroDepartamento, setFiltroDepartamento] = useState("todos");
+  const [filtroStatus, setFiltroStatus] = useState("todos");
+
+  // buscar dados
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token") || "";
 
-      const funcUrl = isDiretorGeral ? `${API_URL}/funcionarios` : `${API_URL}/funcionarios/unidade`;
+      const funcUrl = isDiretorGeral
+        ? `${API_URL}/funcionarios`
+        : `${API_URL}/funcionarios/unidade`;
 
-      // Busca funcionários e departamentos simultaneamente
       const [funcRes, depRes] = await Promise.all([
         fetch(funcUrl, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_URL}/departamento`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       const funcionariosRaw = await funcRes.json();
-      const departamentos = await depRes.json();
+      const departamentosData = await depRes.json();
+      setDepartamentos(departamentosData);
 
-      // Mapeia departamento pelo id
+      // busca unidades só se DG
+      let unidadesData = [];
+      if (isDiretorGeral) {
+        const uniRes = await fetch(`${API_URL}/unidade`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        unidadesData = await uniRes.json();
+        setUnidades(unidadesData);
+      }
+
+      // map departamento
       const depMap = {};
-      departamentos.forEach(d => (depMap[d.id] = d.departamento));
+      departamentosData.forEach((d) => (depMap[d.id] = d.departamento));
 
-      // Adiciona nome do departamento aos funcionários
-      const funcionariosComDep = funcionariosRaw.map(f => ({
+      // map unidade
+      const uniMap = {};
+      unidadesData.forEach((u) => (uniMap[u.id] = u.nome));
+
+      // monta objeto final
+      const funcionariosFinal = funcionariosRaw.map((f) => ({
         ...f,
         departamentoNome: depMap[f.departamento_id] || "-",
+        unidadeNome: isDiretorGeral ? uniMap[f.unidade_id] || "-" : null,
       }));
 
-      setFuncionarios(funcionariosComDep);
+      setFuncionarios(funcionariosFinal);
+
     } catch (error) {
       console.error(error);
       toast.error("Erro ao carregar funcionários");
     }
   };
 
-  useEffect(() => { fetchData(); }, [isDiretorGeral]);
+  useEffect(() => {
+    fetchData();
+  }, [isDiretorGeral]);
 
-  // Função para deletar funcionário
-  const handleDelete = async (id) => {
-    try {
-      const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_URL}/funcionarios/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-  
-      if (!res.ok) throw new Error(data.mensagem || "Erro ao excluir usuário");
-  
-      toast.success(data.mensagem);
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message || "Erro ao excluir usuário");
-    } finally {
-      setDeleteDialog({ open: false, id: null });
-    }
+  // filtragem
+  const funcionariosFiltrados = funcionarios.filter((f) => {
+    const matchUnidade =
+      filtroUnidade === "todas" || String(f.unidade_id) === String(filtroUnidade);
+
+    const matchDepartamento =
+      filtroDepartamento === "todos" || String(f.departamento_id) === String(filtroDepartamento);
+
+    const matchStatus = filtroStatus === "todos" || f.status === filtroStatus;
+
+    return matchUnidade && matchDepartamento && matchStatus;
+  });
+
+  // limpar filtros
+  const limparFiltros = () => {
+    setFiltroUnidade("todas");
+    setFiltroDepartamento("todos");
+    setFiltroStatus("todos");
   };
 
-  // Define colunas da tabela
+  // colunas da tabela
   const columns = [
     {
       name: "Nome",
       uid: "nome",
       sortable: true,
-      render: item => (
+      render: (item) => (
         <div className="flex items-center gap-3">
           <Avatar nome={item.nome} foto={item.foto} />
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">{item.nome}</span>
-            <span className="text-xs text-gray-500">{item.email}</span>
+          <div>
+            <p className="font-semibold text-sm">{item.nome}</p>
+            <p className="text-xs text-gray-600">{item.email}</p>
           </div>
         </div>
       ),
     },
+
     {
       name: "Departamento",
       uid: "departamento",
       sortable: true,
-      render: item => <span className="text-sm capitalize">{item.departamentoNome || "-"}</span>,
+      render: (item) => (
+        <span className="capitalize text-sm">{item.departamentoNome || "-"}</span>
+      ),
     },
+
     {
       name: "Telefone",
       uid: "telefone",
-      sortable: true,
-      render: item => <span className="text-sm">{item.telefone || "-"}</span>,
+      render: (item) => <span className="text-sm">{item.telefone || "-"}</span>,
     },
+
     {
       name: "Status",
       uid: "status",
-      sortable: true,
-      render: item => (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+      render: (item) => (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <StatusBadge status={item.status} />
 
-          {/* Popover com ações */}
+          {/* menu ações */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="light" size="sm" className="sm:w-auto">
+              <Button variant="light" size="sm">
                 <MoreVerticalIcon size={18} />
               </Button>
             </PopoverTrigger>
@@ -187,24 +235,27 @@ export default function TableFuncionarios() {
                         setSelectedFuncionario(item);
                         setOpenDialogUsuario(true);
                       }}
-                      className="cursor-pointer"
                     >
                       Criar Usuário
                     </CommandItem>
+
                     <CommandItem
                       onSelect={() => {
                         setSelectedFuncionario(item);
                         setOpenDialogFuncionario(true);
                       }}
-                      className="cursor-pointer"
                     >
-                      <UserPen className="mr-2 h-4 w-4" /> Editar
+                      <UserPen className="w-4 h-4 mr-2" />
+                      Editar
                     </CommandItem>
+
                     <CommandItem
-                      onSelect={() => setDeleteDialog({ open: true, id: item.id })}
-                      className="cursor-pointer text-red-600"
+                      className="text-red-600"
+                      onSelect={() =>
+                        setDeleteDialog({ open: true, id: item.id })
+                      }
                     >
-                      <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                      <Trash2 className="w-4 h-4 mr-2" /> Excluir
                     </CommandItem>
                   </CommandGroup>
                 </CommandList>
@@ -212,24 +263,24 @@ export default function TableFuncionarios() {
             </PopoverContent>
           </Popover>
 
-          {/* Modal de confirmação para exclusão */}
+          {/* modal delete */}
           <AlertDialog
             open={deleteDialog.open && deleteDialog.id === item.id}
             onOpenChange={(open) => setDeleteDialog({ open, id: item.id })}
           >
-            <AlertDialogTrigger asChild>
-              <div />
-            </AlertDialogTrigger>
+            <AlertDialogTrigger />
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Confirma exclusão?</AlertDialogTitle>
+                <AlertDialogTitle>Excluir Funcionário</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Você tem certeza que deseja excluir o usuário {item.nome}? Esta ação não pode ser desfeita.
+                  Tem certeza que deseja excluir {item.nome}?
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
+              <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDelete(item.id)}>Excluir</AlertDialogAction>
+                <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                  Excluir
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -240,11 +291,80 @@ export default function TableFuncionarios() {
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <TableBase columns={columns} data={funcionarios} defaultSortColumn="nome" />
+      {/* FILTROS - responsivo */}
+      <div className="w-full flex flex-wrap justify-center md:justify-end gap-4 mb-6">
+
+        {/* filtro unidade */}
+        {isDiretorGeral && (
+          <div className="min-w-[160px]">
+            <p className="text-xs text-gray-600 mb-1">Unidade</p>
+            <Select onValueChange={setFiltroUnidade} value={filtroUnidade}>
+              <SelectTrigger className="h-11 min-w-[180px]">
+                <SelectValue placeholder="Selecionar unidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                {unidades.map((u) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {u.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* filtro departamento */}
+        <div className="min-w-[160px]">
+          <p className="text-xs text-gray-600 mb-1">Departamento</p>
+          <Select onValueChange={setFiltroDepartamento} value={filtroDepartamento}>
+            <SelectTrigger className="h-11 min-w-[180px]">
+
+              <SelectValue placeholder="Selecionar departamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {departamentos.map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.departamento}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* filtro status */}
+        <div className="min-w-[160px]">
+          <p className="text-xs text-gray-600 mb-1">Status</p>
+          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+            <SelectTrigger className="h-11 min-w-[180px]">
+              <SelectValue placeholder="Selecionar status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="ativo">Ativo</SelectItem>
+              <SelectItem value="inativo">Inativo</SelectItem>
+              <SelectItem value="ferias">Férias</SelectItem>
+              <SelectItem value="licença">Licença</SelectItem>
+              <SelectItem value="atestado">Atestado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* limpar filtros */}
+        <div className="flex items-end min-w-[130px]">
+          <Button variant="outline" className="w-full" onClick={limparFiltros}>
+            Limpar filtros
+          </Button>
+        </div>
       </div>
 
-      {/* Modais de usuário e funcionário */}
+      {/* tabela */}
+      <div className="overflow-x-auto">
+        <TableBase columns={columns} data={funcionariosFiltrados} defaultSortColumn="nome" />
+      </div>
+
+      {/* modais */}
       {selectedFuncionario && (
         <>
           <DialogUsuario
@@ -253,6 +373,7 @@ export default function TableFuncionarios() {
             funcionario={selectedFuncionario}
             onCreated={fetchData}
           />
+
           <DialogFuncionario
             open={openDialogFuncionario}
             onOpenChange={setOpenDialogFuncionario}

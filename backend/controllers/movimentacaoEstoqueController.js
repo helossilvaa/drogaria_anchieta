@@ -8,7 +8,7 @@ import {
 } from "../models/movimentacaoEstoque.js";
 
 import { Notificacao } from "../models/notificacoes.js";
-import { read } from "../config/database.js";
+import { create, read } from "../config/database.js";
 
 const criarMovimentacaoController = async (req, res) => {
     try {
@@ -169,6 +169,14 @@ const solicitarReposicaoController = async (req, res) => {
         };
         await criarMovimentacao(movimentacaoData);
 
+        //Criar solicitacao 
+        const solicataoData = {
+            filial_id: filialId,
+            produto_id,
+            quantidade_solicitada: quantidade
+        }
+        await create (`solicitacoes_estoque`, solicataoData)
+
         // Notificação para a filial
         try {
             await Notificacao.create({
@@ -229,64 +237,58 @@ const enviarLoteController = async (req, res) => {
     try {
         const { produto_id, filial_id, quantidade } = req.body;
 
-        // Estoque da matriz
-        const estoqueMatriz = await read(
-            "estoque_matriz",
-            `produto_id = ${produto_id}`
-        );
-
-        if (!estoqueMatriz) {
-            return res.status(400).json({ mensagem: "Produto não existe no estoque da matriz." });
+        if (!produto_id || !filial_id || !quantidade) {
+            return res.status(400).json({ mensagem: "Dados incompletos para enviar lote." });
         }
 
-        if (estoqueMatriz.quantidade < quantidade) {
-            return res.status(400).json({ mensagem: "Quantidade insuficiente na matriz." });
+
+        const estoqueMArray = await read(`estoque_matriz`, `produto_id = ${produto_id}
+        LIMIT 1`, `id, quantidade`)
+
+        const estoqueM = estoqueMArray;
+
+        if (!estoqueM) {
+            return res.status(404).json({ mensagem: "Produto não encontrado na matriz." });
         }
 
-        // Atualiza quantidade da matriz
+        if (estoqueM.quantidade < quantidade) {
+            return res.status(400).json({ mensagem: "Estoque insuficiente na matriz." });
+        }
+
+        //Subtrair da matriz
         await update(
-            "estoque_matriz",
-            { quantidade: estoqueMatriz.quantidade - quantidade },
-            `produto_id = ${produto_id}`
+            `UPDATE estoque_matriz SET quantidade = quantidade - ? WHERE id = ?`,
+            [quantidade, estoqueM.id]
         );
 
-        // Estoque da filial
-        const estoqueFilial = await read(
-            "estoque_franquia",
-            `produto_id = ${produto_id} AND unidade_id = ${filial_id}`
+        // Somar na filial
+        await update(
+            `UPDATE estoque_franquia SET quantidade = quantidade + ? 
+       WHERE produto_id = ? AND estoque_matriz_id = ?`,
+            [quantidade, produto_id, estoqueM.id]
         );
 
-        if (estoqueFilial) {
-            await update(
-                "estoque_franquia",
-                { quantidade: estoqueFilial.quantidade + quantidade },
-                `produto_id = ${produto_id} AND unidade_id = ${filial_id}`
-            );
-        } else {
-            await create("estoque_franquia", {
-                produto_id,
-                unidade_id: filial_id,
-                quantidade
-            });
-        }
+        // Registrar movimentação (sem usuario_id)
+        const sqlMov = `
+      INSERT INTO movimentacoes_estoque 
+          (produto_id, unidade_id, tipo, quantidade, descricao)
+      VALUES (?, ?, 'envio', ?, 'Envio da matriz para filial')
+    `;
 
-        // Registrar movimentação
-        await criarMovimentacao({
+        await create(sqlMov, [
             produto_id,
-            unidade_id: filial_id,
-            tipo_movimento: "envio",
-            quantidade,
-            data_movimentacao: new Date(),
-            usuario_id: req.user.id
-        });
+            filial_id,
+            quantidade
+        ]);
 
         return res.json({ mensagem: "Lote enviado com sucesso!" });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensagem: "Erro ao enviar lote." });
+        console.error("Erro enviarLote:", error);
+        return res.status(500).json({ mensagem: "Erro interno ao enviar lote." });
     }
 };
+
 
 
 

@@ -11,6 +11,7 @@ export default function RankingUnidades() {
   const API_URL = "http://localhost:8080";
 
   useEffect(() => {
+    //fetch das unidades que mais dao dinheiro
     const fetchRanking = async () => {
       try {
         const token = localStorage.getItem("token");

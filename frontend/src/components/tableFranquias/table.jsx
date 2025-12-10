@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import TableBase from "@/components/tableBase/tableBase";
-import { MoreVerticalIcon, UserPen, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import TableBase from "@/components/tableBase/tableBase"; // Componente base de tabela
+import { MoreVerticalIcon, UserPen, Trash2 } from "lucide-react"; // Ícones
+import { Button } from "@/components/ui/button"; // Componente de botão do Shadcn
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Popover do Shadcn
+import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"; // Menu de comandos dentro do Popover
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -16,28 +16,31 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/components/ui/alert-dialog";
-import { toast } from "react-toastify";
+} from "@/components/ui/alert-dialog"; // Modal de confirmação (AlertDialog)
+import { toast } from "react-toastify"; // Toast para notificações
 
-import DialogFranquia from "@/components/dialogFranquia/dialogFranquia";
-import DialogDetalhesFranquia from "@/components/dialogDetalhesFranquia/dialogDetalhesFranquia";
+import DialogFranquia from "@/components/dialogFranquia/dialogFranquia"; // Modal de edição de franquia
+import DialogDetalhesFranquia from "@/components/dialogDetalhesFranquia/dialogDetalhesFranquia"; // Modal de detalhes
 
+// Badge de status (ativa/inativa)
 const StatusBadge = ({ status }) => {
   const colors = { ativa: "bg-green-100 text-green-800", inativa: "bg-red-100 text-red-800" };
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors[status] || "bg-gray-100 text-gray-600"}`}>
+      {/* Capitaliza primeira letra */}
       {String(status || "").charAt(0).toUpperCase() + String(status || "").slice(1)}
     </span>
   );
 };
 
+// Avatar com iniciais do nome
 const Avatar = ({ nome }) => {
   const initials = nome
     ? nome
         .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((n) => n[0]?.toUpperCase())
+        .split(/\s+/) // Divide por espaços
+        .slice(0, 2) // Pega primeiras duas palavras
+        .map((n) => n[0]?.toUpperCase()) // Pega primeira letra e deixa maiúscula
         .join("")
     : "";
   return (
@@ -49,15 +52,15 @@ const Avatar = ({ nome }) => {
 
 export default function TableFranquias() {
   const API_URL = "http://localhost:8080";
-  const [franquias, setFranquias] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false); 
-  const [openDetalhes, setOpenDetalhes] = useState(false); 
-  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+  const [franquias, setFranquias] = useState([]); // Lista de franquias
+  const [selected, setSelected] = useState(null); // Franquia selecionada
+  const [openDialog, setOpenDialog] = useState(false); // Abrir modal edição
+  const [openDetalhes, setOpenDetalhes] = useState(false); // Abrir modal detalhes
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null }); // Modal de exclusão
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); // Token de autenticação
 
-  // 🔹 Carregar franquias
+  // Função para carregar franquias
   const loadData = async () => {
     try {
       const res = await fetch(`${API_URL}/unidade`, {
@@ -72,10 +75,10 @@ export default function TableFranquias() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(); // Carrega franquias ao montar componente
   }, []);
 
-  // 🔹 Excluir unidade
+  // Função para deletar unidade
   const handleDelete = async (id) => {
     try {
       const res = await fetch(`${API_URL}/unidade/${id}`, {
@@ -84,34 +87,40 @@ export default function TableFranquias() {
       });
       if (!res.ok) throw new Error("Erro ao excluir");
       toast.success("Unidade excluída com sucesso!");
-      loadData();
+      loadData(); // Recarrega tabela
     } catch (error) {
       console.error(error);
       toast.error("Erro ao excluir unidade");
     } finally {
-      setDeleteDialog({ open: false, id: null });
+      setDeleteDialog({ open: false, id: null }); // Fecha modal
     }
   };
 
+  // Abrir modal de detalhes
   const handleOpenDetalhes = (item) => {
     if (!item?.id) return toast.warn("Unidade inválida para detalhes.");
     setSelected(item);
     setOpenDetalhes(true);
   };
 
+  // Abrir modal de edição
   const handleOpenEditar = (item) => {
     if (!item?.id) return toast.warn("Unidade inválida para edição.");
     setSelected(item);
     setOpenDialog(true);
   };
 
+  // Colunas da tabela
   const columns = [
     {
       name: "Nome",
       uid: "nome",
       sortable: true,
       render: (item) => (
-        <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => handleOpenDetalhes(item)}>
+        <div
+          className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md"
+          onClick={() => handleOpenDetalhes(item)}
+        >
           <Avatar nome={item.nome} />
           <div className="flex flex-col">
             <span className="text-sm font-semibold">{item.nome}</span>
@@ -125,7 +134,9 @@ export default function TableFranquias() {
       uid: "cnpj",
       sortable: true,
       render: (item) => (
-        <span className="text-sm">{item.cnpj?.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") || "-"}</span>
+        <span className="text-sm">
+          {item.cnpj?.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") || "-"}
+        </span>
       ),
     },
     {
@@ -133,7 +144,9 @@ export default function TableFranquias() {
       uid: "telefone",
       sortable: true,
       render: (item) => (
-        <span className="text-sm">{item.telefone?.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3") || "-"}</span>
+        <span className="text-sm">
+          {item.telefone?.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3") || "-"}
+        </span>
       ),
     },
     {
@@ -148,7 +161,10 @@ export default function TableFranquias() {
       sortable: true,
       render: (item) => (
         <div className="flex items-center justify-between">
+          {/* Badge de status */}
           <StatusBadge status={item.status} />
+
+          {/* Menu de ações (popover) */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="p-1">
@@ -179,6 +195,7 @@ export default function TableFranquias() {
             </PopoverContent>
           </Popover>
 
+          {/* AlertDialog para confirmar exclusão */}
           {/* AlertDialog para deletar */}
           <AlertDialog
             open={deleteDialog.open && deleteDialog.id === item.id}
@@ -207,11 +224,12 @@ export default function TableFranquias() {
 
   return (
     <>
+      {/* Tabela principal */}
       <div className="bg-white shadow rounded-xl p-4">
         <TableBase columns={columns} data={franquias} defaultSortColumn="nome" />
       </div>
 
-      {/* Modal de editar */}
+      {/* Modal de edição */}
       {openDialog && selected?.id && (
         <DialogFranquia
           open={openDialog}
@@ -220,7 +238,7 @@ export default function TableFranquias() {
             setOpenDialog(open);
             if (!open) setSelected(null);
           }}
-          onUpdated={loadData}
+          onUpdated={loadData} // Atualiza tabela após edição
         />
       )}
 

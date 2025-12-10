@@ -3,7 +3,8 @@ import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
 import cron from 'node-cron'
-
+import path from "path";
+import { fileURLToPath } from "url";
 import authRotas from './routes/authRotas.js';
 import usuarioRotas from './routes/usuarioRotas.js';
 import vendasRotas from './routes/vendasRotas.js';
@@ -49,6 +50,8 @@ dotenv.config();
 
 const app = express();
 const porta = process.env.PORT || 8080;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -102,9 +105,10 @@ app.get("/pdfs/:id", downloadPDF);
 app.use("/uploads", express.static("uploads"));
 app.use("/", notificacoesRotas);
 app.use('/api', reqEstoqueMatrizRotas);
+app.use ('/relatorios', relatoriosRotas);
 app.use('/api/transacoes-matriz', transacoesMatrizRotas);
 app.use('/salariosfilial', salariosFilialRotas);
-
+app.use("/uploads/produtos", express.static(path.join(__dirname, "uploads/produtos")));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'online' });

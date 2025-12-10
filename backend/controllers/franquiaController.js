@@ -41,8 +41,7 @@ const atribuirGerenteAdmController = async (req, res) => {
 
 
 
-// criar franquia
-
+// criar franquia (e também pega as coordenadas dela)
 
 const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/search";
 
@@ -219,6 +218,7 @@ const deletarUnidadeController = async (req, res) => {
   }
 };
 
+//ranking de desempenho das unidades, pegando as 5 que mais lucram 
 const rankingUnidadesController = async (req, res) => {
   try {
     const sql = `
@@ -231,7 +231,7 @@ const rankingUnidadesController = async (req, res) => {
       LIMIT 5
     `;
     
-    const ranking = await query(sql); // usa a função de query customizada
+    const ranking = await query(sql); 
     res.status(200).json(ranking);
   } catch (error) {
     console.error("Erro ao gerar ranking de unidades:", error);
