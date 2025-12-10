@@ -1,4 +1,5 @@
 import { query } from '../config/database.js';
+import { VendasPorFilial } from "../models/vendasPorFilial.js";
 
 export const totalVendasHoje = async (req, res) => {
   try {
@@ -53,5 +54,58 @@ WHERE v.unidade_id = ? AND DATE(v.data) = CURDATE()
   } catch (err) {
     console.error("Erro ao buscar totais:", err);
     res.status(500).json({ error: "Erro ao buscar totais" });
+  }
+};
+
+export const vendasPorHora = async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+
+    // Pegar unidade do usuário
+    const sqlUnidade = `
+      SELECT f.unidade_id
+      FROM usuarios u
+      JOIN funcionarios f ON f.id = u.funcionario_id
+      WHERE u.id = ?
+    `;
+    const resultado = await query(sqlUnidade, [usuarioId]);
+
+    if (!resultado.length) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    const unidadeId = resultado[0].unidade_id;
+
+    const dados = await VendasPorFilial.vendasPorHora(unidadeId);
+
+    res.json(dados);
+  } catch (err) {
+    console.error("Erro ao buscar vendas por hora:", err);
+    res.status(500).json({ error: "Erro ao buscar vendas por hora" });
+  }
+};
+
+export const topProdutos = async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+
+    const sqlUnidade = `
+      SELECT f.unidade_id
+      FROM usuarios u
+      JOIN funcionarios f ON f.id = u.funcionario_id
+      WHERE u.id = ?
+    `;
+    const resultado = await query(sqlUnidade, [usuarioId]);
+
+    if (!resultado.length)
+      return res.status(404).json({ error: "Usuário não encontrado" });
+
+    const unidadeId = resultado[0].unidade_id;
+
+    const produtos = await VendasPorFilial.topProdutosMaisVendidos(unidadeId);
+
+    res.json(produtos);
+
+  } catch (err) {
+    console.error("Erro ao buscar top produtos:", err);
+    res.status(500).json({ error: "Erro ao buscar top produtos" });
   }
 };

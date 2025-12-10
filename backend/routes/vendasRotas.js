@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/', authMiddleware, criarVendaController);
 router.get('/', authMiddleware, listarVendaController);
 router.get("/evolucaomensal", authMiddleware, evolucaoVendasMensalController);
-router.get('/:id', authMiddleware, obterVendaPorIDController);
+router.get('/:id(\\d+)', authMiddleware, obterVendaPorIDController);
 router.put('/:id', authMiddleware, atualizarVendaController);
 
 router.options('/', (req, res) => {

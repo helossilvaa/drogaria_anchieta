@@ -1,20 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pie, PieChart } from "recharts";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
-    ChartConfig,
-    ChartContainer,
-    ChartLegend,
-    ChartLegendContent,
-} from "@/components/ui/chart";
+import { Pie, PieChart, Cell } from "recharts";
+import { Card } from "@/components/ui/card";
+import { ChartContainer, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
 export const description = "A pie chart with a legend";
 
@@ -37,14 +26,11 @@ export function ChartPieLegend() {
                     },
                 });
 
-                // logging detalhado para debug
                 console.log("FETCH /itens/top-categorias - status:", response.status, response.statusText);
                 const ct = response.headers.get("content-type") || "";
                 console.log("content-type:", ct);
 
-                // Se não OK, tente extrair mensagem de erro legível e abortar
                 if (!response.ok) {
-                    // tenta json, se não, texto
                     let errBody;
                     try {
                         errBody = await response.json();
@@ -52,24 +38,15 @@ export function ChartPieLegend() {
                         errBody = await response.text().catch(() => "<no body>");
                     }
                     console.error("Erro na API (não ok):", response.status, errBody);
-                    setChartData([]); // fallback vazio
+                    setChartData([]);
                     setChartConfig({});
                     return;
                 }
 
-                // tenta ler JSON com segurança
                 let data;
                 if (ct.includes("application/json")) {
-                    try {
-                        data = await response.json();
-                    } catch (err) {
-                        console.error("Falha ao parsear JSON:", err);
-                        setChartData([]);
-                        setChartConfig({});
-                        return;
-                    }
+                    data = await response.json();
                 } else {
-                    // se não for JSON (html/text), log e aborta
                     const txt = await response.text().catch(() => "<no body>");
                     console.error("Resposta não-JSON recebida:", txt);
                     setChartData([]);
@@ -79,7 +56,6 @@ export function ChartPieLegend() {
 
                 console.log("JSON RECEBIDO (raw):", data);
 
-                // normalize: se o backend retornou { data: [...] } ou { resultado: [...] }
                 let arr;
                 if (Array.isArray(data)) {
                     arr = data;
@@ -88,21 +64,20 @@ export function ChartPieLegend() {
                 } else if (Array.isArray(data.resultado)) {
                     arr = data.resultado;
                 } else {
-                    // se vier objeto único, talvez seja erro ou estrutura inesperada
                     console.error("Estrutura inesperada recebida (não é array):", data);
                     setChartData([]);
                     setChartConfig({});
                     return;
                 }
 
-                // agora é seguro mapear
                 const formattedData = arr.map((item) => ({
                     categoria: item.categoria ?? item.categoria_nome ?? item.nome ?? String(item[0] ?? ""),
                     total: Number(item.total ?? item.qtd ?? item.quantidade ?? 0),
                 }));
 
-                // gera cores previsíveis (padrão)
-                const colors = ["#FFCBD0", "#ADD9D9", "#245757"];
+                console.log("Arr normalizado para gráfico:", formattedData);
+
+                const colors = ["#FFCBD0", "#79B0B0", "#245757"]; // cores que você pediu
                 const config = {};
                 formattedData.forEach((item, index) => {
                     config[item.categoria] = { label: item.categoria, color: colors[index % colors.length] };
@@ -126,9 +101,9 @@ export function ChartPieLegend() {
         <Card className="flex flex-col">
             <ChartContainer
                 config={chartConfig}
-                className="mx-auto aspect-square max-h-[300px] !bg-transparent !border-none !shadow-none p-0 [&>div]:!bg-transparent [&>div]:!shadow-none [&>div]:!border-none"
+                aspect={1}
+                className="mx-auto w-full max-w-[300px] h-[300px] !bg-transparent !border-none !shadow-none p-0 [&>div]:!bg-transparent [&>div]:!shadow-none [&>div]:!border-none"
             >
-
                 {loading ? (
                     <div className="flex items-center justify-center w-full h-full">Carregando...</div>
                 ) : chartData.length === 0 ? (
@@ -136,13 +111,17 @@ export function ChartPieLegend() {
                         Nenhum dado disponível
                     </div>
                 ) : (
-                    <PieChart>
+                    <PieChart width={300} height={300}>
                         <Pie
                             data={chartData}
                             dataKey="total"
                             nameKey="categoria"
                             label
-                        />
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={["#FFCBD0", "#79B0B0", "#245757"][index % 3]} />
+                            ))}
+                        </Pie>
                         <ChartLegend
                             content={<ChartLegendContent nameKey="categoria" />}
                             className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
